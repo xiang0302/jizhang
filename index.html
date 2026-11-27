@@ -1881,7 +1881,7 @@
           transactions: Array.isArray(loaded.transactions) ? loaded.transactions : [],
           transfers: Array.isArray(loaded.transfers) ? loaded.transfers : []
         };
-        saveState(true); // 仅写本地，待云端就绪后再按需同步
+        saveState(true);
       } else {
         resetToEmptyState(true);
       }
@@ -1950,7 +1950,7 @@
 
     function getWeekRange(anchorDateStr) {
       const dt = parseDateISO(anchorDateStr);
-      const dayOfWeek = dt.getDay(); // 0(周日) - 6(周六)
+      const dayOfWeek = dt.getDay();
       const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
       const monday = new Date(dt);
       monday.setDate(dt.getDate() + diffToMonday);
@@ -2235,7 +2235,6 @@
       document.getElementById('homeNetWorth').textContent = formatMoney(snap.netWorth);
       document.getElementById('homeTotalDebt').textContent = snap.totalDebt > 0 ? '-' + formatMoney(snap.totalDebt) : '0.00';
 
-      // 渲染小账户卡片（点击卡片直接修改起始金额）
       const gridEl = document.getElementById('homeAccountsGrid');
       if (snap.accountDetails.length === 0) {
         gridEl.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">暂无小账户，点击右上角“+ 添加小账户”开始配置</div>`;
@@ -2264,7 +2263,6 @@
         }).join('');
       }
 
-      // 渲染当月记账项目栏
       const mKey = getMonthKey(currentYear, currentMonth);
       const listEl = document.getElementById('homeCategoriesList');
 
@@ -3195,26 +3193,26 @@
   </script>
 
   <!-- ========================================================================
-       10. Firebase Google 登录与多用户自动云同步引擎
+       10. Firebase Google 登录与多用户自动云同步引擎 (手机端优先跳转登录)
        ======================================================================== -->
   <script type="module">
-    import { initializeApp } from "[https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js](https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js)";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import {
       getAuth,
       GoogleAuthProvider,
-      signInWithPopup,
       signInWithRedirect,
+      signInWithPopup,
       getRedirectResult,
       signOut,
       onAuthStateChanged
-    } from "[https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js](https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js)";
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import {
       getFirestore,
       doc,
       getDoc,
       setDoc,
       onSnapshot
-    } from "[https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js](https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js)";
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAVmYu103CWL6xqDEAUrLvCRuiD75rMJAI",
@@ -3246,27 +3244,31 @@
       const signInBtn = document.getElementById('btnGoogleSignIn');
       const signOutBtn = document.getElementById('btnGoogleSignOut');
 
-      dot.className = 'sync-dot ' + (state || '');
-      label.textContent = text;
+      if (dot) dot.className = 'sync-dot ' + (state || '');
+      if (label) label.textContent = text;
 
       if (user) {
-        nameEl.textContent = user.displayName || user.email || '已登录用户';
-        if (user.photoURL) {
+        if (nameEl) nameEl.textContent = user.displayName || user.email || '已登录用户';
+        if (user.photoURL && avatarImg) {
           avatarImg.src = user.photoURL;
           avatarImg.classList.remove('hidden');
-          avatarFallback.classList.add('hidden');
+          if (avatarFallback) avatarFallback.classList.add('hidden');
         } else {
-          avatarImg.classList.add('hidden');
-          avatarFallback.classList.remove('hidden');
+          if (avatarImg) avatarImg.classList.add('hidden');
+          if (avatarFallback) avatarFallback.classList.remove('hidden');
         }
-        signInBtn.classList.add('hidden');
-        signOutBtn.classList.remove('hidden');
+        if (signInBtn) signInBtn.classList.add('hidden');
+        if (signOutBtn) signOutBtn.classList.remove('hidden');
       } else {
-        nameEl.textContent = '本地离线记账模式';
-        avatarImg.classList.add('hidden');
-        avatarFallback.classList.remove('hidden');
-        signInBtn.classList.remove('hidden');
-        signOutBtn.classList.add('hidden');
+        if (nameEl) nameEl.textContent = '本地离线记账模式';
+        if (avatarImg) avatarImg.classList.add('hidden');
+        if (avatarFallback) avatarFallback.classList.remove('hidden');
+        if (signInBtn) {
+          signInBtn.classList.remove('hidden');
+          signInBtn.disabled = false;
+          signInBtn.style.opacity = '1';
+        }
+        if (signOutBtn) signOutBtn.classList.add('hidden');
       }
     }
 
@@ -3306,8 +3308,7 @@
         const mm = String(now.getMinutes()).padStart(2, '0');
         updateCloudUI('synced', `云端已同步 (${hh}:${mm})`, currentCloudUser);
       } catch (err) {
-        console.error('Cloud push failed:', err);
-        updateCloudUI('error', '云同步暂不可用，已安全保存至本地', currentCloudUser);
+        updateCloudUI('error', '云同步异常: ' + (err.code || err.message), currentCloudUser);
       }
     }
 
@@ -3334,10 +3335,9 @@
       try {
         const snap = await getDoc(userDocRef);
         if (!snap.exists()) {
-          // 云端尚无数据：若本地已有账目，自动迁移上传至云端
           await pushStateToCloud(true);
           if (hasLocalData()) {
-            showToast('已将本地现有账本自动迁移至你的云端账号！');
+            showToast('已将本地现有账本自动迁移至云端！');
           }
         } else {
           const data = snap.data();
@@ -3366,11 +3366,9 @@
           }
         }
       } catch (err) {
-        console.error('Initial cloud fetch error:', err);
-        updateCloudUI('error', '连接云端失败，当前使用本地缓存', user);
+        updateCloudUI('error', '读取云端失败: ' + (err.code || err.message), user);
       }
 
-      // 开启多端实时监听
       unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
         if (!docSnap.exists() || docSnap.metadata.hasPendingWrites) return;
         const data = docSnap.data();
@@ -3394,26 +3392,22 @@
     }
 
     window.handleGoogleSignIn = async function () {
+      const btn = document.getElementById('btnGoogleSignIn');
+      if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+      }
+      updateCloudUI('syncing', '正在跳转 Google 登录页...', null);
+      showToast('正在跳转至 Google 账号选择页...');
+
       try {
-        updateCloudUI('syncing', '正在唤起 Google 登录...', null);
-        await signInWithPopup(auth, provider);
+        await signInWithRedirect(auth, provider);
       } catch (err) {
-        // 手机内嵌浏览器若拦截弹窗，自动降级为整页跳转登录
-        if (
-          err &&
-          (err.code === 'auth/popup-blocked' ||
-            err.code === 'auth/popup-closed-by-user' ||
-            err.code === 'auth/operation-not-supported-in-this-environment')
-        ) {
-          try {
-            await signInWithRedirect(auth, provider);
-          } catch (redirectErr) {
-            updateCloudUI('', '登录已取消，当前为本地模式', null);
-            showToast('登录失败：' + (redirectErr.message || '请稍后重试'));
-          }
-        } else {
-          updateCloudUI('', '登录未完成，当前为本地模式', null);
-          showToast('登录失败：' + (err.message || '请检查网络或授权域名'));
+        try {
+          await signInWithPopup(auth, provider);
+        } catch (popErr) {
+          updateCloudUI('', '登录失败: ' + (popErr.code || popErr.message), null);
+          showToast('登录失败: ' + (popErr.code || popErr.message));
         }
       }
     };
@@ -3437,7 +3431,19 @@
     };
 
     window.initFirebaseCloudSync = function () {
-      getRedirectResult(auth).catch(() => {});
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result && result.user) {
+            showToast('Google 登录成功！');
+          }
+        })
+        .catch((err) => {
+          if (err && err.code) {
+            updateCloudUI('error', '授权返回异常: ' + err.code, null);
+            showToast('授权异常: ' + err.code);
+          }
+        });
+
       onAuthStateChanged(auth, (user) => {
         if (user) {
           setupUserCloudSync(user);
@@ -3452,10 +3458,7 @@
       });
     };
 
-    // 若 initApp 已先执行完毕，立即启动鉴权监听
-    if (document.readyState === 'complete') {
-      window.initFirebaseCloudSync();
-    }
+    window.initFirebaseCloudSync();
   </script>
 </body>
 </html>
