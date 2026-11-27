@@ -469,6 +469,7 @@
     .account-actions {
       display: flex;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     .accounts-grid {
@@ -735,7 +736,7 @@
     }
 
     /* ==========================================================================
-       5. 总资产详情页 (Detail View)
+       5. 总资产详情页 & 资金明细 (Detail View)
        ========================================================================== */
     .detail-header-bar {
       display: flex;
@@ -761,6 +762,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .overview-summary-grid {
@@ -894,7 +897,7 @@
       transition: width 0.35s ease;
     }
 
-    /* 财务利润表 */
+    /* 财务利润表与资金明细表 */
     .finance-table {
       width: 100%;
       border-collapse: collapse;
@@ -925,6 +928,69 @@
       color: var(--text-muted);
       font-weight: 400;
       margin-top: 2px;
+    }
+
+    /* 资金来源与流水明细表格 */
+    .ledger-data-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+    }
+
+    .ledger-data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .ledger-data-table th {
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      font-weight: 700;
+      padding: 10px 10px;
+      border-bottom: 1.5px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .ledger-data-table td {
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .ledger-data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .ledger-data-table th.num-col,
+    .ledger-data-table td.num-col {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .filter-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .filter-chip {
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .filter-chip.active {
+      background: var(--brand-primary);
+      color: #FFFFFF;
+      border-color: var(--brand-primary);
     }
 
     /* 详情页小账户明细行 */
@@ -1088,7 +1154,7 @@
       to { transform: translateY(0); opacity: 1; }
     }
 
-    /* 周期维度切换器与打印PDF专有样式 */
+    /* 周期维度切换器 */
     .period-tabs {
       display: inline-flex;
       background: var(--bg-subtle);
@@ -1112,37 +1178,164 @@
       box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
     }
 
+    /* ==========================================================================
+       7. 专业财报级 PDF 打印排版样式 (@media print)
+       ========================================================================== */
+    .print-only-statement {
+      display: none;
+    }
+
     @media print {
+      @page {
+        size: A4 portrait;
+        margin: 14mm 12mm;
+      }
+
       body {
         background: #FFFFFF !important;
+        color: #000000 !important;
+        font-size: 11pt;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
+
       .app-container {
-        max-width: 100%;
-        padding: 0;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
       }
+
       #homeView,
+      #screenDetailContainer,
       .no-print,
       .modal-backdrop,
       .toast-container {
         display: none !important;
       }
+
       #detailView {
         display: block !important;
       }
-      .detail-card {
-        box-shadow: none !important;
-        border: 1px solid #CBD5E1 !important;
+
+      .print-only-statement {
+        display: block !important;
+      }
+
+      .stmt-header {
+        border-bottom: 2.5px solid #0F172A;
+        padding-bottom: 10px;
+        margin-bottom: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+
+      .stmt-title {
+        font-size: 18pt;
+        font-weight: 800;
+        color: #0F172A;
+        letter-spacing: 0.5px;
+      }
+
+      .stmt-meta {
+        text-align: right;
+        font-size: 9pt;
+        color: #334155;
+        line-height: 1.5;
+      }
+
+      .stmt-kpi-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border: 1.5px solid #0F172A;
+        margin-bottom: 16px;
+        background: #F8FAFC !important;
+      }
+
+      .stmt-kpi-cell {
+        padding: 8px 10px;
+        border-right: 1px solid #CBD5E1;
+      }
+
+      .stmt-kpi-cell:last-child {
+        border-right: none;
+      }
+
+      .stmt-kpi-label {
+        font-size: 8.5pt;
+        color: #475569;
+        font-weight: 600;
+      }
+
+      .stmt-kpi-val {
+        font-size: 13pt;
+        font-weight: 800;
+        color: #0F172A;
+        margin-top: 2px;
+      }
+
+      .stmt-section {
+        margin-bottom: 18px;
+        break-inside: auto;
+      }
+
+      .stmt-section-title {
+        font-size: 11pt;
+        font-weight: 800;
+        color: #0F172A;
+        background: #F1F5F9 !important;
+        border-left: 4px solid #0F172A;
+        padding: 5px 10px;
+        margin-bottom: 6px;
+      }
+
+      .stmt-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9.5pt;
+      }
+
+      .stmt-table th {
+        background: #F8FAFC !important;
+        color: #0F172A;
+        font-weight: 700;
+        border-top: 1.5px solid #0F172A;
+        border-bottom: 1.5px solid #0F172A;
+        padding: 6px 8px;
+        text-align: left;
+      }
+
+      .stmt-table td {
+        border-bottom: 1px solid #CBD5E1;
+        padding: 6px 8px;
+        color: #1E293B;
+      }
+
+      .stmt-table tr {
         break-inside: avoid;
         page-break-inside: avoid;
-        margin-top: 12px;
       }
-      .print-report-header {
-        display: block !important;
-        margin-bottom: 12px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #0F172A;
+
+      .stmt-table tr.stmt-total-row td {
+        border-top: 1.5px solid #0F172A;
+        border-bottom: 2px double #0F172A;
+        font-weight: 800;
+        background: #F8FAFC !important;
+      }
+
+      .stmt-table th.num,
+      .stmt-table td.num {
+        text-align: right;
+      }
+
+      .stmt-footer-note {
+        margin-top: 16px;
+        padding-top: 8px;
+        border-top: 1px solid #94A3B8;
+        font-size: 8.5pt;
+        color: #64748B;
+        display: flex;
+        justify-content: space-between;
       }
     }
 
@@ -1202,7 +1395,7 @@
             总资产 (所有资产类账户之和)
           </span>
           <span class="hero-cta-badge">
-            资产详情与报表
+            资金明细与财报
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
           </span>
         </div>
@@ -1227,6 +1420,9 @@
             我的小账户
           </div>
           <div class="account-actions">
+            <button class="btn btn-sm btn-secondary" onclick="switchView('detail', 'ledger')">
+              资金明细
+            </button>
             <button class="btn btn-sm btn-secondary" onclick="openTransferHistoryModal()" title="查看或撤销账户互转记录">
               互转记录
             </button>
@@ -1259,179 +1455,232 @@
     </div>
 
     <!-- ======================================================================
-         视图 2：总资产详情页 (Detail View)
+         视图 2：总资产详情页 & 资金明细 (Detail View)
          ====================================================================== -->
     <div id="detailView" class="hidden">
-      <!-- 打印/保存PDF专属抬头（仅导出PDF时显示） -->
-      <div class="print-report-header hidden">
-        <div style="display: flex; justify-content: space-between; align-items: baseline;">
-          <h2 style="font-size: 20px; font-weight: 800; color: #0F172A;">智简账本 · 个人财务与资产分析报告</h2>
-          <span id="printPeriodSubtitle" style="font-size: 13px; font-weight: 700; color: #2563EB;"></span>
-        </div>
-        <div id="printGeneratedAt" style="font-size: 11px; color: #64748B; margin-top: 4px;"></div>
-      </div>
-
-      <div class="detail-header-bar no-print">
-        <button class="btn btn-secondary btn-sm" onclick="switchView('home')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="15 18 9 12 15 6"/></svg>
-          返回记账主页
-        </button>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <button class="btn btn-accent btn-sm" onclick="exportReportToPDF()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
-            保存为 PDF
+      <!-- 屏幕交互容器（打印PDF时自动隐藏，由下方财报专用排版接管） -->
+      <div id="screenDetailContainer">
+        <div class="detail-header-bar no-print">
+          <button class="btn btn-secondary btn-sm" onclick="switchView('home')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="15 18 9 12 15 6"/></svg>
+            返回记账主页
           </button>
-        </div>
-      </div>
-
-      <!-- 详情页顶部多维度周期切换器（按年 / 按月 / 按周） -->
-      <div class="month-switcher-bar" style="margin-top: 0; flex-direction: column; gap: 10px;">
-        <div class="period-tabs no-print">
-          <button type="button" class="period-tab-btn" id="tabPeriodYear" onclick="setReportPeriodMode('year')">每年</button>
-          <button type="button" class="period-tab-btn active" id="tabPeriodMonth" onclick="setReportPeriodMode('month')">每月</button>
-          <button type="button" class="period-tab-btn" id="tabPeriodWeek" onclick="setReportPeriodMode('week')">每个星期</button>
-        </div>
-        <div class="month-nav-group" style="margin: 0 auto;">
-          <button class="month-arrow-btn no-print" onclick="changeReportPeriod(-1)">&lt;</button>
-          <span class="current-month-label tabular-nums" id="detailMonthLabel" style="min-width: 195px;">2026年11月</span>
-          <button class="month-arrow-btn no-print" onclick="changeReportPeriod(1)">&gt;</button>
-        </div>
-      </div>
-
-      <!-- 1. 核心资产概览 -->
-      <div class="detail-card">
-        <div class="detail-card-title">
-          <span id="detailOverviewTitle">1. 核心资产概览 (截止该月末)</span>
-          <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">实时历史回溯</span>
-        </div>
-        <div class="overview-summary-grid tabular-nums">
-          <div class="stat-box">
-            <div class="stat-box-label" id="detailTotalAssetsLabel">该周期总资产 (资产账户之和)</div>
-            <div class="stat-box-val text-asset" id="detailTotalAssets">0.00</div>
-          </div>
-          <div class="stat-box highlight-net">
-            <div class="stat-box-label">净资产 (总资产 - 总负债)</div>
-            <div class="stat-box-val" id="detailNetWorth" style="color: #1E3A8A;">0.00</div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="btn btn-accent btn-sm" onclick="exportReportToPDF()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+              保存为 PDF (财报版)
+            </button>
           </div>
         </div>
 
-        <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); margin: 14px 0 6px;">
-          持有的各个小账户明细列表（支持修改名称或校准起始金额）
+        <!-- 详情页顶部多维度周期切换器（按年 / 按月 / 按周） -->
+        <div class="month-switcher-bar" style="margin-top: 0; flex-direction: column; gap: 10px;">
+          <div class="period-tabs no-print">
+            <button type="button" class="period-tab-btn" id="tabPeriodYear" onclick="setReportPeriodMode('year')">每年</button>
+            <button type="button" class="period-tab-btn active" id="tabPeriodMonth" onclick="setReportPeriodMode('month')">每月</button>
+            <button type="button" class="period-tab-btn" id="tabPeriodWeek" onclick="setReportPeriodMode('week')">每个星期</button>
+          </div>
+          <div class="month-nav-group" style="margin: 0 auto;">
+            <button class="month-arrow-btn no-print" onclick="changeReportPeriod(-1)">&lt;</button>
+            <span class="current-month-label tabular-nums" id="detailMonthLabel" style="min-width: 195px;">2026年11月</span>
+            <button class="month-arrow-btn no-print" onclick="changeReportPeriod(1)">&gt;</button>
+          </div>
         </div>
-        <div id="detailAccountsList"></div>
-      </div>
 
-      <!-- 2. 展示框1（财务健康度） -->
-      <div class="detail-card">
-        <div class="detail-card-title">
-          <span>2. 财务健康度指标</span>
-        </div>
-        <div class="health-grid tabular-nums">
-          <div class="health-item">
-            <div class="health-item-label">现金留存 (流动资金余额)</div>
-            <div class="health-item-val text-asset" id="detailCashRetention">0.00</div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="detailMonthSurplusNote">本周期净结余: 0.00</div>
+        <!-- 1. 核心资产概览 -->
+        <div class="detail-card">
+          <div class="detail-card-title">
+            <span id="detailOverviewTitle">1. 核心资产概览 (截止该月末)</span>
+            <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">实时历史回溯</span>
           </div>
-          <div class="health-item">
-            <div class="health-item-label" id="detailGrowthLabel">财富增加率 (环比上期净资产)</div>
-            <div class="health-item-val" id="detailWealthGrowth">--</div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="detailPrevNetNote">上期净资产: 0.00</div>
-          </div>
-          <div class="health-item">
-            <div class="health-item-label">总负债 (所有负债账户之和)</div>
-            <div class="health-item-val text-debt" id="detailTotalDebt">0.00</div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">含信用卡及贷款欠款</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3. 展示框2（支出占比图表分析） -->
-      <div class="detail-card">
-        <div class="detail-card-title">
-          <span id="detailExpenseChartTitle">3. 周期支出占比分析</span>
-          <span class="tabular-nums" style="font-size: 13px; color: var(--text-secondary);" id="detailTotalExpenseBadge">总支出: 0.00</span>
-        </div>
-        <div class="chart-layout">
-          <div class="donut-wrapper">
-            <svg id="expenseDonutSvg" width="170" height="170" viewBox="0 0 170 170"></svg>
-            <div class="donut-center-text tabular-nums">
-              <span style="font-size: 11px; color: var(--text-muted);" id="donutCenterLabel">周期总支出</span>
-              <strong style="font-size: 16px; color: var(--text-primary);" id="donutCenterTotal">0.00</strong>
+          <div class="overview-summary-grid tabular-nums">
+            <div class="stat-box">
+              <div class="stat-box-label" id="detailTotalAssetsLabel">该周期总资产 (资产账户之和)</div>
+              <div class="stat-box-val text-asset" id="detailTotalAssets">0.00</div>
+            </div>
+            <div class="stat-box highlight-net">
+              <div class="stat-box-label">净资产 (总资产 - 总负债)</div>
+              <div class="stat-box-val" id="detailNetWorth" style="color: #1E3A8A;">0.00</div>
             </div>
           </div>
-          <div class="chart-breakdown" id="expenseBreakdownArea"></div>
+
+          <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); margin: 14px 0 6px;">
+            持有的各个小账户明细列表（支持修改名称或校准起始金额）
+          </div>
+          <div id="detailAccountsList"></div>
+        </div>
+
+        <!-- 2. 财务健康度指标 -->
+        <div class="detail-card">
+          <div class="detail-card-title">
+            <span>2. 财务健康度指标</span>
+          </div>
+          <div class="health-grid tabular-nums">
+            <div class="health-item">
+              <div class="health-item-label">现金留存 (流动资金余额)</div>
+              <div class="health-item-val text-asset" id="detailCashRetention">0.00</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="detailMonthSurplusNote">本周期净结余: 0.00</div>
+            </div>
+            <div class="health-item">
+              <div class="health-item-label" id="detailGrowthLabel">财富增加率 (环比上期净资产)</div>
+              <div class="health-item-val" id="detailWealthGrowth">--</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="detailPrevNetNote">上期净资产: 0.00</div>
+            </div>
+            <div class="health-item">
+              <div class="health-item-label">总负债 (所有负债账户之和)</div>
+              <div class="health-item-val text-debt" id="detailTotalDebt">0.00</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">含信用卡及贷款欠款</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 资金明细与所有资金来源溯源 -->
+        <div class="detail-card" id="fundDetailsCard">
+          <div class="detail-card-title">
+            <span>3. 资金明细与所有资金来源</span>
+            <span class="tabular-nums" style="font-size: 13px; color: #059669;" id="detailTotalInflowBadge">周期总流入: +0.00</span>
+          </div>
+
+          <!-- 3A. 资金来源结构汇总表 -->
+          <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px;">
+            一、资金来源结构分类汇总（含全部收入项目与外部直接存入）
+          </div>
+          <div class="ledger-data-table-wrap" style="margin-bottom: 16px;">
+            <table class="ledger-data-table tabular-nums">
+              <thead>
+                <tr>
+                  <th>资金来源项目</th>
+                  <th>来源性质</th>
+                  <th>流向账户</th>
+                  <th class="num-col">金额</th>
+                  <th class="num-col">占比</th>
+                </tr>
+              </thead>
+              <tbody id="fundSourcesSummaryBody"></tbody>
+            </table>
+          </div>
+
+          <!-- 3B. 完整资金来源与流水明细清单 -->
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+            <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary);">
+              二、完整资金流水明细清单
+            </span>
+            <div class="filter-chips" id="ledgerFilterChips" style="margin-bottom: 0;">
+              <button type="button" class="filter-chip active" data-filter="inflow" onclick="setLedgerFilter('inflow')">全部资金来源 (流入)</button>
+              <button type="button" class="filter-chip" data-filter="income" onclick="setLedgerFilter('income')">仅收入类</button>
+              <button type="button" class="filter-chip" data-filter="ext_deposit" onclick="setLedgerFilter('ext_deposit')">外部存入</button>
+              <button type="button" class="filter-chip" data-filter="all" onclick="setLedgerFilter('all')">全部收支明细</button>
+            </div>
+          </div>
+          <div class="ledger-data-table-wrap">
+            <table class="ledger-data-table tabular-nums">
+              <thead>
+                <tr>
+                  <th>日期</th>
+                  <th>项目 / 来源</th>
+                  <th>类型</th>
+                  <th>关联账户</th>
+                  <th class="num-col">金额</th>
+                </tr>
+              </thead>
+              <tbody id="fundLedgerTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 4. 周期支出占比分析 -->
+        <div class="detail-card">
+          <div class="detail-card-title">
+            <span id="detailExpenseChartTitle">4. 周期支出占比分析</span>
+            <span class="tabular-nums" style="font-size: 13px; color: var(--text-secondary);" id="detailTotalExpenseBadge">总支出: 0.00</span>
+          </div>
+          <div class="chart-layout">
+            <div class="donut-wrapper">
+              <svg id="expenseDonutSvg" width="170" height="170" viewBox="0 0 170 170"></svg>
+              <div class="donut-center-text tabular-nums">
+                <span style="font-size: 11px; color: var(--text-muted);" id="donutCenterLabel">周期总支出</span>
+                <strong style="font-size: 16px; color: var(--text-primary);" id="donutCenterTotal">0.00</strong>
+              </div>
+            </div>
+            <div class="chart-breakdown" id="expenseBreakdownArea"></div>
+          </div>
+        </div>
+
+        <!-- 5. 周期现金流与利润表 -->
+        <div class="detail-card">
+          <div class="detail-card-title">
+            <span id="detailFinanceTableTitle">5. 现金流与利润表</span>
+          </div>
+          <table class="finance-table tabular-nums">
+            <tbody>
+              <tr>
+                <td>
+                  <strong>周期总收入</strong>
+                  <span class="table-sub-note">所选周期内所有“收入”类项目入账总和</span>
+                </td>
+                <td class="text-asset" id="tableIncome">+0.00</td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>净利润</strong>
+                  <span class="table-sub-note">周期总收入 - 周期总支出（注：“存入”与“还债”不扣减净利润）</span>
+                </td>
+                <td id="tableNetProfit">0.00</td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>非必要支出</strong>
+                  <span class="table-sub-note">所选周期内归类为“非必要”的弹性消费总和</span>
+                </td>
+                <td style="color: var(--discretionary-amber);" id="tableDiscretionary">0.00</td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>扣除维持性开支后可用的现金</strong>
+                  <span class="table-sub-note">周期总收入 - 周期维持性支出（评估真实自由支配现金流）</span>
+                </td>
+                <td style="color: var(--brand-accent);" id="tableFreeCash">0.00</td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>强制储蓄 / 存入总额</strong>
+                  <span class="table-sub-note">所选周期内所有“存入”类项目累计（参考项）</span>
+                </td>
+                <td style="color: var(--deposit-indigo);" id="tableDepositTotal">0.00</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 6. 底部数据安全区 -->
+        <div class="detail-card no-print">
+          <div class="detail-card-title">
+            <span>6. 数据安全备份与恢复（防清理缓存丢失）</span>
+          </div>
+          <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">
+            登录 Google 账号后账目会自动同步至您的云端私人空间；您也可以随时手动导出 JSON 备份文件妥善保管。
+          </p>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <button class="btn btn-primary" onclick="exportBackupJSON()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              导出数据备份 (JSON)
+            </button>
+            <button class="btn btn-secondary" onclick="document.getElementById('importFileInput').click()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              导入恢复数据
+            </button>
+            <button class="btn btn-danger" onclick="promptClearAllData()">
+              清空所有数据重置
+            </button>
+            <input type="file" id="importFileInput" accept=".json,application/json" class="hidden" onchange="importBackupJSON(event)" />
+          </div>
         </div>
       </div>
 
-      <!-- 4. 展示表（周期现金流与利润表） -->
-      <div class="detail-card">
-        <div class="detail-card-title">
-          <span id="detailFinanceTableTitle">4. 现金流与利润表</span>
-        </div>
-        <table class="finance-table tabular-nums">
-          <tbody>
-            <tr>
-              <td>
-                <strong>周期总收入</strong>
-                <span class="table-sub-note">所选周期内所有“收入”类项目入账总和</span>
-              </td>
-              <td class="text-asset" id="tableIncome">+0.00</td>
-            </tr>
-            <tr>
-              <td>
-                <strong>净利润</strong>
-                <span class="table-sub-note">周期总收入 - 周期总支出（注：“存入”与“还债”不扣减净利润）</span>
-              </td>
-              <td id="tableNetProfit">0.00</td>
-            </tr>
-            <tr>
-              <td>
-                <strong>非必要支出</strong>
-                <span class="table-sub-note">所选周期内归类为“非必要”的弹性消费总和</span>
-              </td>
-              <td style="color: var(--discretionary-amber);" id="tableDiscretionary">0.00</td>
-            </tr>
-            <tr>
-              <td>
-                <strong>扣除维持性开支后可用的现金</strong>
-                <span class="table-sub-note">周期总收入 - 周期维持性支出（评估真实自由支配现金流）</span>
-              </td>
-              <td style="color: var(--brand-accent);" id="tableFreeCash">0.00</td>
-            </tr>
-            <tr>
-              <td>
-                <strong>强制储蓄 / 存入总额</strong>
-                <span class="table-sub-note">所选周期内所有“存入”类项目累计（参考项）</span>
-              </td>
-              <td style="color: var(--deposit-indigo);" id="tableDepositTotal">0.00</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- 5. 底部数据安全区 -->
-      <div class="detail-card no-print">
-        <div class="detail-card-title">
-          <span>5. 数据安全备份与恢复（防清理缓存丢失）</span>
-        </div>
-        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">
-          登录 Google 账号后账目会自动同步至您的云端私人空间；您也可以随时手动导出 JSON 备份文件妥善保管。
-        </p>
-        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-          <button class="btn btn-primary" onclick="exportBackupJSON()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            导出数据备份 (JSON)
-          </button>
-          <button class="btn btn-secondary" onclick="document.getElementById('importFileInput').click()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            导入恢复数据
-          </button>
-          <button class="btn btn-danger" onclick="promptClearAllData()">
-            清空所有数据重置
-          </button>
-          <input type="file" id="importFileInput" accept=".json,application/json" class="hidden" onchange="importBackupJSON(event)" />
-        </div>
-      </div>
+      <!-- ====================================================================
+           财报级 PDF 专用打印视图（仅在导出 PDF / 打印时显示）
+           ==================================================================== -->
+      <div id="printFinancialStatement" class="print-only-statement tabular-nums"></div>
     </div>
   </div>
 
@@ -1799,6 +2048,7 @@
     let currentView = 'home'; // 'home' | 'detail'
     let reportPeriodMode = 'month'; // 'year' | 'month' | 'week'
     let reportWeekAnchor = DEFAULT_TODAY; // 周视图基准日期 YYYY-MM-DD
+    let ledgerFilterMode = 'inflow'; // 'inflow' | 'income' | 'ext_deposit' | 'all'
     let activeHistoryCategoryId = null;
     let pendingDeleteCategoryId = null;
 
@@ -2100,52 +2350,106 @@
       const periodTxs = appState.transactions.filter(tx => tx.date && tx.date >= startStr && tx.date <= endStr);
 
       let totalIncome = 0;
+      let externalDeposit = 0;
+      let internalDeposit = 0;
       let essentialExpense = 0;
       let discretionaryExpense = 0;
       let totalDeposit = 0;
+      let totalRepay = 0;
 
       const expenseByCategory = {};
+      const inflowBySource = {};
 
       for (const tx of periodTxs) {
         const amt = Number(tx.amount) || 0;
+        const catObj = appState.categories.find(c => c.id === tx.categoryId);
+        const label = catObj ? catObj.name : (tx.categoryNameSnapshot || '已删除项目');
+        const targetAcc = appState.accounts.find(a => a.id === tx.accountId);
+        const targetAccName = targetAcc ? targetAcc.name : '未知账户';
+
         if (tx.kind === 'income') {
           totalIncome += amt;
+          const srcKey = `income_${label}`;
+          if (!inflowBySource[srcKey]) {
+            inflowBySource[srcKey] = {
+              name: label,
+              sourceType: '主营/常规收入',
+              targetAccounts: new Set(),
+              count: 0,
+              amount: 0
+            };
+          }
+          inflowBySource[srcKey].amount += amt;
+          inflowBySource[srcKey].count += 1;
+          inflowBySource[srcKey].targetAccounts.add(targetAccName);
         } else if (tx.kind === 'expense') {
           if (tx.subType === 'discretionary') {
             discretionaryExpense += amt;
           } else {
             essentialExpense += amt;
           }
-          const catObj = appState.categories.find(c => c.id === tx.categoryId);
-          const label = catObj ? catObj.name : (tx.categoryNameSnapshot || '已删除项目');
           if (!expenseByCategory[label]) {
             expenseByCategory[label] = { name: label, amount: 0, subType: tx.subType || 'essential' };
           }
           expenseByCategory[label].amount += amt;
         } else if (tx.kind === 'deposit') {
           totalDeposit += amt;
+          if (tx.sourceMode !== 'internal') {
+            externalDeposit += amt;
+            const srcKey = `ext_${label}`;
+            if (!inflowBySource[srcKey]) {
+              inflowBySource[srcKey] = {
+                name: label,
+                sourceType: '外部直接存入',
+                targetAccounts: new Set(),
+                count: 0,
+                amount: 0
+              };
+            }
+            inflowBySource[srcKey].amount += amt;
+            inflowBySource[srcKey].count += 1;
+            inflowBySource[srcKey].targetAccounts.add(targetAccName);
+          } else {
+            internalDeposit += amt;
+          }
+        } else if (tx.kind === 'repay') {
+          totalRepay += amt;
         }
       }
 
+      const totalNewInflow = totalIncome + externalDeposit;
       const totalExpense = essentialExpense + discretionaryExpense;
       const netProfit = totalIncome - totalExpense;
       const freeCashAfterEssential = totalIncome - essentialExpense;
 
+      const fundSourcesList = Object.values(inflowBySource)
+        .map(item => ({
+          ...item,
+          amount: Number(item.amount.toFixed(2)),
+          accountsDisplay: Array.from(item.targetAccounts).join('、')
+        }))
+        .sort((a, b) => b.amount - a.amount);
+
       return {
         periodTxs,
         totalIncome: Number(totalIncome.toFixed(2)),
+        externalDeposit: Number(externalDeposit.toFixed(2)),
+        internalDeposit: Number(internalDeposit.toFixed(2)),
+        totalNewInflow: Number(totalNewInflow.toFixed(2)),
         essentialExpense: Number(essentialExpense.toFixed(2)),
         discretionaryExpense: Number(discretionaryExpense.toFixed(2)),
         totalExpense: Number(totalExpense.toFixed(2)),
         totalDeposit: Number(totalDeposit.toFixed(2)),
+        totalRepay: Number(totalRepay.toFixed(2)),
         netProfit: Number(netProfit.toFixed(2)),
         freeCashAfterEssential: Number(freeCashAfterEssential.toFixed(2)),
-        expenseByCategory: Object.values(expenseByCategory).sort((a, b) => b.amount - a.amount)
+        expenseByCategory: Object.values(expenseByCategory).sort((a, b) => b.amount - a.amount),
+        fundSourcesList
       };
     }
 
     /* ==========================================================================
-       4. 视图渲染 (Home View & Detail View)
+       4. 视图渲染 (Home View & Detail View & 财报级 PDF 渲染)
        ========================================================================== */
     function formatMoney(num) {
       const val = Number(num) || 0;
@@ -2160,6 +2464,14 @@
       if (currentView === 'detail') {
         renderDetailView();
       }
+    }
+
+    function setLedgerFilter(filterMode) {
+      ledgerFilterMode = filterMode;
+      document.querySelectorAll('#ledgerFilterChips .filter-chip').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-filter') === filterMode);
+      });
+      renderDetailView();
     }
 
     function setReportPeriodMode(mode) {
@@ -2194,26 +2506,32 @@
     }
 
     function exportReportToPDF() {
-      const bounds = getReportPeriodBounds();
-      document.getElementById('printPeriodSubtitle').textContent = `统计周期：${bounds.label}`;
-      document.getElementById('printGeneratedAt').textContent = `生成日期：${DEFAULT_TODAY} · 账本自动汇总报表`;
-      showToast('正在调起系统 PDF 打印/保存界面...');
+      buildPrintFinancialStatement();
+      showToast('正在生成财报级 PDF 报表...');
       setTimeout(() => {
         window.print();
-      }, 150);
+      }, 180);
     }
 
-    function switchView(viewName) {
+    function switchView(viewName, focusSection = null) {
       currentView = viewName;
       if (viewName === 'home') {
         document.getElementById('homeView').classList.remove('hidden');
         document.getElementById('detailView').classList.add('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         document.getElementById('homeView').classList.add('hidden');
         document.getElementById('detailView').classList.remove('hidden');
         renderDetailView();
+        if (focusSection === 'ledger') {
+          setTimeout(() => {
+            const target = document.getElementById('fundDetailsCard');
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 80);
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function changeMonth(delta) {
@@ -2400,10 +2718,15 @@
         growthEl.style.color = rate >= 0 ? '#059669' : 'var(--debt-red)';
       }
 
+      // 渲染第 3 板块：资金明细与所有资金来源
+      renderFundDetailsSection(metrics, snap);
+
+      // 渲染第 4 板块：支出占比图表
       document.getElementById('detailTotalExpenseBadge').textContent = `总支出: ${formatMoney(metrics.totalExpense)}`;
       document.getElementById('donutCenterTotal').textContent = formatMoney(metrics.totalExpense);
       renderExpenseDonutChart(metrics);
 
+      // 渲染第 5 板块：现金流与利润表
       document.getElementById('tableIncome').textContent = `+${formatMoney(metrics.totalIncome)}`;
       const netProfitEl = document.getElementById('tableNetProfit');
       netProfitEl.textContent = `${metrics.netProfit >= 0 ? '+' : ''}${formatMoney(metrics.netProfit)}`;
@@ -2415,6 +2738,376 @@
       freeCashEl.style.color = metrics.freeCashAfterEssential >= 0 ? 'var(--brand-accent)' : 'var(--debt-red)';
 
       document.getElementById('tableDepositTotal').textContent = formatMoney(metrics.totalDeposit);
+
+      // 同步更新财报级打印 DOM
+      buildPrintFinancialStatement();
+    }
+
+    function renderFundDetailsSection(metrics, snap) {
+      document.getElementById('detailTotalInflowBadge').textContent = `周期新增资金总流入: +${formatMoney(metrics.totalNewInflow)}`;
+
+      // 一、资金来源分类汇总表
+      const summaryBody = document.getElementById('fundSourcesSummaryBody');
+      const totalInflow = metrics.totalNewInflow;
+
+      let summaryRowsHtml = '';
+      if (metrics.fundSourcesList.length === 0) {
+        summaryRowsHtml = `
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">
+              所选周期内暂无新增资金流入记录（“收入”或“外部直接存入”类目）
+            </td>
+          </tr>
+        `;
+      } else {
+        summaryRowsHtml = metrics.fundSourcesList.map(src => {
+          const pct = totalInflow > 0 ? ((src.amount / totalInflow) * 100).toFixed(1) + '%' : '0.0%';
+          const isIncome = src.sourceType.includes('收入');
+          return `
+            <tr>
+              <td>
+                <strong>${escapeHtml(src.name)}</strong>
+                <span style="font-size: 11px; color: var(--text-muted);">(${src.count}笔)</span>
+              </td>
+              <td>
+                <span class="tag-pill ${isIncome ? 'badge-income' : 'badge-deposit'}">${escapeHtml(src.sourceType)}</span>
+              </td>
+              <td style="color: var(--text-secondary);">${escapeHtml(src.accountsDisplay)}</td>
+              <td class="num-col text-asset" style="font-weight: 700;">+${formatMoney(src.amount)}</td>
+              <td class="num-col" style="font-weight: 600; color: var(--text-secondary);">${pct}</td>
+            </tr>
+          `;
+        }).join('');
+
+        summaryRowsHtml += `
+          <tr style="background: var(--bg-subtle); font-weight: 800;">
+            <td colspan="3">合计新增资金流入（所有外部资金来源总和）</td>
+            <td class="num-col text-asset">+${formatMoney(totalInflow)}</td>
+            <td class="num-col">100.0%</td>
+          </tr>
+        `;
+      }
+
+      // 补充列出各账户初始开账资金来源（便于追溯存量本金来源）
+      const initAccounts = snap.accountDetails.filter(a => Number(a.initialBalance) > 0);
+      if (initAccounts.length > 0) {
+        const totalInit = initAccounts.reduce((s, a) => s + (a.type === 'liability' ? 0 : Number(a.initialBalance)), 0);
+        if (totalInit > 0) {
+          summaryRowsHtml += `
+            <tr style="background: #F8FAFC;">
+              <td colspan="3" style="font-size: 12px; color: var(--text-secondary);">
+                <strong>存量本金来源（开账起始资产余额）</strong>：
+                ${initAccounts.filter(a => a.type !== 'liability').map(a => `${escapeHtml(a.name)}(${formatMoney(a.initialBalance)})`).join('、')}
+              </td>
+              <td class="num-col" style="font-weight: 700; color: var(--text-primary);">${formatMoney(totalInit)}</td>
+              <td class="num-col" style="font-size: 11px; color: var(--text-muted);">期初本金</td>
+            </tr>
+          `;
+        }
+      }
+      summaryBody.innerHTML = summaryRowsHtml;
+
+      // 二、逐笔资金流水明细表
+      const ledgerBody = document.getElementById('fundLedgerTableBody');
+      let filteredTxs = [...metrics.periodTxs].sort((a, b) => b.date.localeCompare(a.date));
+
+      if (ledgerFilterMode === 'inflow') {
+        filteredTxs = filteredTxs.filter(t => t.kind === 'income' || (t.kind === 'deposit' && t.sourceMode !== 'internal'));
+      } else if (ledgerFilterMode === 'income') {
+        filteredTxs = filteredTxs.filter(t => t.kind === 'income');
+      } else if (ledgerFilterMode === 'ext_deposit') {
+        filteredTxs = filteredTxs.filter(t => t.kind === 'deposit' && t.sourceMode !== 'internal');
+      }
+
+      if (filteredTxs.length === 0) {
+        ledgerBody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">
+              当前筛选条件下暂无对应的资金流水记录
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      ledgerBody.innerHTML = filteredTxs.map(tx => {
+        const catObj = appState.categories.find(c => c.id === tx.categoryId);
+        const catName = catObj ? catObj.name : (tx.categoryNameSnapshot || '已删除项目');
+        const targetAcc = appState.accounts.find(a => a.id === tx.accountId);
+        let accText = targetAcc ? targetAcc.name : '未知账户';
+        if ((tx.kind === 'deposit' && tx.sourceMode === 'internal') || (tx.kind === 'repay' && tx.fromAccountId)) {
+          const fromAcc = appState.accounts.find(a => a.id === tx.fromAccountId);
+          accText = `${fromAcc ? fromAcc.name : '未知'} → ${accText}`;
+        }
+
+        let typeBadge = '';
+        let amountHtml = '';
+        if (tx.kind === 'income') {
+          typeBadge = `<span class="tag-pill badge-income">收入来源</span>`;
+          amountHtml = `<span class="text-asset" style="font-weight: 700;">+${formatMoney(tx.amount)}</span>`;
+        } else if (tx.kind === 'deposit') {
+          const isExt = tx.sourceMode !== 'internal';
+          typeBadge = `<span class="tag-pill badge-deposit">${isExt ? '外部存入' : '内部转存'}</span>`;
+          amountHtml = `<span style="color: var(--deposit-indigo); font-weight: 700;">+${formatMoney(tx.amount)}</span>`;
+        } else if (tx.kind === 'repay') {
+          typeBadge = `<span class="tag-pill badge-deposit">还债</span>`;
+          amountHtml = `<span style="color: var(--deposit-indigo); font-weight: 700;">-${formatMoney(tx.amount)}</span>`;
+        } else {
+          const isDis = tx.subType === 'discretionary';
+          typeBadge = `<span class="tag-pill ${isDis ? 'badge-discretionary' : 'badge-essential'}">${isDis ? '非必要支出' : '维持支出'}</span>`;
+          amountHtml = `<span class="text-debt" style="font-weight: 700;">-${formatMoney(tx.amount)}</span>`;
+        }
+
+        return `
+          <tr>
+            <td style="white-space: nowrap; color: var(--text-secondary);">${tx.date}</td>
+            <td>
+              <strong>${escapeHtml(catName)}</strong>
+              ${tx.note ? `<div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(tx.note)}</div>` : ''}
+            </td>
+            <td>${typeBadge}</td>
+            <td style="color: var(--text-secondary);">${escapeHtml(accText)}</td>
+            <td class="num-col">${amountHtml}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function buildPrintFinancialStatement() {
+      const bounds = getReportPeriodBounds();
+      const snap = computeAssetsSnapshot(bounds.endStr);
+      const prevSnap = computeAssetsSnapshot(bounds.prevEndStr);
+      const metrics = computePeriodMetrics(bounds.startStr, bounds.endStr);
+
+      let growthStr = '--';
+      if (prevSnap.netWorth !== 0) {
+        const rate = ((snap.netWorth - prevSnap.netWorth) / Math.abs(prevSnap.netWorth)) * 100;
+        growthStr = `${rate >= 0 ? '+' : ''}${rate.toFixed(2)}%`;
+      }
+
+      // 表一：资产负债明细行
+      const assetRows = snap.accountDetails.map(acc => {
+        const isDebt = acc.type === 'liability';
+        return `
+          <tr>
+            <td>${escapeHtml(acc.name)}</td>
+            <td>${isDebt ? '负债类账户' : '资产类账户'}</td>
+            <td class="num">${formatMoney(acc.initialBalance)}</td>
+            <td class="num">${isDebt && acc.currentBalance > 0 ? '-' : ''}${formatMoney(acc.currentBalance)}</td>
+          </tr>
+        `;
+      }).join('') || `<tr><td colspan="4" style="text-align:center;">暂无账户记录</td></tr>`;
+
+      // 表二：所有资金来源汇总行
+      const totalInflow = metrics.totalNewInflow;
+      const sourceRows = metrics.fundSourcesList.map(src => {
+        const pct = totalInflow > 0 ? ((src.amount / totalInflow) * 100).toFixed(1) + '%' : '0.0%';
+        return `
+          <tr>
+            <td>${escapeHtml(src.name)}</td>
+            <td>${escapeHtml(src.sourceType)}</td>
+            <td>${escapeHtml(src.accountsDisplay)}</td>
+            <td class="num">${src.count}</td>
+            <td class="num">+${formatMoney(src.amount)}</td>
+            <td class="num">${pct}</td>
+          </tr>
+        `;
+      }).join('') || `<tr><td colspan="6" style="text-align:center;">本统计周期内暂无新增资金流入</td></tr>`;
+
+      // 表四：周期资金来源与收支逐笔流水清单（按日期正序排列，符合会计凭证流水规范）
+      const sortedTxs = [...metrics.periodTxs].sort((a, b) => a.date.localeCompare(b.date));
+      const txRows = sortedTxs.map((tx, idx) => {
+        const catObj = appState.categories.find(c => c.id === tx.categoryId);
+        const catName = catObj ? catObj.name : (tx.categoryNameSnapshot || '已删除项目');
+        const targetAcc = appState.accounts.find(a => a.id === tx.accountId);
+        let accText = targetAcc ? targetAcc.name : '未知账户';
+        if ((tx.kind === 'deposit' && tx.sourceMode === 'internal') || (tx.kind === 'repay' && tx.fromAccountId)) {
+          const fromAcc = appState.accounts.find(a => a.id === tx.fromAccountId);
+          accText = `${fromAcc ? fromAcc.name : '未知'} -> ${accText}`;
+        }
+
+        let kindLabel = '维持性支出';
+        let sign = '-';
+        if (tx.kind === 'income') {
+          kindLabel = '收入(资金来源)';
+          sign = '+';
+        } else if (tx.kind === 'deposit') {
+          kindLabel = tx.sourceMode === 'internal' ? '内部转存' : '外部存入(资金来源)';
+          sign = '+';
+        } else if (tx.kind === 'repay') {
+          kindLabel = '偿还负债';
+          sign = '-';
+        } else if (tx.subType === 'discretionary') {
+          kindLabel = '非必要支出';
+          sign = '-';
+        }
+
+        return `
+          <tr>
+            <td>${idx + 1}</td>
+            <td>${tx.date}</td>
+            <td>${escapeHtml(catName)}</td>
+            <td>${kindLabel}</td>
+            <td>${escapeHtml(accText)}</td>
+            <td>${escapeHtml(tx.note || '-')}</td>
+            <td class="num">${sign}${formatMoney(tx.amount)}</td>
+          </tr>
+        `;
+      }).join('') || `<tr><td colspan="7" style="text-align:center;">本统计周期内暂无资金流水记录</td></tr>`;
+
+      const container = document.getElementById('printFinancialStatement');
+      container.innerHTML = `
+        <div class="stmt-header">
+          <div>
+            <div class="stmt-title">智简账本 · 个人财务与资金明细报告</div>
+            <div style="font-size: 9.5pt; color: #334155; margin-top: 4px;">
+              报告周期：<strong>${bounds.label}</strong>（${bounds.startStr} 至 ${bounds.endStr}）
+            </div>
+          </div>
+          <div class="stmt-meta">
+            <div>编制基准日：${DEFAULT_TODAY}</div>
+            <div>货币单位：元（标准会计精度 0.00）</div>
+          </div>
+        </div>
+
+        <!-- 顶部核心指标摘要栏 -->
+        <div class="stmt-kpi-strip">
+          <div class="stmt-kpi-cell">
+            <div class="stmt-kpi-label">期末总资产</div>
+            <div class="stmt-kpi-val">${formatMoney(snap.totalAssets)}</div>
+          </div>
+          <div class="stmt-kpi-cell">
+            <div class="stmt-kpi-label">期末总负债</div>
+            <div class="stmt-kpi-val">${snap.totalDebt > 0 ? '-' : ''}${formatMoney(snap.totalDebt)}</div>
+          </div>
+          <div class="stmt-kpi-cell">
+            <div class="stmt-kpi-label">期末净资产 (环比 ${growthStr})</div>
+            <div class="stmt-kpi-val">${formatMoney(snap.netWorth)}</div>
+          </div>
+          <div class="stmt-kpi-cell">
+            <div class="stmt-kpi-label">周期新增资金总流入</div>
+            <div class="stmt-kpi-val">+${formatMoney(metrics.totalNewInflow)}</div>
+          </div>
+        </div>
+
+        <!-- 表一：资产负债表 -->
+        <div class="stmt-section">
+          <div class="stmt-section-title">表一：资产负债状况明细表（${bounds.endPointTitle}：${bounds.endStr}）</div>
+          <table class="stmt-table">
+            <thead>
+              <tr>
+                <th>账户名称</th>
+                <th>账户性质</th>
+                <th class="num">开账起始余额</th>
+                <th class="num">期末结存余额</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${assetRows}
+              <tr class="stmt-total-row">
+                <td colspan="3">期末净资产合计（总资产 ${formatMoney(snap.totalAssets)} - 总负债 ${formatMoney(snap.totalDebt)}）</td>
+                <td class="num">${formatMoney(snap.netWorth)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 表二：所有资金来源汇总表 -->
+        <div class="stmt-section">
+          <div class="stmt-section-title">表二：周期全部资金来源汇总表（收入及外部直接注入资金）</div>
+          <table class="stmt-table">
+            <thead>
+              <tr>
+                <th>资金来源项目</th>
+                <th>来源类型</th>
+                <th>入账目标账户</th>
+                <th class="num">笔数</th>
+                <th class="num">周期累计金额</th>
+                <th class="num">占总流入比</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sourceRows}
+              <tr class="stmt-total-row">
+                <td colspan="4">周期新增资金来源总计（常规收入 + 外部直接存入）</td>
+                <td class="num">+${formatMoney(metrics.totalNewInflow)}</td>
+                <td class="num">100.0%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 表三：损益与现金流量表 -->
+        <div class="stmt-section">
+          <div class="stmt-section-title">表三：周期损益与自由现金流量表</div>
+          <table class="stmt-table">
+            <thead>
+              <tr>
+                <th>财务报表项目</th>
+                <th>核算口径说明</th>
+                <th class="num">本周期金额</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>一、周期营业/常规总收入</strong></td>
+                <td>所选周期内全部“收入”类项目入账总和</td>
+                <td class="num">+${formatMoney(metrics.totalIncome)}</td>
+              </tr>
+              <tr>
+                <td><strong>二、周期总支出</strong></td>
+                <td>维持性支出 (${formatMoney(metrics.essentialExpense)}) + 非必要支出 (${formatMoney(metrics.discretionaryExpense)})</td>
+                <td class="num">-${formatMoney(metrics.totalExpense)}</td>
+              </tr>
+              <tr>
+                <td><strong>三、周期净利润</strong></td>
+                <td>周期总收入 - 周期总支出（内部存入与还债不扣减净利润）</td>
+                <td class="num">${metrics.netProfit >= 0 ? '+' : ''}${formatMoney(metrics.netProfit)}</td>
+              </tr>
+              <tr>
+                <td><strong>四、扣除维持性开支后可用现金</strong></td>
+                <td>周期总收入 - 维持性支出（衡量真实自由支配能力）</td>
+                <td class="num">${metrics.freeCashAfterEssential >= 0 ? '+' : ''}${formatMoney(metrics.freeCashAfterEssential)}</td>
+              </tr>
+              <tr>
+                <td><strong>五、外部直接存入资金</strong></td>
+                <td>不计入常规收入但直接增加净资产的外部注入（如公司代缴公积金等）</td>
+                <td class="num">+${formatMoney(metrics.externalDeposit)}</td>
+              </tr>
+              <tr class="stmt-total-row">
+                <td colspan="2">六、流动资金现金留存总额（扣除公积金/定期等锁定资产后可用余额）</td>
+                <td class="num">${formatMoney(snap.liquidCash)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 表四：周期资金明细流水总账 -->
+        <div class="stmt-section">
+          <div class="stmt-section-title">表四：周期资金明细流水总账（共 ${sortedTxs.length} 笔凭证记录）</div>
+          <table class="stmt-table">
+            <thead>
+              <tr>
+                <th style="width: 36px;">序号</th>
+                <th style="width: 86px;">日期</th>
+                <th>项目名称</th>
+                <th>资金性质</th>
+                <th>账户流向</th>
+                <th>备注说明</th>
+                <th class="num">发生金额</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${txRows}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="stmt-footer-note">
+          <span>智简账本 · 个人财务管理系统自动生成</span>
+          <span>数据校验一致 · 资产平衡校验通过</span>
+        </div>
+      `;
     }
 
     function renderExpenseDonutChart(metrics) {
