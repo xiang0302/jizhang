@@ -4378,5 +4378,140 @@
   };
 })();
 </script>
+  <script>
+(function () {
+  let pendingDelAccId = null;
+
+  const TRASH_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+
+  // 删除确认弹窗（样式和删除项目的弹窗一致）
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="deleteAccountModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'deleteAccountModal')">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <h3 class="modal-title">删除小账户</h3>
+          <button class="modal-close" onclick="closeModal('deleteAccountModal')">&times;</button>
+        </div>
+        <p id="delAccIntro" style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6;"></p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button class="btn btn-danger-solid" style="justify-content: flex-start; text-align: left; padding: 12px 14px; height: auto;" onclick="confirmDeleteAccount(true)">
+            <div>
+              <div>是，一并删除相关流水和互转</div>
+              <div style="font-size: 11px; font-weight: 400; opacity: 0.9;">涉及该账户的收支、存入、还债、互转记录全部清除，其他账户余额会自动重算</div>
+            </div>
+          </button>
+          <button class="btn btn-secondary" style="justify-content: flex-start; text-align: left; padding: 12px 14px; height: auto;" onclick="confirmDeleteAccount(false)">
+            <div>
+              <div style="color: var(--text-primary);">不，只删除账户本身，历史记录保留</div>
+              <div style="font-size: 11px; font-weight: 400; color: var(--text-muted);">流水继续计入报表，但该账户显示为“未知账户”，总资产会减去它的余额</div>
+            </div>
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('deleteAccountModal')">取消操作</button>
+        </div>
+      </div>
+    </div>
+  `);
+
+  window.openDeleteAccountModal = function (accId) {
+    const acc = appState.accounts.find(a => a.id === accId);
+    if (!acc) return;
+    pendingDelAccId = accId;
+
+    const bal = calculateAccountBalance(accId, null);
+    const txCount = appState.transactions.filter(t => t.accountId === accId || t.fromAccountId === accId).length;
+    const trCount = appState.transfers.filter(t => t.fromAccountId === accId || t.toAccountId === accId).length;
+    const balLabel = acc.type === 'liability' ? '当前欠款' : '当前余额';
+
+    document.getElementById('delAccIntro').innerHTML =
+      `您正在删除账户 <strong style="color: var(--text-primary);">「${escapeHtml(acc.name)}」</strong>` +
+      `（${balLabel} ${formatMoney(bal)}，相关流水 ${txCount} 笔、互转 ${trCount} 笔）。请选择如何处理这些历史记录：`;
+    openModal('deleteAccountModal');
+  };
+
+  window.confirmDeleteAccount = function (deleteHistory) {
+    const id = pendingDelAccId;
+    if (!id) return;
+
+    if (deleteHistory) {
+      appState.transactions = appState.transactions.filter(t => t.accountId !== id && t.fromAccountId !== id);
+      appState.transfers = appState.transfers.filter(t => t.fromAccountId !== id && t.toAccountId !== id);
+    }
+
+    // 项目里绑定的默认账户如果是它，清掉绑定
+    appState.categories.forEach(c => {
+      if (c.defaultAccountId === id) c.defaultAccountId = '';
+      if (c.fromAccountId === id) c.fromAccountId = null;
+    });
+
+    appState.accounts = appState.accounts.filter(a => a.id !== id);
+    pendingDelAccId = null;
+
+    saveState();
+    closeModal('deleteAccountModal');
+    renderAll();
+    showToast(deleteHistory ? '已删除账户及相关记录，余额已重算' : '已仅删除账户本身，历史记录已保留');
+  };
+
+  function idFromOnclick(el) {
+    const m = /openEditAccountModal\('([^']+)'\)/.exec(el.getAttribute('onclick') || '');
+    return m ? m[1] : null;
+  }
+
+  // 主页小账户卡片：加垃圾桶按钮
+  function addHomeDeleteButtons() {
+    document.querySelectorAll('#homeAccountsGrid .account-mini-card').forEach(card => {
+      const id = idFromOnclick(card);
+      const top = card.querySelector('.account-mini-top');
+      if (!id || !top || card.querySelector('.acc-del-btn')) return;
+
+      const box = document.createElement('div');
+      box.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
+      const shortcut = top.querySelector('.account-transfer-shortcut');
+      top.appendChild(box);
+      if (shortcut) box.appendChild(shortcut);
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'icon-btn acc-del-btn';
+      btn.title = '删除账户';
+      btn.style.color = 'var(--debt-red)';
+      btn.innerHTML = TRASH_SVG;
+      btn.onclick = function (e) { e.stopPropagation(); openDeleteAccountModal(id); };
+      box.appendChild(btn);
+    });
+  }
+
+  // 详情页账户列表：加“删除”按钮
+  function addDetailDeleteButtons() {
+    document.querySelectorAll('#detailAccountsList .detail-account-row').forEach(row => {
+      const editBtn = row.querySelector('button[onclick*="openEditAccountModal"]');
+      if (!editBtn || row.querySelector('.acc-del-btn')) return;
+      const id = idFromOnclick(editBtn);
+      if (!id) return;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-sm btn-danger no-print acc-del-btn';
+      btn.textContent = '删除';
+      btn.onclick = function () { openDeleteAccountModal(id); };
+      editBtn.parentNode.appendChild(btn);
+    });
+  }
+
+  const baseHome = window.renderHomeView;
+  window.renderHomeView = function () {
+    baseHome();
+    addHomeDeleteButtons();
+  };
+
+  const baseDetail = window.renderDetailView;
+  window.renderDetailView = function () {
+    baseDetail();
+    addDetailDeleteButtons();
+  };
+})();
+</script>
 </body>
 </html>
