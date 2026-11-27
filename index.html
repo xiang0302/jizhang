@@ -1,1 +1,3051 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>智简账本 · 个人资产与现金流管理</title>
+  <style>
+    /* ==========================================================================
+       1. 设计令牌 (Design Tokens) & 全局重置
+       ========================================================================== */
+    :root {
+      --bg-app: #F4F6F9;
+      --bg-card: #FFFFFF;
+      --bg-subtle: #F8FAFC;
+      --bg-hover: #F1F5F9;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #94A3B8;
+      --border-color: #E2E8F0;
 
+      /* 语义色彩：金融科技配色 */
+      --brand-primary: #1E293B;
+      --brand-accent: #2563EB;
+      --asset-green: #10B981;
+      --asset-green-bg: #ECFDF5;
+      --debt-red: #EF4444;
+      --debt-red-bg: #FEF2F2;
+      --discretionary-amber: #F59E0B;
+      --discretionary-amber-bg: #FFFBEB;
+      --deposit-indigo: #4F46E5;
+      --deposit-indigo-bg: #EEF2FF;
+      --essential-slate: #0EA5E9;
+      --essential-slate-bg: #F0F9FF;
+
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 22px;
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+      --shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.07), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 20px 40px -10px rgba(15, 23, 42, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg-app);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+    }
+
+    /* 主容器响应式布局 */
+    .app-container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 16px 16px 88px;
+    }
+
+    @media (min-width: 640px) {
+      .app-container {
+        padding: 24px 24px 96px;
+      }
+    }
+
+    /* ==========================================================================
+       2. 通用按钮与表单控件
+       ========================================================================== */
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: none;
+      transition: all 0.18s ease;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      min-height: 40px;
+    }
+
+    .btn-primary {
+      background: var(--brand-primary);
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+
+    .btn-primary:hover {
+      background: #334155;
+    }
+
+    .btn-accent {
+      background: var(--brand-accent);
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
+    }
+
+    .btn-accent:hover {
+      background: #1D4ED8;
+    }
+
+    .btn-secondary {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-hover);
+    }
+
+    .btn-danger {
+      background: var(--debt-red-bg);
+      color: var(--debt-red);
+      border: 1px solid #FECACA;
+    }
+
+    .btn-danger:hover {
+      background: #FEE2E2;
+    }
+
+    .btn-danger-solid {
+      background: var(--debt-red);
+      color: #FFFFFF;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 13px;
+      min-height: 34px;
+      border-radius: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 11px 14px;
+      font-size: 15px;
+      color: var(--text-primary);
+      background: var(--bg-subtle);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .form-control:focus {
+      border-color: var(--brand-accent);
+      background: #FFFFFF;
+    }
+
+    .amount-input-hero {
+      font-size: 28px;
+      font-weight: 700;
+      padding: 12px 16px;
+      letter-spacing: -0.5px;
+    }
+
+    /* 单选胶囊组 */
+    .radio-pills {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .radio-pills.cols-2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .radio-pill {
+      padding: 10px 8px;
+      text-align: center;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border-color);
+      background: var(--bg-subtle);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .radio-pill.active {
+      border-color: var(--brand-accent);
+      background: #EFF6FF;
+      color: var(--brand-accent);
+    }
+
+    .radio-pill.active-green {
+      border-color: var(--asset-green);
+      background: var(--asset-green-bg);
+      color: #059669;
+    }
+
+    .radio-pill.active-red {
+      border-color: var(--debt-red);
+      background: var(--debt-red-bg);
+      color: #DC2626;
+    }
+
+    .radio-pill.active-indigo {
+      border-color: var(--deposit-indigo);
+      background: var(--deposit-indigo-bg);
+      color: var(--deposit-indigo);
+    }
+
+    /* ==========================================================================
+       3. 主页顶部：总资产卡片 & 小账户横向/网格区
+       ========================================================================== */
+    .hero-asset-card {
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #0F2922 100%);
+      color: #FFFFFF;
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .hero-asset-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .hero-asset-card::after {
+      content: "";
+      position: absolute;
+      right: -30px;
+      top: -40px;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .hero-label {
+      font-size: 13px;
+      color: #94A3B8;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hero-cta-badge {
+      font-size: 12px;
+      color: #6EE7B7;
+      background: rgba(16, 185, 129, 0.16);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .hero-amount {
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      margin-bottom: 12px;
+      color: #FFFFFF;
+    }
+
+    @media (min-width: 640px) {
+      .hero-amount {
+        font-size: 40px;
+      }
+    }
+
+    .hero-sub-metrics {
+      display: flex;
+      gap: 20px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 13px;
+    }
+
+    .hero-sub-item span:first-child {
+      color: #94A3B8;
+      margin-right: 6px;
+    }
+
+    /* 小账户管理区块 */
+    .accounts-section {
+      margin-top: 16px;
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    .section-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .account-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .accounts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    @media (min-width: 640px) {
+      .accounts-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .account-mini-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    }
+
+    .account-mini-card:hover {
+      border-color: var(--brand-accent);
+      background: #FFFFFF;
+      transform: translateY(-1px);
+    }
+
+    .account-mini-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .account-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      word-break: break-word;
+    }
+
+    .account-transfer-shortcut {
+      color: var(--text-muted);
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .account-transfer-shortcut:hover {
+      color: var(--brand-accent);
+      background: #EFF6FF;
+    }
+
+    .account-balance {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .text-asset {
+      color: #059669;
+    }
+
+    .text-debt {
+      color: var(--debt-red);
+    }
+
+    .account-type-tag {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ==========================================================================
+       4. 月份切换器 & 核心记账项目区
+       ========================================================================== */
+    .month-switcher-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin-top: 18px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    .month-nav-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .month-arrow-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+
+    .month-arrow-btn:hover {
+      background: var(--bg-hover);
+    }
+
+    .current-month-label {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      min-width: 105px;
+      text-align: center;
+    }
+
+    .categories-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .category-item-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .category-item-card:hover {
+      border-color: #CBD5E1;
+      box-shadow: var(--shadow-md);
+    }
+
+    .category-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .category-icon-box {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .badge-essential {
+      background: var(--essential-slate-bg);
+      color: var(--essential-slate);
+    }
+
+    .badge-discretionary {
+      background: var(--discretionary-amber-bg);
+      color: var(--discretionary-amber);
+    }
+
+    .badge-deposit {
+      background: var(--deposit-indigo-bg);
+      color: var(--deposit-indigo);
+    }
+
+    .badge-income {
+      background: var(--asset-green-bg);
+      color: var(--asset-green);
+    }
+
+    .category-info {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .category-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .category-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .tag-pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .category-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .category-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .category-month-sum {
+      font-size: 17px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .category-action-btns {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      background: var(--bg-subtle);
+    }
+
+    .icon-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    /* ==========================================================================
+       5. 总资产详情页 (Detail View)
+       ========================================================================== */
+    .detail-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .detail-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      margin-top: 14px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    .detail-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .overview-summary-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    @media (min-width: 600px) {
+      .overview-summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .stat-box {
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+    }
+
+    .stat-box.highlight-net {
+      background: linear-gradient(135deg, #EFF6FF 0%, #ECFDF5 100%);
+      border-color: #BFDBFE;
+    }
+
+    .stat-box-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .stat-box-val {
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .health-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 520px) {
+      .health-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .health-item {
+      background: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      border: 1px solid var(--border-color);
+    }
+
+    .health-item-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .health-item-val {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    /* 图表与占比条 */
+    .chart-layout {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    @media (min-width: 600px) {
+      .chart-layout {
+        flex-direction: row;
+        align-items: center;
+      }
+    }
+
+    .donut-wrapper {
+      position: relative;
+      width: 170px;
+      height: 170px;
+      flex-shrink: 0;
+    }
+
+    .donut-center-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .chart-breakdown {
+      flex: 1;
+      width: 100%;
+    }
+
+    .progress-row {
+      margin-bottom: 12px;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: #E2E8F0;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+
+    /* 财务利润表 */
+    .finance-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .finance-table tr {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .finance-table tr:last-child {
+      border-bottom: none;
+    }
+
+    .finance-table td {
+      padding: 13px 4px;
+      font-size: 14px;
+    }
+
+    .finance-table td:last-child {
+      text-align: right;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .table-sub-note {
+      display: block;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    /* 详情页小账户明细行 */
+    .detail-account-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border-color);
+      gap: 10px;
+    }
+
+    .detail-account-row:last-child {
+      border-bottom: none;
+    }
+
+    /* ==========================================================================
+       6. 模态弹窗 (Modals) & Toast 提示
+       ========================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.52);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 1000;
+      padding: 0;
+    }
+
+    @media (min-width: 600px) {
+      .modal-backdrop {
+        align-items: center;
+        padding: 20px;
+      }
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+      animation: fadeIn 0.18s ease;
+    }
+
+    .modal-panel {
+      background: #FFFFFF;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 22px 22px 0 0;
+      padding: 22px 20px 28px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      animation: slideUp 0.22s ease;
+    }
+
+    @media (min-width: 600px) {
+      .modal-panel {
+        border-radius: 20px;
+        padding: 24px;
+      }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .modal-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .modal-footer .btn {
+      flex: 1;
+    }
+
+    /* 流水明细列表 */
+    .tx-list {
+      max-height: 340px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+    }
+
+    .tx-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-color);
+      gap: 10px;
+    }
+
+    .tx-row:last-child {
+      border-bottom: none;
+    }
+
+    .tx-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Toast 提示 */
+    .toast-container {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast-msg {
+      background: #0F172A;
+      color: #FFFFFF;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+      animation: fadeInDown 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(24px); opacity: 0.6; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes fadeInDown {
+      from { transform: translateY(-12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* 周期维度切换器与打印PDF专有样式 */
+    .period-tabs {
+      display: inline-flex;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .period-tab-btn {
+      padding: 6px 14px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .period-tab-btn.active {
+      background: var(--brand-primary);
+      color: #FFFFFF;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
+    }
+
+    @media print {
+      body {
+        background: #FFFFFF !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .app-container {
+        max-width: 100%;
+        padding: 0;
+      }
+      #homeView,
+      .no-print,
+      .modal-backdrop,
+      .toast-container {
+        display: none !important;
+      }
+      #detailView {
+        display: block !important;
+      }
+      .detail-card {
+        box-shadow: none !important;
+        border: 1px solid #CBD5E1 !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        margin-top: 12px;
+      }
+      .print-report-header {
+        display: block !important;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #0F172A;
+      }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 28px 16px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toast 通知容器 -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div class="app-container">
+    <!-- ======================================================================
+         视图 1：主页 (Home View)
+         ====================================================================== -->
+    <div id="homeView">
+      <!-- 顶部总资产卡片（点击进入总资产详情页） -->
+      <div class="hero-asset-card" id="openDetailBtn" role="button" tabindex="0">
+        <div class="hero-top-row">
+          <span class="hero-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            总资产 (所有资产类账户之和)
+          </span>
+          <span class="hero-cta-badge">
+            资产详情与报表
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </div>
+        <div class="hero-amount tabular-nums" id="homeTotalAssets">0.00</div>
+        <div class="hero-sub-metrics tabular-nums">
+          <div class="hero-sub-item">
+            <span>净资产</span>
+            <strong id="homeNetWorth" style="color: #6EE7B7;">0.00</strong>
+          </div>
+          <div class="hero-sub-item">
+            <span>总负债</span>
+            <strong id="homeTotalDebt" style="color: #FCA5A5;">0.00</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- 小账户展示与管理区 -->
+      <section class="accounts-section">
+        <div class="section-header-bar">
+          <div class="section-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+            我的小账户
+          </div>
+          <div class="account-actions">
+            <button class="btn btn-sm btn-secondary" onclick="openTransferHistoryModal()" title="查看或撤销账户互转记录">
+              互转记录
+            </button>
+            <button class="btn btn-sm btn-secondary" onclick="openTransferModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+              转账/互转
+            </button>
+            <button class="btn btn-sm btn-primary" onclick="openAddAccountModal()">
+              + 添加小账户
+            </button>
+          </div>
+        </div>
+        <div id="homeAccountsGrid" class="accounts-grid"></div>
+      </section>
+
+      <!-- 主页核心区：月份切换器与记账项目列表 -->
+      <div class="month-switcher-bar">
+        <div class="month-nav-group">
+          <button class="month-arrow-btn" onclick="changeMonth(-1)" aria-label="上个月">&lt;</button>
+          <span class="current-month-label tabular-nums" id="homeMonthLabel">2026年11月</span>
+          <button class="month-arrow-btn" onclick="changeMonth(1)" aria-label="下个月">&gt;</button>
+        </div>
+        <button class="btn btn-sm btn-accent" onclick="openCategoryModal()">
+          + 新增项目
+        </button>
+      </div>
+
+      <!-- 记账项目卡片列表 -->
+      <div id="homeCategoriesList" class="categories-list"></div>
+    </div>
+
+    <!-- ======================================================================
+         视图 2：总资产详情页 (Detail View)
+         ====================================================================== -->
+    <div id="detailView" class="hidden">
+      <!-- 打印/保存PDF专属抬头（仅导出PDF时显示） -->
+      <div class="print-report-header hidden">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <h2 style="font-size: 20px; font-weight: 800; color: #0F172A;">智简账本 · 个人财务与资产分析报告</h2>
+          <span id="printPeriodSubtitle" style="font-size: 13px; font-weight: 700; color: #2563EB;"></span>
+        </div>
+        <div id="printGeneratedAt" style="font-size: 11px; color: #64748B; margin-top: 4px;"></div>
+      </div>
+
+      <div class="detail-header-bar no-print">
+        <button class="btn btn-secondary btn-sm" onclick="switchView('home')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="15 18 9 12 15 6"/></svg>
+          返回记账主页
+        </button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button class="btn btn-accent btn-sm" onclick="exportReportToPDF()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+            保存为 PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- 详情页顶部多维度周期切换器（按年 / 按月 / 按周） -->
+      <div class="month-switcher-bar" style="margin-top: 0; flex-direction: column; gap: 10px;">
+        <div class="period-tabs no-print">
+          <button type="button" class="period-tab-btn" id="tabPeriodYear" onclick="setReportPeriodMode('year')">每年</button>
+          <button type="button" class="period-tab-btn active" id="tabPeriodMonth" onclick="setReportPeriodMode('month')">每月</button>
+          <button type="button" class="period-tab-btn" id="tabPeriodWeek" onclick="setReportPeriodMode('week')">每个星期</button>
+        </div>
+        <div class="month-nav-group" style="margin: 0 auto;">
+          <button class="month-arrow-btn no-print" onclick="changeReportPeriod(-1)">&lt;</button>
+          <span class="current-month-label tabular-nums" id="detailMonthLabel" style="min-width: 195px;">2026年11月</span>
+          <button class="month-arrow-btn no-print" onclick="changeReportPeriod(1)">&gt;</button>
+        </div>
+      </div>
+
+      <!-- 1. 核心资产概览 -->
+      <div class="detail-card">
+        <div class="detail-card-title">
+          <span id="detailOverviewTitle">1. 核心资产概览 (截止该月末)</span>
+          <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">实时历史回溯</span>
+        </div>
+        <div class="overview-summary-grid tabular-nums">
+          <div class="stat-box">
+            <div class="stat-box-label" id="detailTotalAssetsLabel">该周期总资产 (资产账户之和)</div>
+            <div class="stat-box-val text-asset" id="detailTotalAssets">0.00</div>
+          </div>
+          <div class="stat-box highlight-net">
+            <div class="stat-box-label">净资产 (总资产 - 总负债)</div>
+            <div class="stat-box-val" id="detailNetWorth" style="color: #1E3A8A;">0.00</div>
+          </div>
+        </div>
+
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); margin: 14px 0 6px;">
+          持有的各个小账户明细列表（支持修改名称或校准起始金额）
+        </div>
+        <div id="detailAccountsList"></div>
+      </div>
+
+      <!-- 2. 展示框1（财务健康度） -->
+      <div class="detail-card">
+        <div class="detail-card-title">
+          <span>2. 财务健康度指标</span>
+        </div>
+        <div class="health-grid tabular-nums">
+          <div class="health-item">
+            <div class="health-item-label">现金留存 (流动资金余额)</div>
+            <div class="health-item-val text-asset" id="detailCashRetention">0.00</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="detailMonthSurplusNote">本周期净结余: 0.00</div>
+          </div>
+          <div class="health-item">
+            <div class="health-item-label" id="detailGrowthLabel">财富增加率 (环比上期净资产)</div>
+            <div class="health-item-val" id="detailWealthGrowth">--</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="detailPrevNetNote">上期净资产: 0.00</div>
+          </div>
+          <div class="health-item">
+            <div class="health-item-label">总负债 (所有负债账户之和)</div>
+            <div class="health-item-val text-debt" id="detailTotalDebt">0.00</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">含信用卡及贷款欠款</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 展示框2（支出占比图表分析） -->
+      <div class="detail-card">
+        <div class="detail-card-title">
+          <span id="detailExpenseChartTitle">3. 周期支出占比分析</span>
+          <span class="tabular-nums" style="font-size: 13px; color: var(--text-secondary);" id="detailTotalExpenseBadge">总支出: 0.00</span>
+        </div>
+        <div class="chart-layout">
+          <div class="donut-wrapper">
+            <svg id="expenseDonutSvg" width="170" height="170" viewBox="0 0 170 170"></svg>
+            <div class="donut-center-text tabular-nums">
+              <span style="font-size: 11px; color: var(--text-muted);" id="donutCenterLabel">周期总支出</span>
+              <strong style="font-size: 16px; color: var(--text-primary);" id="donutCenterTotal">0.00</strong>
+            </div>
+          </div>
+          <div class="chart-breakdown" id="expenseBreakdownArea"></div>
+        </div>
+      </div>
+
+      <!-- 4. 展示表（周期现金流与利润表） -->
+      <div class="detail-card">
+        <div class="detail-card-title">
+          <span id="detailFinanceTableTitle">4. 现金流与利润表</span>
+        </div>
+        <table class="finance-table tabular-nums">
+          <tbody>
+            <tr>
+              <td>
+                <strong>周期总收入</strong>
+                <span class="table-sub-note">所选周期内所有“收入”类项目入账总和</span>
+              </td>
+              <td class="text-asset" id="tableIncome">+0.00</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>净利润</strong>
+                <span class="table-sub-note">周期总收入 - 周期总支出（注：“存入”与“还债”不扣减净利润）</span>
+              </td>
+              <td id="tableNetProfit">0.00</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>非必要支出</strong>
+                <span class="table-sub-note">所选周期内归类为“非必要”的弹性消费总和</span>
+              </td>
+              <td style="color: var(--discretionary-amber);" id="tableDiscretionary">0.00</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>扣除维持性开支后可用的现金</strong>
+                <span class="table-sub-note">周期总收入 - 周期维持性支出（评估真实自由支配现金流）</span>
+              </td>
+              <td style="color: var(--brand-accent);" id="tableFreeCash">0.00</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>强制储蓄 / 存入总额</strong>
+                <span class="table-sub-note">所选周期内所有“存入”类项目累计（参考项）</span>
+              </td>
+              <td style="color: var(--deposit-indigo);" id="tableDepositTotal">0.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 5. 底部数据安全区 -->
+      <div class="detail-card no-print">
+        <div class="detail-card-title">
+          <span>5. 数据安全备份与恢复（防清理缓存丢失）</span>
+        </div>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">
+          所有账目均安全保存在本地浏览器中。建议定期导出 JSON 备份文件妥善保管，清理缓存或更换设备时可随时导入恢复。
+        </p>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+          <button class="btn btn-primary" onclick="exportBackupJSON()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            导出数据备份 (JSON)
+          </button>
+          <button class="btn btn-secondary" onclick="document.getElementById('importFileInput').click()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            导入恢复数据
+          </button>
+          <button class="btn btn-danger" onclick="promptClearAllData()">
+            清空所有数据重置
+          </button>
+          <input type="file" id="importFileInput" accept=".json,application/json" class="hidden" onchange="importBackupJSON(event)" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       模态弹窗 1：添加 / 编辑校准小账户
+       ======================================================================== -->
+  <div id="accountModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'accountModal')">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3 class="modal-title" id="accountModalTitle">添加小账户</h3>
+        <button class="modal-close" onclick="closeModal('accountModal')">&times;</button>
+      </div>
+      <form id="accountForm" onsubmit="saveAccountForm(event)">
+        <input type="hidden" id="editAccountId" />
+        <div class="form-group">
+          <label class="form-label">小账户名称</label>
+          <input type="text" id="accNameInput" class="form-control" placeholder="例如：Maybank储蓄、现金钱包、EPF公积金、信用卡" required />
+        </div>
+        <div class="form-group" id="accTypeGroup">
+          <label class="form-label">账户类型</label>
+          <div class="radio-pills cols-2">
+            <div class="radio-pill active-green" id="pillAsset" onclick="selectAccountType('asset')">资产账户 (存款/现金)</div>
+            <div class="radio-pill" id="pillLiability" onclick="selectAccountType('liability')">负债账户 (信用卡/贷款)</div>
+          </div>
+          <input type="hidden" id="accTypeInput" value="asset" />
+        </div>
+        <div class="form-group" id="accInitialGroup">
+          <label class="form-label" id="accBalanceLabel">起始金额 (默认为 0)</label>
+          <input type="number" step="0.01" id="accInitialInput" class="form-control tabular-nums" placeholder="0.00" value="0" required />
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;" id="accBalanceHint">
+            负债账户请直接输入当前欠款正数，系统会自动按负债计算。
+          </div>
+        </div>
+        <div class="form-group hidden" id="accCalibrateGroup">
+          <label class="form-label">当前最新实际余额 (可选：输入后自动反算起始金额)</label>
+          <input type="number" step="0.01" id="accCalibrateCurrentInput" class="form-control tabular-nums" placeholder="输入账户当前实际余额" />
+          <div style="font-size: 11px; color: var(--brand-accent); margin-top: 4px;">
+            提示：可直接修改上方的“起始金额”，或修改此处实际余额自动反算起始金额。
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('accountModal')">取消</button>
+          <button type="submit" class="btn btn-primary">确认保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       模态弹窗 2：小账户自由互转
+       ======================================================================== -->
+  <div id="transferModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'transferModal')">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3 class="modal-title">小账户自由互转</h3>
+        <button class="modal-close" onclick="closeModal('transferModal')">&times;</button>
+      </div>
+      <form onsubmit="saveTransferForm(event)">
+        <div class="form-group">
+          <label class="form-label">转账金额</label>
+          <input type="number" step="0.01" min="0.01" id="transferAmountInput" class="form-control amount-input-hero tabular-nums" placeholder="0.00" required />
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label class="form-label">转出账户</label>
+            <select id="transferFromSelect" class="form-control" required></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">转入账户</label>
+            <select id="transferToSelect" class="form-control" required></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">转账日期</label>
+          <input type="date" id="transferDateInput" class="form-control tabular-nums" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">备注 (选填)</label>
+          <input type="text" id="transferNoteInput" class="form-control" placeholder="如：银行卡还信用卡、提现等" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('transferModal')">取消</button>
+          <button type="submit" class="btn btn-primary">确认互转</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       模态弹窗 2B：账户互转流水与撤销
+       ======================================================================== -->
+  <div id="transferHistoryModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'transferHistoryModal')">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3 class="modal-title">账户互转记录 (<span id="thMonthLabel"></span>)</h3>
+        <button class="modal-close" onclick="closeModal('transferHistoryModal')">&times;</button>
+      </div>
+      <div id="transferHistoryList" class="tx-list"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('transferHistoryModal')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       模态弹窗 3：创建 / 编辑记账项目
+       ======================================================================== -->
+  <div id="categoryModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'categoryModal')">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3 class="modal-title" id="categoryModalTitle">新增记账项目</h3>
+        <button class="modal-close" onclick="closeModal('categoryModal')">&times;</button>
+      </div>
+      <form onsubmit="saveCategoryForm(event)">
+        <input type="hidden" id="editCategoryId" />
+        <div class="form-group">
+          <label class="form-label">项目名称</label>
+          <input type="text" id="catNameInput" class="form-control" placeholder="如：早餐、工资、定期定投、个人EPF" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">选择项目大类</label>
+          <div class="radio-pills" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="radio-pill active-red" id="catKindExpense" onclick="selectCategoryKind('expense')">支出</div>
+            <div class="radio-pill" id="catKindIncome" onclick="selectCategoryKind('income')">收入</div>
+            <div class="radio-pill" id="catKindDeposit" onclick="selectCategoryKind('deposit')">存入</div>
+            <div class="radio-pill" id="catKindRepay" onclick="selectCategoryKind('repay')">还债</div>
+          </div>
+          <input type="hidden" id="catKindInput" value="expense" />
+        </div>
+
+        <!-- 支出专属配置 -->
+        <div id="expenseConfigArea">
+          <div class="form-group">
+            <label class="form-label">支出性质归类</label>
+            <div class="radio-pills cols-2">
+              <div class="radio-pill active" id="expSubEssential" onclick="selectExpenseSubType('essential')">维持性支出 (房租/餐食/水电)</div>
+              <div class="radio-pill" id="expSubDiscretionary" onclick="selectExpenseSubType('discretionary')">非必要支出 (娱乐/购物/奶茶)</div>
+            </div>
+            <input type="hidden" id="expSubTypeInput" value="essential" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">默认扣款小账户</label>
+            <select id="expDefaultAccountSelect" class="form-control"></select>
+          </div>
+        </div>
+
+        <!-- 收入专属配置 -->
+        <div id="incomeConfigArea" class="hidden">
+          <div class="form-group">
+            <label class="form-label">默认入账小账户</label>
+            <select id="incDefaultAccountSelect" class="form-control"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">来源备注 (选填)</label>
+            <input type="text" id="incSourceNoteInput" class="form-control" placeholder="如：主业薪资、副业分红等" />
+          </div>
+        </div>
+
+        <!-- 存入专属配置 -->
+        <div id="depositConfigArea" class="hidden">
+          <div class="form-group">
+            <label class="form-label">存入目标小账户</label>
+            <select id="depTargetAccountSelect" class="form-control"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">资金来源方式</label>
+            <div class="radio-pills cols-2">
+              <div class="radio-pill active-indigo" id="depSrcExternal" onclick="selectDepositSourceMode('external')">外部直接存入 (如公司交EPF)</div>
+              <div class="radio-pill" id="depSrcInternal" onclick="selectDepositSourceMode('internal')">从现有小账户扣除转入</div>
+            </div>
+            <input type="hidden" id="depSourceModeInput" value="external" />
+          </div>
+          <div class="form-group hidden" id="depFromAccountGroup">
+            <label class="form-label">选择扣款来源小账户</label>
+            <select id="depFromAccountSelect" class="form-control"></select>
+          </div>
+        </div>
+
+        <!-- 还债专属配置 -->
+        <div id="repayConfigArea" class="hidden">
+          <div class="form-group">
+            <label class="form-label">选择要偿还的负债账户</label>
+            <select id="repayLiabilityAccountSelect" class="form-control"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">默认扣款资产账户 (选填)</label>
+            <select id="repayFromAccountSelect" class="form-control"></select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('categoryModal')">取消</button>
+          <button type="submit" class="btn btn-primary">确认保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       模态弹窗 4：删除项目二次确认弹窗
+       ======================================================================== -->
+  <div id="deleteCategoryModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'deleteCategoryModal')">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3 class="modal-title">删除记账项目</h3>
+        <button class="modal-close" onclick="closeModal('deleteCategoryModal')">&times;</button>
+      </div>
+      <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
+        您正在删除项目 <strong id="delCatTargetName" style="color: var(--text-primary);"></strong>。请选择如何处理该项目已记录的历史账单数据：
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="btn btn-danger-solid" style="justify-content: flex-start; text-align: left; padding: 12px 14px; height: auto;" onclick="confirmDeleteCategory(true)">
+          <div>
+            <div>是，一并删除已记录的历史数据</div>
+            <div style="font-size: 11px; font-weight: 400; opacity: 0.9;">彻底清除该项目及所有历史流水，相关账户余额将自动重算</div>
+          </div>
+        </button>
+        <button class="btn btn-secondary" style="justify-content: flex-start; text-align: left; padding: 12px 14px; height: auto;" onclick="confirmDeleteCategory(false)">
+          <div>
+            <div style="color: var(--text-primary);">不，只删除项目本身，历史数据保留</div>
+            <div style="font-size: 11px; font-weight: 400; color: var(--text-muted);">历史流水继续计入历史月份报表和总资产，但不再显示于主页项目栏</div>
+          </div>
+        </button>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('deleteCategoryModal')">取消操作</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       模态弹窗 5：日常极速记账弹窗
+       ======================================================================== -->
+  <div id="quickRecordModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'quickRecordModal')">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="qrCategoryTitle">记一笔</h3>
+          <span id="qrCategoryBadge" class="tag-pill" style="margin-top: 4px; display: inline-block;"></span>
+        </div>
+        <button class="modal-close" onclick="closeModal('quickRecordModal')">&times;</button>
+      </div>
+
+      <form onsubmit="saveQuickRecordForm(event)">
+        <input type="hidden" id="qrCategoryId" />
+        <div class="form-group">
+          <label class="form-label">金额</label>
+          <input type="number" step="0.01" min="0.01" id="qrAmountInput" class="form-control amount-input-hero tabular-nums" placeholder="0.00" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">日期</label>
+          <input type="date" id="qrDateInput" class="form-control tabular-nums" required />
+        </div>
+
+        <!-- 主账户选择（默认带出项目绑定账户，支持临时切换） -->
+        <div class="form-group">
+          <label class="form-label" id="qrPrimaryAccountLabel">关联小账户 (点击可临时切换)</label>
+          <select id="qrPrimaryAccountSelect" class="form-control"></select>
+        </div>
+
+        <!-- 存入且从内部账户扣款时的扣款账户选择 -->
+        <div class="form-group hidden" id="qrDepositFromGroup">
+          <label class="form-label" id="qrDepositFromLabel">扣款来源小账户 (可临时切换)</label>
+          <select id="qrDepositFromSelect" class="form-control"></select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">备注 (选填)</label>
+          <input type="text" id="qrNoteInput" class="form-control" placeholder="添加备注信息..." />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('quickRecordModal')">取消</button>
+          <button type="submit" class="btn btn-primary">确认记账</button>
+        </div>
+      </form>
+
+      <!-- 底部查看本月明细入口 -->
+      <div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border-color); text-align: center;">
+        <button type="button" class="btn btn-sm btn-secondary" style="width: 100%;" onclick="switchQuickRecordToHistory()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          查看本月明细 / 修改或撤销错账
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       模态弹窗 6：项目本月明细查改与单笔编辑弹窗
+       ======================================================================== -->
+  <div id="txHistoryModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'txHistoryModal')">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="txHistoryTitle">本月明细</h3>
+          <span style="font-size: 12px; color: var(--text-muted);" id="txHistorySub">2026年11月</span>
+        </div>
+        <button class="modal-close" onclick="closeModal('txHistoryModal')">&times;</button>
+      </div>
+
+      <!-- 单笔编辑内联面板 -->
+      <div id="editSingleTxBox" class="hidden" style="background: var(--bg-subtle); border: 1.5px solid var(--brand-accent); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 14px;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--brand-accent); margin-bottom: 10px;">修改单笔流水记录</div>
+        <input type="hidden" id="editTxId" />
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+          <div>
+            <label class="form-label" style="font-size: 11px;">金额</label>
+            <input type="number" step="0.01" min="0.01" id="editTxAmount" class="form-control tabular-nums" style="padding: 8px 10px;" />
+          </div>
+          <div>
+            <label class="form-label" style="font-size: 11px;">日期</label>
+            <input type="date" id="editTxDate" class="form-control tabular-nums" style="padding: 8px 10px;" />
+          </div>
+        </div>
+        <div style="margin-bottom: 8px;">
+          <label class="form-label" style="font-size: 11px;">关联账户</label>
+          <select id="editTxAccount" class="form-control" style="padding: 8px 10px;"></select>
+        </div>
+        <div style="margin-bottom: 10px;">
+          <label class="form-label" style="font-size: 11px;">备注</label>
+          <input type="text" id="editTxNote" class="form-control" style="padding: 8px 10px;" />
+        </div>
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button type="button" class="btn btn-sm btn-secondary" onclick="cancelEditSingleTx()">取消</button>
+          <button type="button" class="btn btn-sm btn-accent" onclick="saveEditSingleTx()">保存修改</button>
+        </div>
+      </div>
+
+      <div id="txHistoryList" class="tx-list"></div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('txHistoryModal')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       模态弹窗 7：通用确认弹窗
+       ======================================================================== -->
+  <div id="confirmModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'confirmModal')">
+    <div class="modal-panel" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="confirmModalTitle">确认操作</h3>
+        <button class="modal-close" onclick="closeModal('confirmModal')">&times;</button>
+      </div>
+      <p id="confirmModalBody" style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;"></p>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('confirmModal')">取消</button>
+        <button type="button" class="btn btn-danger-solid" id="confirmModalOkBtn">确认执行</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       1. 核心数据状态与默认时间设定 (默认基准：2026-11 / 2026-11-27)
+       ========================================================================== */
+    const STORAGE_KEY = 'zhijian_ledger_v1_clean';
+    const DEFAULT_TODAY = '2026-11-27';
+
+    let currentYear = 2026;
+    let currentMonth = 11; // 1 - 12
+    let currentView = 'home'; // 'home' | 'detail'
+    let reportPeriodMode = 'month'; // 'year' | 'month' | 'week'
+    let reportWeekAnchor = DEFAULT_TODAY; // 周视图基准日期 YYYY-MM-DD
+    let activeHistoryCategoryId = null;
+    let pendingDeleteCategoryId = null;
+
+    let appState = {
+      accounts: [],
+      categories: [],
+      transactions: [],
+      transfers: []
+    };
+
+    /* ==========================================================================
+       2. 初始化与双引擎本地存储读写 (localStorage + IndexedDB)
+       ========================================================================== */
+    const IDB_NAME = 'ZhijianLedgerDB';
+    const IDB_STORE = 'ledger_store';
+
+    function readFromIDB() {
+      return new Promise((resolve) => {
+        if (!window.indexedDB) return resolve(null);
+        try {
+          const req = indexedDB.open(IDB_NAME, 1);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(IDB_STORE)) {
+              db.createObjectStore(IDB_STORE);
+            }
+          };
+          req.onsuccess = (e) => {
+            const db = e.target.result;
+            const tx = db.transaction(IDB_STORE, 'readonly');
+            const getReq = tx.objectStore(IDB_STORE).get(STORAGE_KEY);
+            getReq.onsuccess = () => resolve(getReq.result || null);
+            getReq.onerror = () => resolve(null);
+          };
+          req.onerror = () => resolve(null);
+        } catch (err) {
+          resolve(null);
+        }
+      });
+    }
+
+    function writeToIDB(dataObj) {
+      if (!window.indexedDB) return;
+      try {
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) {
+            db.createObjectStore(IDB_STORE);
+          }
+        };
+        req.onsuccess = (e) => {
+          const db = e.target.result;
+          const tx = db.transaction(IDB_STORE, 'readwrite');
+          tx.objectStore(IDB_STORE).put(dataObj, STORAGE_KEY);
+        };
+      } catch (err) {}
+    }
+
+    async function initApp() {
+      try {
+        localStorage.removeItem('zhijian_ledger_v1');
+      } catch (e) {}
+
+      let loaded = null;
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        try {
+          loaded = JSON.parse(raw);
+        } catch (e) {}
+      }
+      if (!loaded) {
+        loaded = await readFromIDB();
+      }
+
+      if (loaded && typeof loaded === 'object') {
+        appState = {
+          accounts: Array.isArray(loaded.accounts) ? loaded.accounts : [],
+          categories: Array.isArray(loaded.categories) ? loaded.categories : [],
+          transactions: Array.isArray(loaded.transactions) ? loaded.transactions : [],
+          transfers: Array.isArray(loaded.transfers) ? loaded.transfers : []
+        };
+        saveState();
+      } else {
+        resetToEmptyState();
+      }
+
+      document.getElementById('openDetailBtn').addEventListener('click', () => switchView('detail'));
+      window.addEventListener('beforeunload', saveState);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') saveState();
+      });
+      bindAccountBalanceSync();
+      renderAll();
+    }
+
+    function resetToEmptyState() {
+      appState = {
+        accounts: [],
+        categories: [],
+        transactions: [],
+        transfers: []
+      };
+      saveState();
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {}
+      writeToIDB(appState);
+    }
+
+    function generateId(prefix) {
+      return prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+    }
+
+    /* ==========================================================================
+       3. 实时余额与历史快照核心引擎 (Single Source of Truth)
+       ========================================================================== */
+    function getMonthKey(year, month) {
+      return `${year}-${String(month).padStart(2, '0')}`;
+    }
+
+    function getMonthEndDate(year, month) {
+      const lastDay = new Date(year, month, 0).getDate();
+      return `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    }
+
+    function formatDateISO(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseDateISO(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function getWeekRange(anchorDateStr) {
+      const dt = parseDateISO(anchorDateStr);
+      const dayOfWeek = dt.getDay(); // 0(周日) - 6(周六)
+      const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(dt);
+      monday.setDate(dt.getDate() + diffToMonday);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      return {
+        startStr: formatDateISO(monday),
+        endStr: formatDateISO(sunday),
+        label: `${monday.getFullYear()}年${monday.getMonth() + 1}月${monday.getDate()}日 - ${sunday.getMonth() + 1}月${sunday.getDate()}日`
+      };
+    }
+
+    function getReportPeriodBounds() {
+      if (reportPeriodMode === 'year') {
+        const prevY = currentYear - 1;
+        return {
+          mode: 'year',
+          label: `${currentYear}全年`,
+          startStr: `${currentYear}-01-01`,
+          endStr: `${currentYear}-12-31`,
+          prevEndStr: `${prevY}-12-31`,
+          endPointTitle: '截止该年末',
+          prevPointLabel: '上年末净资产',
+          growthLabel: '财富增加率 (较上年末净资产)'
+        };
+      }
+      if (reportPeriodMode === 'week') {
+        const currWeek = getWeekRange(reportWeekAnchor);
+        const prevAnchorDt = parseDateISO(reportWeekAnchor);
+        prevAnchorDt.setDate(prevAnchorDt.getDate() - 7);
+        const prevWeek = getWeekRange(formatDateISO(prevAnchorDt));
+        return {
+          mode: 'week',
+          label: currWeek.label,
+          startStr: currWeek.startStr,
+          endStr: currWeek.endStr,
+          prevEndStr: prevWeek.endStr,
+          endPointTitle: '截止该周日',
+          prevPointLabel: '上周末净资产',
+          growthLabel: '财富增加率 (环比上周净资产)'
+        };
+      }
+      let prevY = currentYear;
+      let prevM = currentMonth - 1;
+      if (prevM < 1) {
+        prevM = 12;
+        prevY -= 1;
+      }
+      return {
+        mode: 'month',
+        label: `${currentYear}年${currentMonth}月`,
+        startStr: `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`,
+        endStr: getMonthEndDate(currentYear, currentMonth),
+        prevEndStr: getMonthEndDate(prevY, prevM),
+        endPointTitle: '截止该月末',
+        prevPointLabel: '上月末净资产',
+        growthLabel: '财富增加率 (环比上月净资产)'
+      };
+    }
+
+    function calculateAccountBalance(accountId, upToDateStr = null) {
+      const acc = appState.accounts.find(a => a.id === accountId);
+      if (!acc) return 0;
+
+      let balance = Number(acc.initialBalance) || 0;
+      const isLiability = acc.type === 'liability';
+
+      for (const tx of appState.transactions) {
+        if (upToDateStr && tx.date > upToDateStr) continue;
+
+        const amt = Number(tx.amount) || 0;
+        if (tx.kind === 'income') {
+          if (tx.accountId === accountId) {
+            balance += isLiability ? -amt : amt;
+          }
+        } else if (tx.kind === 'expense') {
+          if (tx.accountId === accountId) {
+            balance += isLiability ? amt : -amt;
+          }
+        } else if (tx.kind === 'repay') {
+          if (tx.accountId === accountId) {
+            balance += isLiability ? -amt : amt;
+          }
+          if (tx.fromAccountId && tx.fromAccountId === accountId) {
+            balance += isLiability ? amt : -amt;
+          }
+        } else if (tx.kind === 'deposit') {
+          if (tx.accountId === accountId) {
+            balance += isLiability ? -amt : amt;
+          }
+          if (tx.sourceMode === 'internal' && tx.fromAccountId === accountId) {
+            const fromAcc = appState.accounts.find(a => a.id === accountId);
+            if (fromAcc) {
+              balance += (fromAcc.type === 'liability') ? amt : -amt;
+            }
+          }
+        }
+      }
+
+      for (const tr of appState.transfers) {
+        if (upToDateStr && tr.date > upToDateStr) continue;
+        const amt = Number(tr.amount) || 0;
+        if (tr.fromAccountId === accountId) {
+          balance += isLiability ? amt : -amt;
+        }
+        if (tr.toAccountId === accountId) {
+          balance += isLiability ? -amt : amt;
+        }
+      }
+
+      return Number(balance.toFixed(2));
+    }
+
+    function computeAssetsSnapshot(upToDateStr = null) {
+      let totalAssets = 0;
+      let totalDebt = 0;
+      let liquidCash = 0;
+
+      const accountDetails = appState.accounts.map(acc => {
+        const bal = calculateAccountBalance(acc.id, upToDateStr);
+        if (acc.type === 'liability') {
+          totalDebt += bal;
+        } else {
+          totalAssets += bal;
+          const lowerName = acc.name.toLowerCase();
+          if (!lowerName.includes('epf') && !lowerName.includes('公积金') && !lowerName.includes('定投') && !lowerName.includes('定期')) {
+            liquidCash += bal;
+          }
+        }
+        return {
+          ...acc,
+          currentBalance: bal
+        };
+      });
+
+      const netWorth = totalAssets - totalDebt;
+      return {
+        totalAssets: Number(totalAssets.toFixed(2)),
+        totalDebt: Number(totalDebt.toFixed(2)),
+        netWorth: Number(netWorth.toFixed(2)),
+        liquidCash: Number(liquidCash.toFixed(2)),
+        accountDetails
+      };
+    }
+
+    function computePeriodMetrics(startStr, endStr) {
+      const periodTxs = appState.transactions.filter(tx => tx.date && tx.date >= startStr && tx.date <= endStr);
+
+      let totalIncome = 0;
+      let essentialExpense = 0;
+      let discretionaryExpense = 0;
+      let totalDeposit = 0;
+
+      const expenseByCategory = {};
+
+      for (const tx of periodTxs) {
+        const amt = Number(tx.amount) || 0;
+        if (tx.kind === 'income') {
+          totalIncome += amt;
+        } else if (tx.kind === 'expense') {
+          if (tx.subType === 'discretionary') {
+            discretionaryExpense += amt;
+          } else {
+            essentialExpense += amt;
+          }
+          const catObj = appState.categories.find(c => c.id === tx.categoryId);
+          const label = catObj ? catObj.name : (tx.categoryNameSnapshot || '已删除项目');
+          if (!expenseByCategory[label]) {
+            expenseByCategory[label] = { name: label, amount: 0, subType: tx.subType || 'essential' };
+          }
+          expenseByCategory[label].amount += amt;
+        } else if (tx.kind === 'deposit') {
+          totalDeposit += amt;
+        }
+      }
+
+      const totalExpense = essentialExpense + discretionaryExpense;
+      const netProfit = totalIncome - totalExpense;
+      const freeCashAfterEssential = totalIncome - essentialExpense;
+
+      return {
+        periodTxs,
+        totalIncome: Number(totalIncome.toFixed(2)),
+        essentialExpense: Number(essentialExpense.toFixed(2)),
+        discretionaryExpense: Number(discretionaryExpense.toFixed(2)),
+        totalExpense: Number(totalExpense.toFixed(2)),
+        totalDeposit: Number(totalDeposit.toFixed(2)),
+        netProfit: Number(netProfit.toFixed(2)),
+        freeCashAfterEssential: Number(freeCashAfterEssential.toFixed(2)),
+        expenseByCategory: Object.values(expenseByCategory).sort((a, b) => b.amount - a.amount)
+      };
+    }
+
+    /* ==========================================================================
+       4. 视图渲染 (Home View & Detail View)
+       ========================================================================== */
+    function formatMoney(num) {
+      const val = Number(num) || 0;
+      return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function renderAll() {
+      const monthStr = `${currentYear}年${currentMonth}月`;
+      document.getElementById('homeMonthLabel').textContent = monthStr;
+
+      renderHomeView();
+      if (currentView === 'detail') {
+        renderDetailView();
+      }
+    }
+
+    function setReportPeriodMode(mode) {
+      reportPeriodMode = mode;
+      document.getElementById('tabPeriodYear').classList.toggle('active', mode === 'year');
+      document.getElementById('tabPeriodMonth').classList.toggle('active', mode === 'month');
+      document.getElementById('tabPeriodWeek').classList.toggle('active', mode === 'week');
+
+      if (mode === 'week') {
+        const anchorDt = parseDateISO(reportWeekAnchor);
+        if (anchorDt.getFullYear() !== currentYear || (anchorDt.getMonth() + 1) !== currentMonth) {
+          reportWeekAnchor = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+        }
+      }
+      renderDetailView();
+    }
+
+    function changeReportPeriod(delta) {
+      if (reportPeriodMode === 'year') {
+        currentYear += delta;
+      } else if (reportPeriodMode === 'week') {
+        const dt = parseDateISO(reportWeekAnchor);
+        dt.setDate(dt.getDate() + delta * 7);
+        reportWeekAnchor = formatDateISO(dt);
+        currentYear = dt.getFullYear();
+        currentMonth = dt.getMonth() + 1;
+      } else {
+        changeMonth(delta);
+        return;
+      }
+      renderAll();
+    }
+
+    function exportReportToPDF() {
+      const bounds = getReportPeriodBounds();
+      document.getElementById('printPeriodSubtitle').textContent = `统计周期：${bounds.label}`;
+      document.getElementById('printGeneratedAt').textContent = `生成日期：${DEFAULT_TODAY} · 账本自动汇总报表`;
+      showToast('正在调起系统 PDF 打印/保存界面...');
+      setTimeout(() => {
+        window.print();
+      }, 150);
+    }
+
+    function switchView(viewName) {
+      currentView = viewName;
+      if (viewName === 'home') {
+        document.getElementById('homeView').classList.remove('hidden');
+        document.getElementById('detailView').classList.add('hidden');
+      } else {
+        document.getElementById('homeView').classList.add('hidden');
+        document.getElementById('detailView').classList.remove('hidden');
+        renderDetailView();
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function changeMonth(delta) {
+      currentMonth += delta;
+      if (currentMonth > 12) {
+        currentMonth = 1;
+        currentYear += 1;
+      } else if (currentMonth < 1) {
+        currentMonth = 12;
+        currentYear -= 1;
+      }
+      renderAll();
+    }
+
+    function renderHomeView() {
+      const snap = computeAssetsSnapshot(null);
+
+      document.getElementById('homeTotalAssets').textContent = formatMoney(snap.totalAssets);
+      document.getElementById('homeNetWorth').textContent = formatMoney(snap.netWorth);
+      document.getElementById('homeTotalDebt').textContent = snap.totalDebt > 0 ? '-' + formatMoney(snap.totalDebt) : '0.00';
+
+      // 渲染小账户卡片（点击卡片直接修改起始金额）
+      const gridEl = document.getElementById('homeAccountsGrid');
+      if (snap.accountDetails.length === 0) {
+        gridEl.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">暂无小账户，点击右上角“+ 添加小账户”开始配置</div>`;
+      } else {
+        gridEl.innerHTML = snap.accountDetails.map(acc => {
+          const isDebt = acc.type === 'liability';
+          const displayBal = isDebt ? (acc.currentBalance > 0 ? '-' + formatMoney(acc.currentBalance) : '0.00') : formatMoney(acc.currentBalance);
+          const initBalStr = formatMoney(acc.initialBalance || 0);
+          return `
+            <div class="account-mini-card" onclick="openEditAccountModal('${acc.id}')" title="点击设置或修改起始金额">
+              <div class="account-mini-top">
+                <span class="account-name">${escapeHtml(acc.name)}</span>
+                <button class="account-transfer-shortcut" title="从此账户转出" onclick="event.stopPropagation(); openTransferModal('${acc.id}')">
+                  互转
+                </button>
+              </div>
+              <div>
+                <div class="account-balance tabular-nums ${isDebt ? 'text-debt' : 'text-asset'}">${displayBal}</div>
+                <div class="account-type-tag" style="display: flex; justify-content: space-between; align-items: center;">
+                  <span>${isDebt ? '负债账户' : '资产账户'}</span>
+                  <span class="tabular-nums">起始: ${initBalStr}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // 渲染当月记账项目栏
+      const mKey = getMonthKey(currentYear, currentMonth);
+      const listEl = document.getElementById('homeCategoriesList');
+
+      if (appState.categories.length === 0) {
+        listEl.innerHTML = `<div class="detail-card empty-state">暂无记账项目，点击上方“+ 新增项目”创建您的第一个账目分类</div>`;
+        return;
+      }
+
+      listEl.innerHTML = appState.categories.map(cat => {
+        const catMonthTxs = appState.transactions.filter(t => t.categoryId === cat.id && t.date && t.date.startsWith(mKey));
+        const monthSum = catMonthTxs.reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+
+        let badgeClass = 'badge-essential';
+        let badgeText = '维持性支出';
+        let iconChar = '支';
+        let amountColor = 'var(--text-primary)';
+        let amountPrefix = '';
+
+        if (cat.kind === 'expense') {
+          if (cat.subType === 'discretionary') {
+            badgeClass = 'badge-discretionary';
+            badgeText = '非必要支出';
+            iconChar = '玩';
+            amountColor = 'var(--discretionary-amber)';
+          } else {
+            badgeClass = 'badge-essential';
+            badgeText = '维持性支出';
+            iconChar = '刚';
+          }
+          amountPrefix = monthSum > 0 ? '-' : '';
+        } else if (cat.kind === 'income') {
+          badgeClass = 'badge-income';
+          badgeText = '收入';
+          iconChar = '收';
+          amountColor = '#059669';
+          amountPrefix = monthSum > 0 ? '+' : '';
+        } else if (cat.kind === 'deposit') {
+          badgeClass = 'badge-deposit';
+          badgeText = cat.sourceMode === 'internal' ? '存入(账户互转)' : '存入(外部入账)';
+          iconChar = '存';
+          amountColor = 'var(--deposit-indigo)';
+          amountPrefix = monthSum > 0 ? '+' : '';
+        } else if (cat.kind === 'repay') {
+          badgeClass = 'badge-deposit';
+          badgeText = '还债(同步减债)';
+          iconChar = '还';
+          amountColor = 'var(--deposit-indigo)';
+          amountPrefix = monthSum > 0 ? '-' : '';
+        }
+
+        const defaultAcc = appState.accounts.find(a => a.id === cat.defaultAccountId);
+        const accHint = defaultAcc ? `默认账户: ${defaultAcc.name}` : '未指定默认账户';
+
+        return `
+          <div class="category-item-card" onclick="openQuickRecordModal('${cat.id}')">
+            <div class="category-left">
+              <div class="category-icon-box ${badgeClass}">${iconChar}</div>
+              <div class="category-info">
+                <div class="category-title-row">
+                  <span class="category-name">${escapeHtml(cat.name)}</span>
+                  <span class="tag-pill ${badgeClass}">${badgeText}</span>
+                </div>
+                <div class="category-sub">${escapeHtml(accHint)} · 本月 ${catMonthTxs.length} 笔</div>
+              </div>
+            </div>
+            <div class="category-right">
+              <div class="category-month-sum tabular-nums" style="color: ${amountColor};">
+                ${amountPrefix}${formatMoney(monthSum)}
+              </div>
+              <div class="category-action-btns" onclick="event.stopPropagation()">
+                <button class="icon-btn" title="查看本月明细" onclick="openTxHistoryModal('${cat.id}')">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                </button>
+                <button class="icon-btn" title="编辑项目" onclick="openCategoryModal('${cat.id}')">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="icon-btn" title="删除项目" style="color: var(--debt-red);" onclick="openDeleteCategoryModal('${cat.id}')">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderDetailView() {
+      const bounds = getReportPeriodBounds();
+      document.getElementById('detailMonthLabel').textContent = bounds.label;
+      document.getElementById('detailOverviewTitle').textContent = `1. 核心资产概览 (${bounds.endPointTitle})`;
+      document.getElementById('detailGrowthLabel').textContent = bounds.growthLabel;
+
+      const snap = computeAssetsSnapshot(bounds.endStr);
+      const prevSnap = computeAssetsSnapshot(bounds.prevEndStr);
+      const metrics = computePeriodMetrics(bounds.startStr, bounds.endStr);
+
+      document.getElementById('detailTotalAssets').textContent = formatMoney(snap.totalAssets);
+      document.getElementById('detailNetWorth').textContent = formatMoney(snap.netWorth);
+
+      const detailAccEl = document.getElementById('detailAccountsList');
+      if (snap.accountDetails.length === 0) {
+        detailAccEl.innerHTML = `<div class="empty-state">暂无小账户</div>`;
+      } else {
+        detailAccEl.innerHTML = snap.accountDetails.map(acc => {
+          const isDebt = acc.type === 'liability';
+          const displayBal = isDebt ? (acc.currentBalance > 0 ? '-' + formatMoney(acc.currentBalance) : '0.00') : formatMoney(acc.currentBalance);
+          return `
+            <div class="detail-account-row">
+              <div>
+                <div style="font-weight: 700; font-size: 14px;">${escapeHtml(acc.name)}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">${isDebt ? '负债账户' : '资产账户'} · 初始设定: ${formatMoney(acc.initialBalance)}</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="tabular-nums ${isDebt ? 'text-debt' : 'text-asset'}" style="font-weight: 700; font-size: 15px;">${displayBal}</span>
+                <button class="btn btn-sm btn-secondary no-print" onclick="openEditAccountModal('${acc.id}')">修改/校准</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('detailCashRetention').textContent = formatMoney(snap.liquidCash);
+      document.getElementById('detailMonthSurplusNote').textContent = `本周期净结余: ${metrics.netProfit >= 0 ? '+' : ''}${formatMoney(metrics.netProfit)}`;
+      document.getElementById('detailTotalDebt').textContent = snap.totalDebt > 0 ? '-' + formatMoney(snap.totalDebt) : '0.00';
+
+      const growthEl = document.getElementById('detailWealthGrowth');
+      document.getElementById('detailPrevNetNote').textContent = `${bounds.prevPointLabel}: ${formatMoney(prevSnap.netWorth)}`;
+      if (prevSnap.netWorth === 0) {
+        growthEl.textContent = '--';
+        growthEl.style.color = 'var(--text-muted)';
+      } else {
+        const rate = ((snap.netWorth - prevSnap.netWorth) / Math.abs(prevSnap.netWorth)) * 100;
+        const sign = rate >= 0 ? '+' : '';
+        growthEl.textContent = `${sign}${rate.toFixed(2)}%`;
+        growthEl.style.color = rate >= 0 ? '#059669' : 'var(--debt-red)';
+      }
+
+      document.getElementById('detailTotalExpenseBadge').textContent = `总支出: ${formatMoney(metrics.totalExpense)}`;
+      document.getElementById('donutCenterTotal').textContent = formatMoney(metrics.totalExpense);
+      renderExpenseDonutChart(metrics);
+
+      document.getElementById('tableIncome').textContent = `+${formatMoney(metrics.totalIncome)}`;
+      const netProfitEl = document.getElementById('tableNetProfit');
+      netProfitEl.textContent = `${metrics.netProfit >= 0 ? '+' : ''}${formatMoney(metrics.netProfit)}`;
+      netProfitEl.style.color = metrics.netProfit >= 0 ? '#059669' : 'var(--debt-red)';
+
+      document.getElementById('tableDiscretionary').textContent = `-${formatMoney(metrics.discretionaryExpense)}`;
+      const freeCashEl = document.getElementById('tableFreeCash');
+      freeCashEl.textContent = `${metrics.freeCashAfterEssential >= 0 ? '+' : ''}${formatMoney(metrics.freeCashAfterEssential)}`;
+      freeCashEl.style.color = metrics.freeCashAfterEssential >= 0 ? 'var(--brand-accent)' : 'var(--debt-red)';
+
+      document.getElementById('tableDepositTotal').textContent = formatMoney(metrics.totalDeposit);
+    }
+
+    function renderExpenseDonutChart(metrics) {
+      const svg = document.getElementById('expenseDonutSvg');
+      const breakdownEl = document.getElementById('expenseBreakdownArea');
+      const total = metrics.totalExpense;
+
+      const cx = 85, cy = 85, r = 64;
+      const circumference = 2 * Math.PI * r;
+
+      if (total <= 0) {
+        svg.innerHTML = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#E2E8F0" stroke-width="20" />`;
+        breakdownEl.innerHTML = `
+          <div style="font-size: 13px; color: var(--text-muted); padding: 12px 0;">
+            本月暂无支出记录。记入支出后，此处将自动展示“维持性支出”与“非必要支出”的金额与占比。
+          </div>
+        `;
+        return;
+      }
+
+      const essPct = (metrics.essentialExpense / total) * 100;
+      const disPct = (metrics.discretionaryExpense / total) * 100;
+      const essDash = (essPct / 100) * circumference;
+      const disDash = (disPct / 100) * circumference;
+
+      svg.innerHTML = `
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#E2E8F0" stroke-width="20" />
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#0EA5E9" stroke-width="20"
+          stroke-dasharray="${essDash} ${circumference}"
+          transform="rotate(-90 ${cx} ${cy})" />
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#F59E0B" stroke-width="20"
+          stroke-dasharray="${disDash} ${circumference}"
+          stroke-dashoffset="-${essDash}"
+          transform="rotate(-90 ${cx} ${cy})" />
+      `;
+
+      let html = `
+        <div class="progress-row">
+          <div class="progress-header">
+            <span style="color: #0284C7;">● 维持性支出</span>
+            <span class="tabular-nums">${formatMoney(metrics.essentialExpense)} (${essPct.toFixed(1)}%)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: ${essPct}%; background: #0EA5E9;"></div>
+          </div>
+        </div>
+        <div class="progress-row">
+          <div class="progress-header">
+            <span style="color: #D97706;">● 非必要支出</span>
+            <span class="tabular-nums">${formatMoney(metrics.discretionaryExpense)} (${disPct.toFixed(1)}%)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: ${disPct}%; background: #F59E0B;"></div>
+          </div>
+        </div>
+      `;
+
+      if (metrics.expenseByCategory.length > 0) {
+        html += `<div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border-color); font-size: 12px; font-weight: 700; color: var(--text-secondary);">各具体支出项目占比明细</div>`;
+        html += metrics.expenseByCategory.map(item => {
+          const pct = (item.amount / total) * 100;
+          const barColor = item.subType === 'discretionary' ? '#F59E0B' : '#0EA5E9';
+          return `
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-top: 6px;">
+              <span>${escapeHtml(item.name)} <span style="color: var(--text-muted);">(${item.subType === 'discretionary' ? '非必要' : '维持'})</span></span>
+              <span class="tabular-nums" style="font-weight: 600;">${formatMoney(item.amount)} · <span style="color: ${barColor};">${pct.toFixed(1)}%</span></span>
+            </div>
+          `;
+        }).join('');
+      }
+
+      breakdownEl.innerHTML = html;
+    }
+
+    /* ==========================================================================
+       5. 交互逻辑：小账户添加、起始金额设置、互转与历史撤销
+       ========================================================================== */
+    function selectAccountType(type) {
+      document.getElementById('accTypeInput').value = type;
+      document.getElementById('pillAsset').className = type === 'asset' ? 'radio-pill active-green' : 'radio-pill';
+      document.getElementById('pillLiability').className = type === 'liability' ? 'radio-pill active-red' : 'radio-pill';
+    }
+
+    function openAddAccountModal() {
+      document.getElementById('accountModalTitle').textContent = '添加小账户';
+      document.getElementById('editAccountId').value = '';
+      document.getElementById('accNameInput').value = '';
+      document.getElementById('accInitialInput').value = '0';
+      document.getElementById('accTypeGroup').classList.remove('hidden');
+      document.getElementById('accBalanceLabel').textContent = '起始金额 (默认为 0)';
+      document.getElementById('accBalanceHint').classList.remove('hidden');
+      document.getElementById('accCalibrateGroup').classList.add('hidden');
+      selectAccountType('asset');
+      openModal('accountModal');
+    }
+
+    function openEditAccountModal(accId) {
+      const acc = appState.accounts.find(a => a.id === accId);
+      if (!acc) return;
+      const currentBal = calculateAccountBalance(acc.id, null);
+
+      document.getElementById('accountModalTitle').textContent = '设置小账户与起始金额';
+      document.getElementById('editAccountId').value = acc.id;
+      document.getElementById('accNameInput').value = acc.name;
+      document.getElementById('accTypeInput').value = acc.type;
+      document.getElementById('accTypeGroup').classList.add('hidden');
+
+      document.getElementById('accBalanceLabel').textContent = '起始金额 (开账初始余额)';
+      document.getElementById('accInitialInput').value = Number(acc.initialBalance || 0).toFixed(2);
+      document.getElementById('accBalanceHint').classList.add('hidden');
+
+      document.getElementById('accCalibrateGroup').classList.remove('hidden');
+      document.getElementById('accCalibrateCurrentInput').value = currentBal.toFixed(2);
+
+      openModal('accountModal');
+    }
+
+    function bindAccountBalanceSync() {
+      const initInput = document.getElementById('accInitialInput');
+      const currInput = document.getElementById('accCalibrateCurrentInput');
+
+      initInput.addEventListener('input', function () {
+        const editId = document.getElementById('editAccountId').value;
+        if (!editId) return;
+        const acc = appState.accounts.find(a => a.id === editId);
+        if (!acc) return;
+        const oldCurrent = calculateAccountBalance(editId, null);
+        const oldInit = Number(acc.initialBalance) || 0;
+        const txDelta = oldCurrent - oldInit;
+        const newInit = parseFloat(initInput.value) || 0;
+        currInput.value = (newInit + txDelta).toFixed(2);
+      });
+
+      currInput.addEventListener('input', function () {
+        const editId = document.getElementById('editAccountId').value;
+        if (!editId) return;
+        const acc = appState.accounts.find(a => a.id === editId);
+        if (!acc) return;
+        const oldCurrent = calculateAccountBalance(editId, null);
+        const oldInit = Number(acc.initialBalance) || 0;
+        const txDelta = oldCurrent - oldInit;
+        const targetCurrent = parseFloat(currInput.value) || 0;
+        initInput.value = (targetCurrent - txDelta).toFixed(2);
+      });
+    }
+
+    function saveAccountForm(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editAccountId').value;
+      const name = document.getElementById('accNameInput').value.trim();
+      const type = document.getElementById('accTypeInput').value;
+      const inputInitVal = parseFloat(document.getElementById('accInitialInput').value) || 0;
+
+      if (!name) return;
+
+      if (!editId) {
+        appState.accounts.push({
+          id: generateId('acc'),
+          name,
+          type,
+          initialBalance: Number(Math.abs(inputInitVal).toFixed(2))
+        });
+        showToast(`已创建小账户「${name}」`);
+      } else {
+        const acc = appState.accounts.find(a => a.id === editId);
+        if (acc) {
+          acc.name = name;
+          acc.initialBalance = Number(inputInitVal.toFixed(2));
+          showToast(`已更新账户「${name}」起始金额`);
+        }
+      }
+
+      saveState();
+      closeModal('accountModal');
+      renderAll();
+    }
+
+    function openTransferModal(presetFromId = null) {
+      if (appState.accounts.length < 2) {
+        showToast('请至少创建两个小账户后再进行互转');
+        return;
+      }
+      const fromSel = document.getElementById('transferFromSelect');
+      const toSel = document.getElementById('transferToSelect');
+
+      const optionsHtml = appState.accounts.map(a => {
+        const bal = calculateAccountBalance(a.id, null);
+        const tag = a.type === 'liability' ? '负债' : '资产';
+        return `<option value="${a.id}">${escapeHtml(a.name)} (${tag}: ${formatMoney(bal)})</option>`;
+      }).join('');
+
+      fromSel.innerHTML = optionsHtml;
+      toSel.innerHTML = optionsHtml;
+
+      if (presetFromId) {
+        fromSel.value = presetFromId;
+      }
+      const otherAcc = appState.accounts.find(a => a.id !== fromSel.value);
+      if (otherAcc) toSel.value = otherAcc.id;
+
+      document.getElementById('transferAmountInput').value = '';
+      document.getElementById('transferDateInput').value = DEFAULT_TODAY;
+      document.getElementById('transferNoteInput').value = '';
+      openModal('transferModal');
+    }
+
+    function saveTransferForm(e) {
+      e.preventDefault();
+      const amount = parseFloat(document.getElementById('transferAmountInput').value);
+      const fromId = document.getElementById('transferFromSelect').value;
+      const toId = document.getElementById('transferToSelect').value;
+      const date = document.getElementById('transferDateInput').value;
+      const note = document.getElementById('transferNoteInput').value.trim();
+
+      if (!amount || amount <= 0) {
+        showToast('请输入有效的转账金额');
+        return;
+      }
+      if (fromId === toId) {
+        showToast('转出账户与转入账户不能相同');
+        return;
+      }
+
+      appState.transfers.push({
+        id: generateId('tr'),
+        fromAccountId: fromId,
+        toAccountId: toId,
+        amount: Number(amount.toFixed(2)),
+        date,
+        note
+      });
+
+      saveState();
+      closeModal('transferModal');
+      renderAll();
+      showToast('账户互转成功，总净资产保持平衡');
+    }
+
+    function openTransferHistoryModal() {
+      const mKey = getMonthKey(currentYear, currentMonth);
+      document.getElementById('thMonthLabel').textContent = `${currentYear}年${currentMonth}月`;
+      const listEl = document.getElementById('transferHistoryList');
+      const monthTransfers = appState.transfers.filter(t => t.date && t.date.startsWith(mKey));
+
+      if (monthTransfers.length === 0) {
+        listEl.innerHTML = `<div class="empty-state">本月暂无账户互转记录</div>`;
+      } else {
+        listEl.innerHTML = monthTransfers.map(tr => {
+          const fromAcc = appState.accounts.find(a => a.id === tr.fromAccountId);
+          const toAcc = appState.accounts.find(a => a.id === tr.toAccountId);
+          return `
+            <div class="tx-row">
+              <div>
+                <div style="font-size: 14px; font-weight: 700;">
+                  ${escapeHtml(fromAcc ? fromAcc.name : '已删账户')} → ${escapeHtml(toAcc ? toAcc.name : '已删账户')}
+                </div>
+                <div class="tx-meta">${tr.date} ${tr.note ? '· ' + escapeHtml(tr.note) : ''}</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="tabular-nums" style="font-weight: 700;">${formatMoney(tr.amount)}</span>
+                <button class="btn btn-sm btn-danger" onclick="deleteTransfer('${tr.id}')">撤销</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+      openModal('transferHistoryModal');
+    }
+
+    function deleteTransfer(trId) {
+      appState.transfers = appState.transfers.filter(t => t.id !== trId);
+      saveState();
+      openTransferHistoryModal();
+      renderAll();
+      showToast('已撤销该笔账户互转');
+    }
+
+    /* ==========================================================================
+       6. 交互逻辑：创建/编辑/删除记账项目
+       ========================================================================== */
+    function populateAccountSelect(selectId, selectedId = null) {
+      const el = document.getElementById(selectId);
+      if (appState.accounts.length === 0) {
+        el.innerHTML = `<option value="">请先添加小账户</option>`;
+        return;
+      }
+      el.innerHTML = appState.accounts.map(a => {
+        const tag = a.type === 'liability' ? '负债' : '资产';
+        return `<option value="${a.id}">${escapeHtml(a.name)} (${tag})</option>`;
+      }).join('');
+      if (selectedId && appState.accounts.some(a => a.id === selectedId)) {
+        el.value = selectedId;
+      }
+    }
+
+    function selectCategoryKind(kind) {
+      document.getElementById('catKindInput').value = kind;
+      document.getElementById('catKindExpense').className = kind === 'expense' ? 'radio-pill active-red' : 'radio-pill';
+      document.getElementById('catKindIncome').className = kind === 'income' ? 'radio-pill active-green' : 'radio-pill';
+      document.getElementById('catKindDeposit').className = kind === 'deposit' ? 'radio-pill active-indigo' : 'radio-pill';
+      document.getElementById('catKindRepay').className = kind === 'repay' ? 'radio-pill active-indigo' : 'radio-pill';
+
+      document.getElementById('expenseConfigArea').classList.toggle('hidden', kind !== 'expense');
+      document.getElementById('incomeConfigArea').classList.toggle('hidden', kind !== 'income');
+      document.getElementById('depositConfigArea').classList.toggle('hidden', kind !== 'deposit');
+      document.getElementById('repayConfigArea').classList.toggle('hidden', kind !== 'repay');
+    }
+
+    function selectExpenseSubType(sub) {
+      document.getElementById('expSubTypeInput').value = sub;
+      document.getElementById('expSubEssential').className = sub === 'essential' ? 'radio-pill active' : 'radio-pill';
+      document.getElementById('expSubDiscretionary').className = sub === 'discretionary' ? 'radio-pill active' : 'radio-pill';
+    }
+
+    function selectDepositSourceMode(mode) {
+      document.getElementById('depSourceModeInput').value = mode;
+      document.getElementById('depSrcExternal').className = mode === 'external' ? 'radio-pill active-indigo' : 'radio-pill';
+      document.getElementById('depSrcInternal').className = mode === 'internal' ? 'radio-pill active-indigo' : 'radio-pill';
+      document.getElementById('depFromAccountGroup').classList.toggle('hidden', mode !== 'internal');
+    }
+
+    function openCategoryModal(catId = null) {
+      if (appState.accounts.length === 0) {
+        showToast('请先在上方至少添加一个小账户');
+        return;
+      }
+      populateAccountSelect('expDefaultAccountSelect');
+      populateAccountSelect('incDefaultAccountSelect');
+      populateAccountSelect('depTargetAccountSelect');
+      populateAccountSelect('depFromAccountSelect');
+      populateAccountSelect('repayLiabilityAccountSelect');
+      populateAccountSelect('repayFromAccountSelect');
+
+      const repayFromEl = document.getElementById('repayFromAccountSelect');
+      repayFromEl.insertAdjacentHTML('afterbegin', '<option value="">不指定扣款账户 (仅减少欠债)</option>');
+      repayFromEl.value = '';
+
+      if (!catId) {
+        document.getElementById('categoryModalTitle').textContent = '新增记账项目';
+        document.getElementById('editCategoryId').value = '';
+        document.getElementById('catNameInput').value = '';
+        document.getElementById('incSourceNoteInput').value = '';
+        selectCategoryKind('expense');
+        selectExpenseSubType('essential');
+        selectDepositSourceMode('external');
+        const firstDebt = appState.accounts.find(a => a.type === 'liability');
+        if (firstDebt) document.getElementById('repayLiabilityAccountSelect').value = firstDebt.id;
+      } else {
+        const cat = appState.categories.find(c => c.id === catId);
+        if (!cat) return;
+        document.getElementById('categoryModalTitle').textContent = '修改记账项目';
+        document.getElementById('editCategoryId').value = cat.id;
+        document.getElementById('catNameInput').value = cat.name;
+        selectCategoryKind(cat.kind);
+
+        if (cat.kind === 'expense') {
+          selectExpenseSubType(cat.subType || 'essential');
+          populateAccountSelect('expDefaultAccountSelect', cat.defaultAccountId);
+        } else if (cat.kind === 'income') {
+          populateAccountSelect('incDefaultAccountSelect', cat.defaultAccountId);
+          document.getElementById('incSourceNoteInput').value = cat.sourceNote || '';
+        } else if (cat.kind === 'deposit') {
+          populateAccountSelect('depTargetAccountSelect', cat.defaultAccountId);
+          selectDepositSourceMode(cat.sourceMode || 'external');
+          populateAccountSelect('depFromAccountSelect', cat.fromAccountId);
+        } else if (cat.kind === 'repay') {
+          populateAccountSelect('repayLiabilityAccountSelect', cat.defaultAccountId);
+          if (cat.fromAccountId) repayFromEl.value = cat.fromAccountId;
+        }
+      }
+      openModal('categoryModal');
+    }
+
+    function saveCategoryForm(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editCategoryId').value;
+      const name = document.getElementById('catNameInput').value.trim();
+      const kind = document.getElementById('catKindInput').value;
+
+      if (!name) return;
+
+      const payload = { name, kind };
+      if (kind === 'expense') {
+        payload.subType = document.getElementById('expSubTypeInput').value;
+        payload.defaultAccountId = document.getElementById('expDefaultAccountSelect').value;
+      } else if (kind === 'income') {
+        payload.defaultAccountId = document.getElementById('incDefaultAccountSelect').value;
+        payload.sourceNote = document.getElementById('incSourceNoteInput').value.trim();
+      } else if (kind === 'deposit') {
+        payload.defaultAccountId = document.getElementById('depTargetAccountSelect').value;
+        payload.sourceMode = document.getElementById('depSourceModeInput').value;
+        payload.fromAccountId = payload.sourceMode === 'internal' ? document.getElementById('depFromAccountSelect').value : null;
+        if (payload.sourceMode === 'internal' && payload.defaultAccountId === payload.fromAccountId) {
+          showToast('存入目标账户与扣款来源账户不能相同');
+          return;
+        }
+      } else if (kind === 'repay') {
+        payload.defaultAccountId = document.getElementById('repayLiabilityAccountSelect').value;
+        payload.fromAccountId = document.getElementById('repayFromAccountSelect').value || null;
+        if (payload.fromAccountId && payload.defaultAccountId === payload.fromAccountId) {
+          showToast('还款负债账户与扣款账户不能相同');
+          return;
+        }
+      }
+
+      if (!editId) {
+        appState.categories.push({ id: generateId('cat'), ...payload });
+        showToast(`已创建项目「${name}」`);
+      } else {
+        const idx = appState.categories.findIndex(c => c.id === editId);
+        if (idx !== -1) {
+          appState.categories[idx] = { ...appState.categories[idx], ...payload };
+          appState.transactions.forEach(tx => {
+            if (tx.categoryId === editId) {
+              tx.categoryNameSnapshot = name;
+              if (kind === 'expense') tx.subType = payload.subType;
+            }
+          });
+          showToast(`已更新项目「${name}」`);
+        }
+      }
+
+      saveState();
+      closeModal('categoryModal');
+      renderAll();
+    }
+
+    function openDeleteCategoryModal(catId) {
+      const cat = appState.categories.find(c => c.id === catId);
+      if (!cat) return;
+      pendingDeleteCategoryId = catId;
+      document.getElementById('delCatTargetName').textContent = `「${cat.name}」`;
+      openModal('deleteCategoryModal');
+    }
+
+    function confirmDeleteCategory(deleteHistory) {
+      if (!pendingDeleteCategoryId) return;
+      const cat = appState.categories.find(c => c.id === pendingDeleteCategoryId);
+      const catName = cat ? cat.name : '已删除项目';
+
+      appState.categories = appState.categories.filter(c => c.id !== pendingDeleteCategoryId);
+
+      if (deleteHistory) {
+        appState.transactions = appState.transactions.filter(t => t.categoryId !== pendingDeleteCategoryId);
+        showToast('已删除项目及所有历史账单，余额已重算');
+      } else {
+        appState.transactions.forEach(t => {
+          if (t.categoryId === pendingDeleteCategoryId) {
+            t.categoryNameSnapshot = catName;
+          }
+        });
+        showToast('已仅删除项目本身，历史数据已保留在报表中');
+      }
+
+      pendingDeleteCategoryId = null;
+      saveState();
+      closeModal('deleteCategoryModal');
+      renderAll();
+    }
+
+    /* ==========================================================================
+       7. 交互逻辑：日常极速记账 & 明细查改撤销
+       ========================================================================== */
+    function openQuickRecordModal(catId) {
+      const cat = appState.categories.find(c => c.id === catId);
+      if (!cat) return;
+
+      document.getElementById('qrCategoryId').value = cat.id;
+      document.getElementById('qrCategoryTitle').textContent = cat.name;
+
+      const badgeEl = document.getElementById('qrCategoryBadge');
+      const primaryLabel = document.getElementById('qrPrimaryAccountLabel');
+      const depFromGroup = document.getElementById('qrDepositFromGroup');
+
+      if (cat.kind === 'expense') {
+        badgeEl.textContent = cat.subType === 'discretionary' ? '非必要支出' : '维持性支出';
+        badgeEl.className = 'tag-pill ' + (cat.subType === 'discretionary' ? 'badge-discretionary' : 'badge-essential');
+        primaryLabel.textContent = '扣款小账户 (默认带出，点击可临时切换)';
+        depFromGroup.classList.add('hidden');
+      } else if (cat.kind === 'income') {
+        badgeEl.textContent = '收入入账';
+        badgeEl.className = 'tag-pill badge-income';
+        primaryLabel.textContent = '入账小账户 (默认带出，点击可临时切换)';
+        depFromGroup.classList.add('hidden');
+      } else if (cat.kind === 'deposit') {
+        badgeEl.textContent = cat.sourceMode === 'internal' ? '存入 (从账户扣款转入)' : '存入 (外部直接存入)';
+        badgeEl.className = 'tag-pill badge-deposit';
+        primaryLabel.textContent = '存入目标小账户 (点击可临时切换)';
+        if (cat.sourceMode === 'internal') {
+          depFromGroup.classList.remove('hidden');
+          document.getElementById('qrDepositFromLabel').textContent = '扣款来源小账户 (可临时切换)';
+          populateAccountSelect('qrDepositFromSelect', cat.fromAccountId);
+        } else {
+          depFromGroup.classList.add('hidden');
+        }
+      } else if (cat.kind === 'repay') {
+        badgeEl.textContent = '还债 (欠债账户同步减少)';
+        badgeEl.className = 'tag-pill badge-deposit';
+        primaryLabel.textContent = '偿还目标负债账户 (点击可临时切换)';
+        depFromGroup.classList.remove('hidden');
+        document.getElementById('qrDepositFromLabel').textContent = '扣款资产账户 (可选)';
+        populateAccountSelect('qrDepositFromSelect', cat.fromAccountId);
+        const fromSel = document.getElementById('qrDepositFromSelect');
+        fromSel.insertAdjacentHTML('afterbegin', '<option value="">不扣减资产账户 (仅减少欠债)</option>');
+        fromSel.value = cat.fromAccountId || '';
+      }
+
+      populateAccountSelect('qrPrimaryAccountSelect', cat.defaultAccountId);
+      document.getElementById('qrAmountInput').value = '';
+      document.getElementById('qrDateInput').value = DEFAULT_TODAY;
+      document.getElementById('qrNoteInput').value = '';
+
+      openModal('quickRecordModal');
+      setTimeout(() => document.getElementById('qrAmountInput').focus(), 120);
+    }
+
+    function saveQuickRecordForm(e) {
+      e.preventDefault();
+      const catId = document.getElementById('qrCategoryId').value;
+      const cat = appState.categories.find(c => c.id === catId);
+      if (!cat) return;
+
+      const amount = parseFloat(document.getElementById('qrAmountInput').value);
+      const date = document.getElementById('qrDateInput').value;
+      const primaryAccountId = document.getElementById('qrPrimaryAccountSelect').value;
+      const note = document.getElementById('qrNoteInput').value.trim();
+
+      if (!amount || amount <= 0) {
+        showToast('请输入有效金额');
+        return;
+      }
+
+      let fromAccountId = null;
+      if (cat.kind === 'deposit' && cat.sourceMode === 'internal') {
+        fromAccountId = document.getElementById('qrDepositFromSelect').value;
+        if (fromAccountId === primaryAccountId) {
+          showToast('存入目标账户与扣款账户不能相同');
+          return;
+        }
+      } else if (cat.kind === 'repay') {
+        fromAccountId = document.getElementById('qrDepositFromSelect').value || null;
+        if (fromAccountId && fromAccountId === primaryAccountId) {
+          showToast('还款目标与扣款账户不能相同');
+          return;
+        }
+      }
+
+      appState.transactions.push({
+        id: generateId('tx'),
+        categoryId: cat.id,
+        categoryNameSnapshot: cat.name,
+        kind: cat.kind,
+        subType: cat.subType || null,
+        amount: Number(amount.toFixed(2)),
+        date,
+        accountId: primaryAccountId,
+        sourceMode: cat.sourceMode || 'external',
+        fromAccountId,
+        note
+      });
+
+      saveState();
+      closeModal('quickRecordModal');
+      renderAll();
+      showToast(`已记录「${cat.name}」 ${formatMoney(amount)}`);
+    }
+
+    function switchQuickRecordToHistory() {
+      const catId = document.getElementById('qrCategoryId').value;
+      closeModal('quickRecordModal');
+      openTxHistoryModal(catId);
+    }
+
+    function openTxHistoryModal(catId) {
+      activeHistoryCategoryId = catId;
+      const cat = appState.categories.find(c => c.id === catId);
+      const mKey = getMonthKey(currentYear, currentMonth);
+
+      document.getElementById('txHistoryTitle').textContent = `${cat ? cat.name : '项目'} · 本月明细`;
+      document.getElementById('txHistorySub').textContent = `${currentYear}年${currentMonth}月`;
+      cancelEditSingleTx();
+
+      const txs = appState.transactions
+        .filter(t => t.categoryId === catId && t.date && t.date.startsWith(mKey))
+        .sort((a, b) => b.date.localeCompare(a.date));
+
+      const listEl = document.getElementById('txHistoryList');
+      if (txs.length === 0) {
+        listEl.innerHTML = `<div class="empty-state">本月该项目暂无流水记录</div>`;
+      } else {
+        listEl.innerHTML = txs.map(tx => {
+          const acc = appState.accounts.find(a => a.id === tx.accountId);
+          let accDesc = acc ? acc.name : '未知账户';
+          if ((tx.kind === 'deposit' && tx.sourceMode === 'internal') || (tx.kind === 'repay' && tx.fromAccountId)) {
+            const fAcc = appState.accounts.find(a => a.id === tx.fromAccountId);
+            accDesc = `${fAcc ? fAcc.name : '未知'} → ${accDesc}`;
+          }
+          return `
+            <div class="tx-row">
+              <div>
+                <div class="tabular-nums" style="font-size: 15px; font-weight: 700;">${formatMoney(tx.amount)}</div>
+                <div class="tx-meta">${tx.date} · ${escapeHtml(accDesc)} ${tx.note ? '· ' + escapeHtml(tx.note) : ''}</div>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <button class="btn btn-sm btn-secondary" onclick="startEditSingleTx('${tx.id}')">修改</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteSingleTx('${tx.id}')">删除</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+      openModal('txHistoryModal');
+    }
+
+    function startEditSingleTx(txId) {
+      const tx = appState.transactions.find(t => t.id === txId);
+      if (!tx) return;
+      document.getElementById('editTxId').value = tx.id;
+      document.getElementById('editTxAmount').value = tx.amount;
+      document.getElementById('editTxDate').value = tx.date;
+      populateAccountSelect('editTxAccount', tx.accountId);
+      document.getElementById('editTxNote').value = tx.note || '';
+      document.getElementById('editSingleTxBox').classList.remove('hidden');
+    }
+
+    function cancelEditSingleTx() {
+      document.getElementById('editSingleTxBox').classList.add('hidden');
+      document.getElementById('editTxId').value = '';
+    }
+
+    function saveEditSingleTx() {
+      const txId = document.getElementById('editTxId').value;
+      const tx = appState.transactions.find(t => t.id === txId);
+      if (!tx) return;
+
+      const newAmt = parseFloat(document.getElementById('editTxAmount').value);
+      const newDate = document.getElementById('editTxDate').value;
+      const newAccId = document.getElementById('editTxAccount').value;
+      const newNote = document.getElementById('editTxNote').value.trim();
+
+      if (!newAmt || newAmt <= 0) {
+        showToast('金额必须大于 0');
+        return;
+      }
+
+      tx.amount = Number(newAmt.toFixed(2));
+      tx.date = newDate;
+      tx.accountId = newAccId;
+      tx.note = newNote;
+
+      saveState();
+      cancelEditSingleTx();
+      openTxHistoryModal(activeHistoryCategoryId);
+      renderAll();
+      showToast('已修改该笔流水，账户余额已自动同步重算');
+    }
+
+    function deleteSingleTx(txId) {
+      appState.transactions = appState.transactions.filter(t => t.id !== txId);
+      saveState();
+      openTxHistoryModal(activeHistoryCategoryId);
+      renderAll();
+      showToast('已删除该笔错账，对应小账户余额已退回');
+    }
+
+    /* ==========================================================================
+       8. 数据安全：JSON 备份导出、导入恢复与清空重置
+       ========================================================================== */
+    function exportBackupJSON() {
+      const dataStr = JSON.stringify(appState, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `智简记账本备份_${DEFAULT_TODAY}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('已导出 JSON 备份文件');
+    }
+
+    function importBackupJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!imported || !Array.isArray(imported.accounts) || !Array.isArray(imported.categories) || !Array.isArray(imported.transactions)) {
+            showToast('备份文件格式无效，请选择正确的 JSON 备份');
+            return;
+          }
+          appState = {
+            accounts: imported.accounts,
+            categories: imported.categories,
+            transactions: imported.transactions,
+            transfers: Array.isArray(imported.transfers) ? imported.transfers : []
+          };
+          saveState();
+          renderAll();
+          showToast('备份数据导入恢复成功！');
+        } catch (err) {
+          showToast('解析备份文件失败，请检查文件是否损坏');
+        }
+        event.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    function promptClearAllData() {
+      showConfirmModal(
+        '清空所有数据重置',
+        '确定要清空当前所有小账户、记账项目及历史流水吗？清空后所有数据将恢复为零且无法撤销。',
+        function () {
+          resetToEmptyState();
+          renderAll();
+          showToast('已清空所有数据，账本已恢复为零');
+        }
+      );
+    }
+
+    /* ==========================================================================
+       9. 通用弹窗控制与辅助工具
+       ========================================================================== */
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    function closeModalOnBackdrop(event, id) {
+      if (event.target.id === id) {
+        closeModal(id);
+      }
+    }
+
+    function showConfirmModal(title, message, onConfirm) {
+      document.getElementById('confirmModalTitle').textContent = title;
+      document.getElementById('confirmModalBody').textContent = message;
+      const okBtn = document.getElementById('confirmModalOkBtn');
+      const newBtn = okBtn.cloneNode(true);
+      okBtn.parentNode.replaceChild(newBtn, okBtn);
+      newBtn.addEventListener('click', function () {
+        closeModal('confirmModal');
+        if (typeof onConfirm === 'function') onConfirm();
+      });
+      openModal('confirmModal');
+    }
+
+    function showToast(msg) {
+      const container = document.getElementById('toastContainer');
+      const el = document.createElement('div');
+      el.className = 'toast-msg';
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 0.2s';
+        setTimeout(() => el.remove(), 220);
+      }, 2400);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    window.onload = initApp;
+  </script>
+</body>
+</html>
+```
