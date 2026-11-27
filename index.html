@@ -4291,5 +4291,92 @@
 
     window.initFirebaseCloudSync();
   </script>
+  <style>
+  .category-sections { margin-top: 6px; }
+  .cat-section { margin-top: 18px; }
+  .cat-section-head { display: flex; align-items: center; gap: 8px; padding: 0 4px; }
+  .cat-section-bar { width: 4px; height: 16px; border-radius: 2px; flex-shrink: 0; }
+  .cat-section-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+  .cat-section-count { font-size: 12px; color: var(--text-muted); }
+  .cat-section-total { margin-left: auto; font-size: 14px; font-weight: 700; }
+  .cat-section .categories-grid { margin-top: 10px; }
+  .cat-section-empty {
+    grid-column: 1 / -1; padding: 14px; text-align: center;
+    font-size: 12px; color: var(--text-muted);
+    border: 1px dashed var(--border-strong); border-radius: var(--radius-md);
+  }
+</style>
+<script>
+(function () {
+  // 板块顺序：想换顺序，调换下面几行的位置即可
+  const SECTIONS = [
+    { kind: 'expense', title: '支出类', color: 'var(--debt-red)', sign: '-', empty: '暂无支出项目' },
+    { kind: 'deposit', title: '存款', color: 'var(--deposit-indigo)', sign: '+', empty: '暂无存款项目' },
+    { kind: 'income', title: '收入', color: '#34D399', sign: '+', empty: '暂无收入项目' },
+    { kind: 'repay', title: '还债', color: 'var(--deposit-indigo)', sign: '-', empty: '', hideIfEmpty: true }
+  ];
+
+  const baseRender = window.renderHomeView;
+
+  window.renderHomeView = function () {
+    baseRender();
+
+    const listEl = document.getElementById('homeCategoriesList');
+    const cards = Array.from(listEl.querySelectorAll(':scope > .category-grid-card'));
+    if (cards.length === 0) return;
+
+    const kindOf = {};
+    appState.categories.forEach(c => { kindOf[c.id] = c.kind; });
+
+    const mKey = getMonthKey(currentYear, currentMonth);
+    const sumOf = {};
+    appState.transactions.forEach(t => {
+      if (t.date && t.date.startsWith(mKey)) {
+        sumOf[t.categoryId] = (sumOf[t.categoryId] || 0) + (Number(t.amount) || 0);
+      }
+    });
+
+    const groups = {};
+    SECTIONS.forEach(s => { groups[s.kind] = []; });
+    cards.forEach(card => {
+      const m = /openQuickRecordModal\('([^']+)'\)/.exec(card.getAttribute('onclick') || '');
+      const kind = m ? kindOf[m[1]] : null;
+      if (kind && groups[kind]) groups[kind].push({ card, id: m[1] });
+    });
+
+    listEl.className = 'category-sections';
+    listEl.innerHTML = '';
+
+    SECTIONS.forEach(s => {
+      const items = groups[s.kind];
+      if (items.length === 0 && s.hideIfEmpty) return;
+
+      const total = items.reduce((a, it) => a + (sumOf[it.id] || 0), 0);
+      const totalText = total > 0 ? s.sign + formatMoney(total) : '0.00';
+
+      const sec = document.createElement('section');
+      sec.className = 'cat-section';
+      sec.innerHTML = `
+        <div class="cat-section-head">
+          <span class="cat-section-bar" style="background:${s.color};"></span>
+          <span class="cat-section-title">${s.title}</span>
+          <span class="cat-section-count">${items.length}个项目</span>
+          <span class="cat-section-total tabular-nums" style="color:${s.color};">本月 ${totalText}</span>
+        </div>
+      `;
+
+      const grid = document.createElement('div');
+      grid.className = 'categories-grid';
+      if (items.length) {
+        items.forEach(it => grid.appendChild(it.card));
+      } else {
+        grid.innerHTML = `<div class="cat-section-empty">${s.empty}，点右上「+ 新增项目」添加</div>`;
+      }
+      sec.appendChild(grid);
+      listEl.appendChild(sec);
+    });
+  };
+})();
+</script>
 </body>
 </html>
