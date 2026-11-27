@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -73,6 +72,120 @@
       .app-container {
         padding: 24px 24px 96px;
       }
+    }
+
+    /* ==========================================================================
+       顶部云同步与账号状态栏
+       ========================================================================== */
+    .cloud-sync-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .cloud-user-info {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .cloud-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #E2E8F0;
+      flex-shrink: 0;
+    }
+
+    .cloud-avatar-placeholder {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #EFF6FF;
+      color: var(--brand-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .cloud-status-text {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .cloud-user-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cloud-sync-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #94A3B8;
+      display: inline-block;
+    }
+
+    .sync-dot.synced {
+      background: #10B981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+
+    .sync-dot.syncing {
+      background: #F59E0B;
+      animation: pulseDot 1s infinite;
+    }
+
+    .sync-dot.error {
+      background: #EF4444;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    .btn-google-login {
+      background: #FFFFFF;
+      color: #0F172A;
+      border: 1.5px solid #CBD5E1;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+
+    .btn-google-login:hover {
+      background: #F8FAFC;
+      border-color: #94A3B8;
     }
 
     /* ==========================================================================
@@ -1055,6 +1168,32 @@
          视图 1：主页 (Home View)
          ====================================================================== -->
     <div id="homeView">
+      <!-- 顶部云同步与 Google 账号状态栏 -->
+      <div class="cloud-sync-bar no-print">
+        <div class="cloud-user-info">
+          <img id="cloudUserAvatar" class="cloud-avatar hidden" alt="头像" />
+          <div id="cloudAvatarFallback" class="cloud-avatar-placeholder">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+          </div>
+          <div class="cloud-status-text">
+            <div class="cloud-user-name" id="cloudUserName">本地离线记账模式</div>
+            <div class="cloud-sync-badge">
+              <span class="sync-dot" id="cloudSyncDot"></span>
+              <span id="cloudSyncLabel">登录 Google 账号即可开启跨设备云同步</span>
+            </div>
+          </div>
+        </div>
+        <div id="cloudAuthActions" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+          <button type="button" class="btn-google-login" id="btnGoogleSignIn" onclick="handleGoogleSignIn()">
+            <svg width="15" height="15" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/><path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.1.74-2.51 1.18-4.22 1.18-3.24 0-5.99-2.19-6.97-5.13H1.02v3.14C3.05 21.2 7.24 24 12 24Z"/><path fill="#FBBC05" d="M5.03 14.04c-.25-.74-.39-1.54-.39-2.36 0-.82.14-1.62.39-2.36V6.18H1.02C.37 7.47 0 8.91 0 10.45v2.46c0 1.54.37 2.98 1.02 4.27l4.01-3.14Z"/><path fill="#EA4335" d="M12 4.75c1.79 0 3.41.62 4.68 1.82l3.51-3.51C18.07 1.19 15.3 0 12 0 7.24 0 3.05 2.8 1.02 6.82l4.01 3.14c.98-2.94 3.73-5.21 6.97-5.21Z"/></svg>
+            Google 登录同步
+          </button>
+          <button type="button" class="btn btn-sm btn-secondary hidden" id="btnGoogleSignOut" onclick="handleGoogleSignOut()">
+            退出
+          </button>
+        </div>
+      </div>
+
       <!-- 顶部总资产卡片（点击进入总资产详情页） -->
       <div class="hero-asset-card" id="openDetailBtn" role="button" tabindex="0">
         <div class="hero-top-row">
@@ -1276,7 +1415,7 @@
           <span>5. 数据安全备份与恢复（防清理缓存丢失）</span>
         </div>
         <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">
-          所有账目均安全保存在本地浏览器中。建议定期导出 JSON 备份文件妥善保管，清理缓存或更换设备时可随时导入恢复。
+          登录 Google 账号后账目会自动同步至您的云端私人空间；您也可以随时手动导出 JSON 备份文件妥善保管。
         </p>
         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
           <button class="btn btn-primary" onclick="exportBackupJSON()">
@@ -1671,7 +1810,7 @@
     };
 
     /* ==========================================================================
-       2. 初始化与双引擎本地存储读写 (localStorage + IndexedDB)
+       2. 初始化与双引擎本地存储读写 (localStorage + IndexedDB + 云端桥接)
        ========================================================================== */
     const IDB_NAME = 'ZhijianLedgerDB';
     const IDB_STORE = 'ledger_store';
@@ -1742,35 +1881,43 @@
           transactions: Array.isArray(loaded.transactions) ? loaded.transactions : [],
           transfers: Array.isArray(loaded.transfers) ? loaded.transfers : []
         };
-        saveState();
+        saveState(true); // 仅写本地，待云端就绪后再按需同步
       } else {
-        resetToEmptyState();
+        resetToEmptyState(true);
       }
 
       document.getElementById('openDetailBtn').addEventListener('click', () => switchView('detail'));
-      window.addEventListener('beforeunload', saveState);
+      window.addEventListener('beforeunload', () => saveState(true));
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') saveState();
+        if (document.visibilityState === 'hidden') saveState(true);
       });
       bindAccountBalanceSync();
       renderAll();
+
+      if (typeof window.initFirebaseCloudSync === 'function') {
+        window.initFirebaseCloudSync();
+      }
     }
 
-    function resetToEmptyState() {
+    function resetToEmptyState(skipCloud = false) {
       appState = {
         accounts: [],
         categories: [],
         transactions: [],
         transfers: []
       };
-      saveState();
+      saveState(skipCloud);
     }
 
-    function saveState() {
+    function saveState(skipCloud = false) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       } catch (e) {}
       writeToIDB(appState);
+
+      if (!skipCloud && typeof window.scheduleCloudPush === 'function') {
+        window.scheduleCloudPush();
+      }
     }
 
     function generateId(prefix) {
@@ -3046,6 +3193,269 @@
 
     window.onload = initApp;
   </script>
+
+  <!-- ========================================================================
+       10. Firebase Google 登录与多用户自动云同步引擎
+       ======================================================================== -->
+  <script type="module">
+    import { initializeApp } from "[https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js](https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js)";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
+      signOut,
+      onAuthStateChanged
+    } from "[https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js](https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js)";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      onSnapshot
+    } from "[https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js](https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js)";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAVmYu103CWL6xqDEAUrLvCRuiD75rMJAI",
+      authDomain: "zhijian-ledger.firebaseapp.com",
+      projectId: "zhijian-ledger",
+      storageBucket: "zhijian-ledger.firebasestorage.app",
+      messagingSenderId: "165693740515",
+      appId: "1:165693740515:web:bef0e3017cd52977e3fcd6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    let currentCloudUser = null;
+    let unsubscribeSnapshot = null;
+    let cloudPushTimer = null;
+    let isApplyingRemoteUpdate = false;
+    let lastKnownCloudJson = '';
+
+    function updateCloudUI(state, text, user = null) {
+      const dot = document.getElementById('cloudSyncDot');
+      const label = document.getElementById('cloudSyncLabel');
+      const nameEl = document.getElementById('cloudUserName');
+      const avatarImg = document.getElementById('cloudUserAvatar');
+      const avatarFallback = document.getElementById('cloudAvatarFallback');
+      const signInBtn = document.getElementById('btnGoogleSignIn');
+      const signOutBtn = document.getElementById('btnGoogleSignOut');
+
+      dot.className = 'sync-dot ' + (state || '');
+      label.textContent = text;
+
+      if (user) {
+        nameEl.textContent = user.displayName || user.email || '已登录用户';
+        if (user.photoURL) {
+          avatarImg.src = user.photoURL;
+          avatarImg.classList.remove('hidden');
+          avatarFallback.classList.add('hidden');
+        } else {
+          avatarImg.classList.add('hidden');
+          avatarFallback.classList.remove('hidden');
+        }
+        signInBtn.classList.add('hidden');
+        signOutBtn.classList.remove('hidden');
+      } else {
+        nameEl.textContent = '本地离线记账模式';
+        avatarImg.classList.add('hidden');
+        avatarFallback.classList.remove('hidden');
+        signInBtn.classList.remove('hidden');
+        signOutBtn.classList.add('hidden');
+      }
+    }
+
+    function hasLocalData() {
+      return (
+        (appState.accounts && appState.accounts.length > 0) ||
+        (appState.categories && appState.categories.length > 0) ||
+        (appState.transactions && appState.transactions.length > 0) ||
+        (appState.transfers && appState.transfers.length > 0)
+      );
+    }
+
+    async function pushStateToCloud(immediate = false) {
+      if (!currentCloudUser || isApplyingRemoteUpdate) return;
+      const userDocRef = doc(db, 'users', currentCloudUser.uid, 'ledger', 'main');
+      const payload = {
+        accounts: appState.accounts || [],
+        categories: appState.categories || [],
+        transactions: appState.transactions || [],
+        transfers: appState.transfers || [],
+        updatedAt: Date.now()
+      };
+      const serialized = JSON.stringify({
+        accounts: payload.accounts,
+        categories: payload.categories,
+        transactions: payload.transactions,
+        transfers: payload.transfers
+      });
+      if (serialized === lastKnownCloudJson && !immediate) return;
+
+      updateCloudUI('syncing', '正在同步至云端...', currentCloudUser);
+      try {
+        await setDoc(userDocRef, payload, { merge: true });
+        lastKnownCloudJson = serialized;
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        updateCloudUI('synced', `云端已同步 (${hh}:${mm})`, currentCloudUser);
+      } catch (err) {
+        console.error('Cloud push failed:', err);
+        updateCloudUI('error', '云同步暂不可用，已安全保存至本地', currentCloudUser);
+      }
+    }
+
+    window.scheduleCloudPush = function () {
+      if (!currentCloudUser || isApplyingRemoteUpdate) return;
+      updateCloudUI('syncing', '正在保存更改...', currentCloudUser);
+      clearTimeout(cloudPushTimer);
+      cloudPushTimer = setTimeout(() => {
+        pushStateToCloud(false);
+      }, 600);
+    };
+
+    async function setupUserCloudSync(user) {
+      currentCloudUser = user;
+      updateCloudUI('syncing', '正在连接云端账本...', user);
+
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
+      const userDocRef = doc(db, 'users', user.uid, 'ledger', 'main');
+
+      try {
+        const snap = await getDoc(userDocRef);
+        if (!snap.exists()) {
+          // 云端尚无数据：若本地已有账目，自动迁移上传至云端
+          await pushStateToCloud(true);
+          if (hasLocalData()) {
+            showToast('已将本地现有账本自动迁移至你的云端账号！');
+          }
+        } else {
+          const data = snap.data();
+          const remoteState = {
+            accounts: Array.isArray(data.accounts) ? data.accounts : [],
+            categories: Array.isArray(data.categories) ? data.categories : [],
+            transactions: Array.isArray(data.transactions) ? data.transactions : [],
+            transfers: Array.isArray(data.transfers) ? data.transfers : []
+          };
+          const remoteHasData =
+            remoteState.accounts.length > 0 ||
+            remoteState.categories.length > 0 ||
+            remoteState.transactions.length > 0 ||
+            remoteState.transfers.length > 0;
+
+          if (!remoteHasData && hasLocalData()) {
+            await pushStateToCloud(true);
+          } else {
+            isApplyingRemoteUpdate = true;
+            appState = remoteState;
+            lastKnownCloudJson = JSON.stringify(remoteState);
+            saveState(true);
+            renderAll();
+            isApplyingRemoteUpdate = false;
+            updateCloudUI('synced', '已与云端保持同步', user);
+          }
+        }
+      } catch (err) {
+        console.error('Initial cloud fetch error:', err);
+        updateCloudUI('error', '连接云端失败，当前使用本地缓存', user);
+      }
+
+      // 开启多端实时监听
+      unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
+        if (!docSnap.exists() || docSnap.metadata.hasPendingWrites) return;
+        const data = docSnap.data();
+        const incoming = {
+          accounts: Array.isArray(data.accounts) ? data.accounts : [],
+          categories: Array.isArray(data.categories) ? data.categories : [],
+          transactions: Array.isArray(data.transactions) ? data.transactions : [],
+          transfers: Array.isArray(data.transfers) ? data.transfers : []
+        };
+        const incomingJson = JSON.stringify(incoming);
+        if (incomingJson === lastKnownCloudJson) return;
+
+        isApplyingRemoteUpdate = true;
+        appState = incoming;
+        lastKnownCloudJson = incomingJson;
+        saveState(true);
+        renderAll();
+        isApplyingRemoteUpdate = false;
+        updateCloudUI('synced', '已接收云端最新账目', user);
+      });
+    }
+
+    window.handleGoogleSignIn = async function () {
+      try {
+        updateCloudUI('syncing', '正在唤起 Google 登录...', null);
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        // 手机内嵌浏览器若拦截弹窗，自动降级为整页跳转登录
+        if (
+          err &&
+          (err.code === 'auth/popup-blocked' ||
+            err.code === 'auth/popup-closed-by-user' ||
+            err.code === 'auth/operation-not-supported-in-this-environment')
+        ) {
+          try {
+            await signInWithRedirect(auth, provider);
+          } catch (redirectErr) {
+            updateCloudUI('', '登录已取消，当前为本地模式', null);
+            showToast('登录失败：' + (redirectErr.message || '请稍后重试'));
+          }
+        } else {
+          updateCloudUI('', '登录未完成，当前为本地模式', null);
+          showToast('登录失败：' + (err.message || '请检查网络或授权域名'));
+        }
+      }
+    };
+
+    window.handleGoogleSignOut = function () {
+      showConfirmModal(
+        '退出 Google 账号',
+        '退出后将切换回本地离线模式（云端数据已安全保存，下次登录随时恢复）。确定要退出吗？',
+        async function () {
+          if (unsubscribeSnapshot) {
+            unsubscribeSnapshot();
+            unsubscribeSnapshot = null;
+          }
+          await signOut(auth);
+          currentCloudUser = null;
+          lastKnownCloudJson = '';
+          updateCloudUI('', '已退出登录，当前为本地模式', null);
+          showToast('已安全退出 Google 账号');
+        }
+      );
+    };
+
+    window.initFirebaseCloudSync = function () {
+      getRedirectResult(auth).catch(() => {});
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          setupUserCloudSync(user);
+        } else {
+          currentCloudUser = null;
+          if (unsubscribeSnapshot) {
+            unsubscribeSnapshot();
+            unsubscribeSnapshot = null;
+          }
+          updateCloudUI('', '登录 Google 账号即可开启跨设备云同步', null);
+        }
+      });
+    };
+
+    // 若 initApp 已先执行完毕，立即启动鉴权监听
+    if (document.readyState === 'complete') {
+      window.initFirebaseCloudSync();
+    }
+  </script>
 </body>
 </html>
-```
