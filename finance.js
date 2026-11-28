@@ -484,3 +484,105 @@ function computePeriodMetrics(startStr, endStr) {
     fundSourcesList
   };
 }
+
+function computeFinancialHealthMetrics(snap, metrics, bounds) {
+  // 1. 计算近3个月（含当前基准月）月均维持性支出，用于精确估算应急生存月数 (Runway)
+  let total3mEssential = 0;
+  let activeMonths = 0;
+  for (let i = 0; i < 3; i++) {
+    let y = currentYear;
+    let m = currentMonth - i;
+    while (m < 1) {
+      m += 12;
+      y -= 1;
+    }
+    const mb = buildBoundsForMonth(y, m);
+    const mm = computePeriodMetrics(mb.startStr, mb.endStr);
+    if (mm.essentialExpense > 0) {
+      total3mEssential += mm.essentialExpense;
+      activeMonths += 1;
+    }
+  }
+
+  let avgMonthlyEssential = activeMonths > 0 ? total3mEssential / activeMonths : 0;
+  if (avgMonthlyEssential <= 0 && metrics.essentialExpense > 0) {
+    avgMonthlyEssential = bounds.mode === 'year'
+      ? metrics.essentialExpense / 12
+      : (bounds.mode === 'week' ? metrics.essentialExpense * 4.33 : metrics.essentialExpense);
+  }
+
+  const runwayMonths = avgMonthlyEssential > 0
+    ? Number((snap.liquidCash / avgMonthlyEssential).toFixed(1))
+    : null;
+
+  let runwayStatus = '待积累基础开支数据';
+  let runwayColor = 'var(--text-secondary)';
+  if (runwayMonths !== null) {
+    if (runwayMonths >= 6) {
+      runwayStatus = '护城河充足 (≥6个月安全线)';
+      runwayColor = '#34D399';
+    } else if (runwayMonths >= 3) {
+      runwayStatus = '稳健安全 (建议冲刺6个月)';
+      runwayColor = '#60A5FA';
+    } else if (runwayMonths >= 1) {
+      runwayStatus = '起步储备 (需持续补充现金池)';
+      runwayColor = '#FBBF24';
+    } else {
+      runwayStatus = '防御偏薄 (建议优先留存应急金)';
+      runwayColor = '#F87171';
+    }
+  }
+
+  // 2. 刚性消费比 (维持性支出 / 周期新增总流入) & 弹性消费占比
+  const totalInflow = metrics.totalNewInflow;
+  const essentialRatio = totalInflow > 0
+    ? Number(((metrics.essentialExpense / totalInflow) * 100).toFixed(1))
+    : 0;
+  const discretionaryRatio = totalInflow > 0
+    ? Number(((metrics.discretionaryExpense / totalInflow) * 100).toFixed(1))
+    : 0;
+
+  let essentialNote = '本周期暂无新增资金流入';
+  if (totalInflow > 0) {
+    if (essentialRatio <= 40) {
+      essentialNote = `自律极佳 · 弹性消费占 ${discretionaryRatio}%`;
+    } else if (essentialRatio <= 65) {
+      essentialNote = `结构健康 · 弹性消费占 ${discretionaryRatio}%`;
+    } else {
+      essentialNote = `刚性成本偏高 · 弹性占 ${discretionaryRatio}%`;
+    }
+  }
+
+  // 3. 债务覆盖倍数 (流动资金 / 总负债)
+  const debtCoverRatio = snap.totalDebt > 0
+    ? Number((snap.liquidCash / snap.totalDebt).toFixed(2))
+    : null;
+
+  let debtCoverStatus = '零负债状态 · 财务完全无债一身轻';
+  let debtCoverColor = '#34D399';
+  if (snap.totalDebt > 0) {
+    if (debtCoverRatio >= 2) {
+      debtCoverStatus = `流动资金可 ${debtCoverRatio} 倍覆盖负债`;
+      debtCoverColor = '#34D399';
+    } else if (debtCoverRatio >= 1) {
+      debtCoverStatus = `流动资金可 ${debtCoverRatio} 倍全额覆盖`;
+      debtCoverColor = '#60A5FA';
+    } else {
+      debtCoverStatus = `流动资金覆盖 ${Math.round(debtCoverRatio * 100)}% 负债`;
+      debtCoverColor = '#FBBF24';
+    }
+  }
+
+  return {
+    avgMonthlyEssential: Number(avgMonthlyEssential.toFixed(2)),
+    runwayMonths,
+    runwayStatus,
+    runwayColor,
+    essentialRatio,
+    discretionaryRatio,
+    essentialNote,
+    debtCoverRatio,
+    debtCoverStatus,
+    debtCoverColor
+  };
+}

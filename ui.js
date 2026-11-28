@@ -902,9 +902,37 @@ function renderDetailView() {
     }).join('');
   }
 
+  const health = computeFinancialHealthMetrics(snap, metrics, bounds);
+
   const debtRatioEl = document.getElementById('detailDebtRatioBadge');
   if (debtRatioEl) {
     debtRatioEl.textContent = `资产负债率: ${snap.debtRatio.toFixed(1)}%`;
+  }
+
+  const runwayEl = document.getElementById('detailRunwayMonths');
+  const runwayNoteEl = document.getElementById('detailRunwayNote');
+  if (runwayEl && runwayNoteEl) {
+    runwayEl.textContent = health.runwayMonths !== null ? `${health.runwayMonths} 个月` : '充足 / 待测算';
+    runwayEl.style.color = health.runwayColor;
+    runwayNoteEl.textContent = health.avgMonthlyEssential > 0
+      ? `${health.runwayStatus} (月均刚需 ${formatMoney(health.avgMonthlyEssential)})`
+      : health.runwayStatus;
+  }
+
+  const essRatioEl = document.getElementById('detailEssentialRatio');
+  const essNoteEl = document.getElementById('detailEssentialNote');
+  if (essRatioEl && essNoteEl) {
+    essRatioEl.textContent = `${health.essentialRatio.toFixed(1)}%`;
+    essRatioEl.style.color = health.essentialRatio <= 50 ? '#38BDF8' : (health.essentialRatio <= 70 ? '#FBBF24' : '#F87171');
+    essNoteEl.textContent = health.essentialNote;
+  }
+
+  const debtCoverEl = document.getElementById('detailDebtCover');
+  const debtCoverNoteEl = document.getElementById('detailDebtCoverNote');
+  if (debtCoverEl && debtCoverNoteEl) {
+    debtCoverEl.textContent = snap.totalDebt > 0 ? `${health.debtCoverRatio} 倍` : '无负债';
+    debtCoverEl.style.color = health.debtCoverColor;
+    debtCoverNoteEl.textContent = health.debtCoverStatus;
   }
 
   document.getElementById('detailCashRetention').textContent = formatMoney(snap.liquidCash);
@@ -1398,9 +1426,14 @@ function buildPrintFinancialStatement(targetBounds = null) {
             <td>不计入常规收入但直接增加净资产的外部注入（如公司代缴公积金等）</td>
             <td class="num">+${formatMoney(metrics.externalDeposit)}</td>
           </tr>
-          <tr class="stmt-total-row">
-            <td colspan="2">六、期末流动资金现金留存总额（扣除投资/公积金/定期等资产后可用余额）</td>
+          <tr>
+            <td><strong>六、期末流动资金现金留存总额</strong></td>
+            <td>扣除投资/公积金/定期等资产后可随时动用余额</td>
             <td class="num">${formatMoney(snap.liquidCash)}</td>
+          </tr>
+          <tr class="stmt-total-row">
+            <td colspan="2">七、周期综合储蓄率与应急生存保障（月均刚性支出 ${formatMoney(computeFinancialHealthMetrics(snap, metrics, bounds).avgMonthlyEssential)}）</td>
+            <td class="num">储蓄率 ${metrics.savingsRate.toFixed(1)}% ｜ 可支撑 ${computeFinancialHealthMetrics(snap, metrics, bounds).runwayMonths !== null ? computeFinancialHealthMetrics(snap, metrics, bounds).runwayMonths + ' 个月' : '--'}</td>
           </tr>
         </tbody>
       </table>

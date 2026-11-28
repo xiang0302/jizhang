@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>智简账本 · 个人资产与现金流管理</title>
-  <link rel="stylesheet" href="style.css?v=14" />
+  <link rel="stylesheet" href="style.css?v=15" />
 </head>
 <body>
 
@@ -231,27 +231,42 @@
           <div id="detailAccountsList"></div>
         </div>
 
-        <!-- 2. 财务健康度指标 -->
+        <!-- 2. 财务健康度指标（六维体检仪表盘） -->
         <div class="detail-card">
           <div class="detail-card-title">
             <span>财务健康度指标</span>
-            <span id="detailDebtRatioBadge" style="font-size: 12px; color: var(--text-secondary);">资产负债率: 0.0%</span>
+            <span id="detailDebtRatioBadge" class="badge-live-tag">资产负债率: 0.0%</span>
           </div>
-          <div class="health-grid tabular-nums">
+          <div class="health-grid health-grid-6 tabular-nums">
+            <div class="health-item health-item-accent">
+              <div class="health-item-label">应急生存月数 (Runway)</div>
+              <div class="health-item-val" id="detailRunwayMonths" style="color: #34D399;">--</div>
+              <div class="health-item-sub" id="detailRunwayNote">按近3个月均维持支出测算</div>
+            </div>
             <div class="health-item">
               <div class="health-item-label">现金留存 (流动资金余额)</div>
               <div class="health-item-val text-asset" id="detailCashRetention">0.00</div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="detailMonthSurplusNote">本周期净结余: 0.00</div>
+              <div class="health-item-sub" id="detailMonthSurplusNote">本周期净结余: 0.00</div>
             </div>
             <div class="health-item">
               <div class="health-item-label" id="detailGrowthLabel">财富增加率 (环比上期净资产)</div>
               <div class="health-item-val" id="detailWealthGrowth">--</div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="detailPrevNetNote">上期净资产: 0.00</div>
+              <div class="health-item-sub" id="detailPrevNetNote">上期净资产: 0.00</div>
+            </div>
+            <div class="health-item">
+              <div class="health-item-label">刚性消费比 (维持支出/流入)</div>
+              <div class="health-item-val" id="detailEssentialRatio" style="color: #38BDF8;">0.0%</div>
+              <div class="health-item-sub" id="detailEssentialNote">衡量基本生活成本压力</div>
+            </div>
+            <div class="health-item">
+              <div class="health-item-label">债务覆盖倍数 (现金/负债)</div>
+              <div class="health-item-val" id="detailDebtCover" style="color: #34D399;">无负债</div>
+              <div class="health-item-sub" id="detailDebtCoverNote">零负债状态 · 财务完全无债</div>
             </div>
             <div class="health-item">
               <div class="health-item-label">总负债 (所有负债账户之和)</div>
               <div class="health-item-val text-debt" id="detailTotalDebt">0.00</div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">含信用卡及贷款欠款</div>
+              <div class="health-item-sub">含信用卡及贷款欠款</div>
             </div>
           </div>
         </div>
@@ -918,8 +933,8 @@
   </div>
 
   <!-- 按职责拆分的 3 个独立脚本模块 -->
-  <script src="finance.js?v=14"></script>
-  <script src="ui.js?v=14"></script>
+  <script src="finance.js?v=15"></script>
+  <script src="ui.js?v=15"></script>
   <script type="module" src="cloud.js"></script>
 </body>
 </html>
