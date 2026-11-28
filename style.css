@@ -2595,3 +2595,335 @@ button:active {
     width: 86px;
   }
 }
+
+/* ==========================================================================
+   视觉比例与按键克制感调优（v21）：收敛高光/阴影/边框，恢复主次呼吸感
+   ========================================================================== */
+.btn {
+  box-shadow: none !important;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: #2563EB !important;
+  color: #F8FAFC !important;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+}
+
+.btn-primary:hover {
+  background: #1D4ED8 !important;
+}
+
+.btn-accent {
+  background: #1E293B !important;
+  color: #6EE7B7 !important;
+  border: 1px solid rgba(52, 211, 153, 0.35) !important;
+}
+
+.btn-accent:hover {
+  background: #273549 !important;
+}
+
+.btn-secondary {
+  background: rgba(24, 34, 53, 0.72) !important;
+  color: #CBD5E1 !important;
+  border: 1px solid rgba(148, 163, 184, 0.16) !important;
+}
+
+.btn-secondary:hover {
+  background: rgba(33, 46, 70, 0.9) !important;
+  color: #F8FAFC !important;
+}
+
+.btn-google-login {
+  background: rgba(24, 34, 53, 0.8) !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+  box-shadow: none !important;
+  font-weight: 600;
+}
+
+/* 收敛总资产主卡与段位进度条的过重发光与投影，让数值与结构更稳重 */
+.hero-asset-card {
+  background: linear-gradient(145deg, #0C1322 0%, #14223E 58%, #0C2A24 100%) !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35) !important;
+  padding: 18px 18px 16px !important;
+}
+
+.hero-glow-orb {
+  opacity: 0.45;
+}
+
+.hero-cta-badge {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #E2E8F0 !important;
+  box-shadow: none !important;
+  font-weight: 600;
+}
+
+.hero-amount {
+  font-size: 32px !important;
+  margin-bottom: 10px !important;
+}
+
+@media (min-width: 640px) {
+  .hero-amount {
+    font-size: 38px !important;
+  }
+}
+
+.hero-milestone-box {
+  background: rgba(7, 11, 20, 0.36) !important;
+  border: 1px solid rgba(148, 163, 184, 0.12) !important;
+  padding: 8px 10px !important;
+  margin-bottom: 10px !important;
+}
+
+.hero-milestone-fill {
+  background: linear-gradient(90deg, #10B981 0%, #3B82F6 100%) !important;
+  box-shadow: none !important;
+}
+
+/* 统一卡片层级与边框克制感 */
+.detail-card,
+.accounts-section,
+.month-switcher-bar,
+.home-pulse-strip,
+.achievement-banner {
+  border-color: rgba(148, 163, 184, 0.12) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22) !important;
+}
+
+.achievement-banner {
+  background: linear-gradient(145deg, #0E1628 0%, #162440 60%, #0D2923 100%) !important;
+  padding: 14px 16px !important;
+}
+
+.ach-headline {
+  font-size: 17.5px !important;
+}
+
+.ach-score-ring {
+  width: 56px !important;
+  height: 56px !important;
+  border-width: 2px !important;
+  box-shadow: none !important;
+}
+
+.ach-score-num {
+  font-size: 13.5px !important;
+}
+
+/* 焦点舱首卡适度克制，避免抢占整体视觉重心 */
+#homeCategoriesList.layout-bento .category-grid-card:first-child {
+  background: linear-gradient(135deg, rgba(24, 34, 53, 0.92) 0%, rgba(16, 23, 38, 0.96) 100%) !important;
+  border: 1px solid rgba(96, 165, 250, 0.28) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+  padding: 13px 14px !important;
+}
+
+.filter-chip.active {
+  background: #2563EB !important;
+  border-color: #2563EB !important;
+  box-shadow: none !important;
+}
+
+/* ==========================================================================
+   v22：资金来源圆形占比图 + 隐藏式流水筛选抽屉
+   ========================================================================== */
+.source-donut-section {
+  background: rgba(9, 14, 26, 0.45);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 13px 14px;
+  margin-bottom: 16px;
+}
+
+.source-donut-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.source-donut-heading {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.source-donut-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.source-donut-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+@media (min-width: 580px) {
+  .source-donut-layout {
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+  }
+}
+
+.source-ring-wrap {
+  position: relative;
+  width: 156px;
+  height: 156px;
+  flex-shrink: 0;
+}
+
+.source-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  padding: 0 12px;
+}
+
+.source-ring-caption {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.source-ring-amount {
+  font-size: 15px;
+  font-weight: 800;
+  color: #34D399;
+  margin-top: 2px;
+}
+
+.source-legend-list {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.source-legend-item {
+  background: rgba(24, 34, 53, 0.52);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.source-legend-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+}
+
+.source-legend-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.source-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.source-legend-name {
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.source-legend-type {
+  font-size: 10px;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.source-legend-right {
+  text-align: right;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.source-legend-amt {
+  font-weight: 800;
+  color: #34D399;
+}
+
+.source-legend-pct {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: 5px;
+}
+
+.source-legend-sub {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  padding-left: 16px;
+}
+
+.ledger-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.ledger-list-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ledger-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ledger-active-tag {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.ledger-toggle-btn {
+  min-height: 30px !important;
+  padding: 4px 10px !important;
+  font-size: 12px !important;
+}
+
+.ledger-filter-drawer {
+  background: rgba(9, 14, 26, 0.55);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 10px;
+}

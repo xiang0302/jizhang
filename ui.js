@@ -1127,8 +1127,182 @@ function deleteTransferFromDetail(trId) {
   );
 }
 
+let ledgerDrawerOpen = false;
+
+const SOURCE_DONUT_PALETTE = [
+  '#34D399',
+  '#60A5FA',
+  '#A78BFA',
+  '#FBBF24',
+  '#38BDF8',
+  '#F472B6',
+  '#2DD4BF'
+];
+
+function toggleLedgerFilterDrawer() {
+  ledgerDrawerOpen = !ledgerDrawerOpen;
+  const drawer = document.getElementById('ledgerFilterDrawer');
+  const btnText = document.getElementById('ledgerDrawerBtnText');
+  if (drawer) {
+    drawer.classList.toggle('hidden', !ledgerDrawerOpen);
+  }
+  if (btnText) {
+    btnText.textContent = ledgerDrawerOpen ? '收起筛选' : '筛选与搜索';
+  }
+}
+
+function resetLedgerFilters() {
+  ledgerFilterMode = 'inflow';
+  ledgerAccountFilter = 'all';
+  ledgerSearchQuery = '';
+  document.querySelectorAll('#ledgerFilterChips .filter-chip').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-filter') === 'inflow');
+  });
+  const accSel = document.getElementById('ledgerAccountFilter');
+  if (accSel) accSel.value = 'all';
+  const searchInp = document.getElementById('ledgerSearchInput');
+  if (searchInp) searchInp.value = '';
+  renderDetailView();
+}
+
+function renderFundSourcesDonut(metrics, snap) {
+  const host = document.getElementById('fundSourcesDonutWrap');
+  const hintEl = document.getElementById('fundSourcesInitHint');
+  if (!host) return;
+
+  if (hintEl) {
+    const initAssets = snap.accountDetails.filter(a => a.type !== 'liability' && Number(a.initialBalance) > 0);
+    if (initAssets.length > 0) {
+      const initSum = initAssets.reduce((s, a) => s + Number(a.initialBalance), 0);
+      hintEl.textContent = `期初存量本金 ${formatMoney(initSum)}`;
+    } else {
+      hintEl.textContent = '';
+    }
+  }
+
+  const totalInflow = metrics.totalNewInflow;
+  const list = metrics.fundSourcesList || [];
+
+  if (totalInflow <= 0 || list.length === 0) {
+    const cx = 78, cy = 78, r = 58;
+    host.innerHTML = `
+      <div class="source-ring-wrap">
+        <svg width="156" height="156" viewBox="0 0 156 156">
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(148,163,184,0.16)" stroke-width="18" />
+        </svg>
+        <div class="source-ring-center">
+          <span class="source-ring-caption">本周期流入</span>
+          <strong class="source-ring-amount" style="color: var(--text-secondary);">0.00</strong>
+        </div>
+      </div>
+      <div class="empty-state" style="padding: 10px 4px; flex: 1;">
+        所选周期暂无新增资金流入记录（“收入”或“外部直接存入”类目）
+      </div>
+    `;
+    return;
+  }
+
+  const cx = 78, cy = 78, r = 58;
+  const circumference = 2 * Math.PI * r;
+  let accumulatedOffset = 0;
+
+  // 最多单独展示前 6 项，其余合并为「其他来源」，保证圆环与图例清爽美观
+  const topItems = list.length > 6 ? list.slice(0, 6) : list;
+  const restItems = list.length > 6 ? list.slice(6) : [];
+  const donutItems = topItems.map((item, idx) => ({
+    ...item,
+    color: SOURCE_DONUT_PALETTE[idx % SOURCE_DONUT_PALETTE.length]
+  }));
+
+  if (restItems.length > 0) {
+    const restAmt = restItems.reduce((s, x) => s + x.amount, 0);
+    const restCount = restItems.reduce((s, x) => s + x.count, 0);
+    donutItems.push({
+      name: `其他来源 (${restItems.length}项)`,
+      sourceType: '综合流入',
+      accountsDisplay: '多账户',
+      count: restCount,
+      amount: Number(restAmt.toFixed(2)),
+      color: '#94A3B8'
+    });
+  }
+
+  const arcsSvg = donutItems.map(seg => {
+    const ratio = Math.max(0, seg.amount / totalInflow);
+    const dashLen = ratio * circumference;
+    const circleHtml = `
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${seg.color}" stroke-width="18"
+        stroke-dasharray="${dashLen.toFixed(2)} ${circumference.toFixed(2)}"
+        stroke-dashoffset="${(-accumulatedOffset).toFixed(2)}"
+        transform="rotate(-90 ${cx} ${cy})" />
+    `;
+    accumulatedOffset += dashLen;
+    return circleHtml;
+  }).join('');
+
+  const legendHtml = donutItems.map(seg => {
+    const pct = ((seg.amount / totalInflow) * 100).toFixed(1);
+    const shortType = seg.sourceType.includes('收入') ? '收入' : (seg.sourceType.includes('存入') ? '外部存入' : '流入');
+    return `
+      <div class="source-legend-item">
+        <div class="source-legend-top">
+          <div class="source-legend-left">
+            <span class="source-swatch" style="background: ${seg.color};"></span>
+            <span class="source-legend-name">${escapeHtml(seg.name)}</span>
+            <span class="source-legend-type">${shortType}</span>
+          </div>
+          <div class="source-legend-right">
+            <span class="source-legend-amt">+${formatMoney(seg.amount)}</span>
+            <span class="source-legend-pct">${pct}%</span>
+          </div>
+        </div>
+        <div class="source-legend-sub">流向：${escapeHtml(seg.accountsDisplay)} · ${seg.count}笔</div>
+      </div>
+    `;
+  }).join('');
+
+  host.innerHTML = `
+    <div class="source-ring-wrap">
+      <svg width="156" height="156" viewBox="0 0 156 156" role="img" aria-label="资金来源占比环图">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(148,163,184,0.12)" stroke-width="18" />
+        ${arcsSvg}
+      </svg>
+      <div class="source-ring-center">
+        <span class="source-ring-caption">总流入</span>
+        <strong class="source-ring-amount">+${formatMoney(totalInflow)}</strong>
+      </div>
+    </div>
+    <div class="source-legend-list">
+      ${legendHtml}
+    </div>
+  `;
+}
+
 function renderFundDetailsSection(metrics, snap) {
   document.getElementById('detailTotalInflowBadge').textContent = `周期总流入: +${formatMoney(metrics.totalNewInflow)}`;
+
+  renderFundSourcesDonut(metrics, snap);
+
+  const filterNames = {
+    inflow: '全部流入',
+    income: '仅收入',
+    ext_deposit: '外部存入',
+    transfer: '账户互转',
+    all: '全部明细'
+  };
+  const activeTagEl = document.getElementById('ledgerActiveFilterTag');
+  if (activeTagEl) {
+    const baseLabel = filterNames[ledgerFilterMode] || '全部流入';
+    const extraParts = [];
+    if (ledgerAccountFilter && ledgerAccountFilter !== 'all') {
+      const fAcc = appState.accounts.find(a => a.id === ledgerAccountFilter);
+      if (fAcc) extraParts.push(fAcc.name);
+    }
+    if (ledgerSearchQuery) {
+      extraParts.push(`"${ledgerSearchQuery}"`);
+    }
+    activeTagEl.textContent = extraParts.length > 0 ? `${baseLabel} · ${extraParts.join(' · ')}` : baseLabel;
+  }
 
   // 同步更新账户筛选下拉框选项
   const accFilterSel = document.getElementById('ledgerAccountFilter');
@@ -1140,80 +1314,6 @@ function renderFundDetailsSection(metrics, snap) {
     accFilterSel.value = appState.accounts.some(a => a.id === prevVal) ? prevVal : 'all';
     ledgerAccountFilter = accFilterSel.value;
   }
-
-  const summaryBody = document.getElementById('fundSourcesSummaryBody');
-  const totalInflow = metrics.totalNewInflow;
-
-  let summaryRowsHtml = '';
-  if (metrics.fundSourcesList.length === 0) {
-    summaryRowsHtml = `
-      <tr>
-        <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">
-          所选周期内暂无新增资金流入记录（“收入”或“外部直接存入”类目）
-        </td>
-      </tr>
-    `;
-  } else {
-    summaryRowsHtml = metrics.fundSourcesList.map(src => {
-      const pct = totalInflow > 0 ? ((src.amount / totalInflow) * 100).toFixed(1) + '%' : '0.0%';
-      const isIncome = src.sourceType.includes('收入');
-      const shortType = isIncome ? '收入' : '外部存入';
-      return `
-        <tr>
-          <td>
-            <div class="tbl-primary-title">
-              <strong>${escapeHtml(src.name)}</strong>
-              <span class="tbl-count-note">(${src.count}笔)</span>
-            </div>
-            <div class="tbl-mobile-sub">
-              <span class="tag-pill ${isIncome ? 'badge-income' : 'badge-deposit'}">${shortType}</span>
-              <span class="tbl-acc-chip">${escapeHtml(src.accountsDisplay)}</span>
-            </div>
-          </td>
-          <td class="hide-mobile-col">
-            <span class="tag-pill ${isIncome ? 'badge-income' : 'badge-deposit'}">${escapeHtml(src.sourceType)}</span>
-          </td>
-          <td class="hide-mobile-col" style="color: var(--text-secondary);">${escapeHtml(src.accountsDisplay)}</td>
-          <td class="num-col text-asset" style="font-weight: 800;">+${formatMoney(src.amount)}</td>
-          <td class="num-col" style="font-weight: 700; color: var(--text-secondary);">${pct}</td>
-        </tr>
-      `;
-    }).join('');
-
-    summaryRowsHtml += `
-      <tr class="tbl-summary-total-row">
-        <td class="tbl-total-label-cell">合计新增资金流入</td>
-        <td class="hide-mobile-col"></td>
-        <td class="hide-mobile-col"></td>
-        <td class="num-col text-asset">+${formatMoney(totalInflow)}</td>
-        <td class="num-col">100%</td>
-      </tr>
-    `;
-  }
-
-  const initAccounts = snap.accountDetails.filter(a => Number(a.initialBalance) > 0);
-  if (initAccounts.length > 0) {
-    const totalInit = initAccounts.reduce((s, a) => s + (a.type === 'liability' ? 0 : Number(a.initialBalance)), 0);
-    if (totalInit > 0) {
-      const initDesc = initAccounts
-        .filter(a => a.type !== 'liability')
-        .map(a => `${escapeHtml(a.name)}(${formatMoney(a.initialBalance)})`)
-        .join('、');
-      summaryRowsHtml += `
-        <tr style="background: rgba(255, 255, 255, 0.02);">
-          <td class="tbl-init-label-cell">
-            <div style="font-weight: 700; color: var(--text-secondary);">存量本金 (期初余额)</div>
-            <div class="tbl-init-sub">${initDesc}</div>
-          </td>
-          <td class="hide-mobile-col"></td>
-          <td class="hide-mobile-col"></td>
-          <td class="num-col" style="font-weight: 700; color: var(--text-primary);">${formatMoney(totalInit)}</td>
-          <td class="num-col" style="font-size: 10.5px; color: var(--text-muted);">期初本金</td>
-        </tr>
-      `;
-    }
-  }
-  summaryBody.innerHTML = summaryRowsHtml;
 
   const bounds = getReportPeriodBounds();
   const periodTransfers = appState.transfers

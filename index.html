@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>智简账本 · 个人资产与现金流管理</title>
-  <link rel="stylesheet" href="style.css?v=20" />
+  <link rel="stylesheet" href="style.css?v=22" />
 </head>
 <body>
 
@@ -302,47 +302,48 @@
             <span class="tabular-nums inflow-pill-badge" id="detailTotalInflowBadge">周期总流入: +0.00</span>
           </div>
 
-          <!-- 3A. 资金来源结构汇总表 -->
-          <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px;">
-            一、资金来源结构分类汇总（含全部收入项目与外部直接存入）
-          </div>
-          <div class="ledger-data-table-wrap" style="margin-bottom: 16px;">
-            <table class="ledger-data-table tabular-nums">
-              <thead>
-                <tr>
-                  <th>资金来源项目</th>
-                  <th class="hide-mobile-col">来源性质</th>
-                  <th class="hide-mobile-col">流向账户</th>
-                  <th class="num-col">金额</th>
-                  <th class="num-col">占比</th>
-                </tr>
-              </thead>
-              <tbody id="fundSourcesSummaryBody"></tbody>
-            </table>
+          <!-- 3A. 资金来源圆形占比图与明细 -->
+          <div class="source-donut-section">
+            <div class="source-donut-head">
+              <span class="source-donut-heading">资金来源结构占比</span>
+              <span class="source-donut-sub" id="fundSourcesInitHint"></span>
+            </div>
+            <div id="fundSourcesDonutWrap" class="source-donut-layout tabular-nums"></div>
           </div>
 
-          <!-- 3B. 完整资金来源与流水明细清单 -->
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
-            <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary);">
-              二、完整资金流水明细清单
-            </span>
-            <div class="filter-chips" id="ledgerFilterChips" style="margin-bottom: 0;">
-              <button type="button" class="filter-chip active" data-filter="inflow" onclick="setLedgerFilter('inflow')">全部资金来源 (流入)</button>
-              <button type="button" class="filter-chip" data-filter="income" onclick="setLedgerFilter('income')">仅收入类</button>
+          <!-- 3B. 完整资金来源与流水明细清单（筛选工具默认隐藏收纳，点击按键展开） -->
+          <div class="ledger-list-header">
+            <div class="ledger-list-title-wrap">
+              <span class="source-donut-heading">完整资金流水明细</span>
+              <span id="ledgerResultCount" class="ledger-count-pill tabular-nums">0 条</span>
+            </div>
+            <div class="ledger-toolbar-right no-print">
+              <span id="ledgerActiveFilterTag" class="ledger-active-tag">全部资金来源</span>
+              <button type="button" class="btn btn-sm btn-secondary ledger-toggle-btn" id="btnToggleLedgerFilters" onclick="toggleLedgerFilterDrawer()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                <span id="ledgerDrawerBtnText">筛选与搜索</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="ledgerFilterDrawer" class="ledger-filter-drawer hidden no-print">
+            <div class="filter-chips" id="ledgerFilterChips">
+              <button type="button" class="filter-chip active" data-filter="inflow" onclick="setLedgerFilter('inflow')">全部流入</button>
+              <button type="button" class="filter-chip" data-filter="income" onclick="setLedgerFilter('income')">仅收入</button>
               <button type="button" class="filter-chip" data-filter="ext_deposit" onclick="setLedgerFilter('ext_deposit')">外部存入</button>
               <button type="button" class="filter-chip" data-filter="transfer" onclick="setLedgerFilter('transfer')">账户互转</button>
               <button type="button" class="filter-chip" data-filter="all" onclick="setLedgerFilter('all')">全部明细</button>
             </div>
+            <div class="ledger-subfilter-bar" style="margin-bottom: 0;">
+              <select id="ledgerAccountFilter" class="form-control ledger-mini-select" onchange="setLedgerAccountFilter(this.value)">
+                <option value="all">全部小账户</option>
+              </select>
+              <input type="text" id="ledgerSearchInput" class="form-control ledger-mini-search" placeholder="搜索项目名或备注..." oninput="setLedgerSearchQuery(this.value)" />
+              <button type="button" class="btn btn-sm btn-secondary" onclick="resetLedgerFilters()">重置</button>
+            </div>
           </div>
-          <div class="ledger-subfilter-bar no-print">
-            <select id="ledgerAccountFilter" class="form-control ledger-mini-select" onchange="setLedgerAccountFilter(this.value)">
-              <option value="all">全部小账户</option>
-            </select>
-            <input type="text" id="ledgerSearchInput" class="form-control ledger-mini-search" placeholder="搜索项目名或备注..." oninput="setLedgerSearchQuery(this.value)" />
-            <span id="ledgerResultCount" class="ledger-count-pill tabular-nums">0 条</span>
-          </div>
-          <div class="ledger-hint-line">提示：点击任意一行流水或互转记录，可直接修改或撤销</div>
-          </div>
+
+          <div class="ledger-hint-line">点击任意一行流水可修改或撤销</div>
           <div class="ledger-data-table-wrap">
             <table class="ledger-data-table tabular-nums">
               <thead>
@@ -990,8 +991,8 @@
   </div>
 
   <!-- 按职责拆分的 3 个独立脚本模块 -->
-  <script src="finance.js?v=20"></script>
-  <script src="ui.js?v=20"></script>
+  <script src="finance.js?v=22"></script>
+  <script src="ui.js?v=22"></script>
   <script type="module" src="cloud.js"></script>
 </body>
 </html>
