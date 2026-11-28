@@ -350,6 +350,8 @@ function renderAll() {
   renderHomeView();
   if (currentView === 'detail') {
     renderDetailView();
+  } else if (currentView === 'ledger') {
+    renderLedgerPageView();
   }
 }
 
@@ -358,14 +360,23 @@ function setLedgerFilter(filterMode) {
   document.querySelectorAll('#ledgerFilterChips .filter-chip').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-filter') === filterMode);
   });
-  renderDetailView();
+  if (currentView === 'ledger') renderLedgerPageView(); else renderDetailView();
 }
 
 function setReportPeriodMode(mode) {
   reportPeriodMode = mode;
-  document.getElementById('tabPeriodYear').classList.toggle('active', mode === 'year');
-  document.getElementById('tabPeriodMonth').classList.toggle('active', mode === 'month');
-  document.getElementById('tabPeriodWeek').classList.toggle('active', mode === 'week');
+  ['tabPeriodYear', 'ledgerTabYear'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', mode === 'year');
+  });
+  ['tabPeriodMonth', 'ledgerTabMonth'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', mode === 'month');
+  });
+  ['tabPeriodWeek', 'ledgerTabWeek'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', mode === 'week');
+  });
 
   if (mode === 'week') {
     const anchorDt = parseDateISO(reportWeekAnchor);
@@ -373,7 +384,11 @@ function setReportPeriodMode(mode) {
       reportWeekAnchor = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
     }
   }
-  renderDetailView();
+  if (currentView === 'ledger') {
+    renderLedgerPageView();
+  } else {
+    renderDetailView();
+  }
 }
 
 function changeReportPeriod(delta) {
@@ -453,23 +468,22 @@ function confirmExportReportToPDF() {
 
 function switchView(viewName, focusSection = null) {
   currentView = viewName;
-  if (viewName === 'home') {
-    document.getElementById('homeView').classList.remove('hidden');
-    document.getElementById('detailView').classList.add('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } else {
-    document.getElementById('homeView').classList.add('hidden');
-    document.getElementById('detailView').classList.remove('hidden');
+  const homeEl = document.getElementById('homeView');
+  const detailEl = document.getElementById('detailView');
+  const ledgerEl = document.getElementById('ledgerView');
+
+  if (homeEl) homeEl.classList.toggle('hidden', viewName !== 'home');
+  if (detailEl) detailEl.classList.toggle('hidden', viewName !== 'detail');
+  if (ledgerEl) ledgerEl.classList.toggle('hidden', viewName !== 'ledger');
+
+  if (viewName === 'detail') {
     renderDetailView();
-    if (focusSection === 'ledger') {
-      setTimeout(() => {
-        const target = document.getElementById('fundDetailsCard');
-        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 80);
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+  } else if (viewName === 'ledger') {
+    renderLedgerPageView();
+  } else {
+    renderHomeView();
   }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function changeMonth(delta) {
@@ -1047,8 +1061,9 @@ function renderDetailView() {
     growthEl.style.color = rate >= 0 ? '#34D399' : '#F87171';
   }
 
-  // 渲染第 3 板块：资金明细与所有资金来源
-  renderFundDetailsSection(metrics, snap);
+  // 渲染第 3 板块：资金来源结构占比环图
+  document.getElementById('detailTotalInflowBadge').textContent = `周期总流入: +${formatMoney(metrics.totalNewInflow)}`;
+  renderFundSourcesDonut(metrics, snap);
 
   const prevBounds = getPreviousPeriodBounds(bounds);
   const prevMetrics = computePeriodMetrics(prevBounds.startStr, prevBounds.endStr);
@@ -1090,12 +1105,12 @@ function renderDetailView() {
 
 function setLedgerAccountFilter(accId) {
   ledgerAccountFilter = accId || 'all';
-  renderDetailView();
+  if (currentView === 'ledger') renderLedgerPageView(); else renderDetailView();
 }
 
 function setLedgerSearchQuery(val) {
   ledgerSearchQuery = (val || '').trim().toLowerCase();
-  renderDetailView();
+  if (currentView === 'ledger') renderLedgerPageView(); else renderDetailView();
 }
 
 function openTxDirectlyFromDetail(txId) {
@@ -1162,7 +1177,7 @@ function resetLedgerFilters() {
   if (accSel) accSel.value = 'all';
   const searchInp = document.getElementById('ledgerSearchInput');
   if (searchInp) searchInp.value = '';
-  renderDetailView();
+  if (currentView === 'ledger') renderLedgerPageView(); else renderDetailView();
 }
 
 function renderFundSourcesDonut(metrics, snap) {
@@ -1470,6 +1485,22 @@ function renderFundDetailsSection(metrics, snap) {
       </tr>
     `;
   }).join('');
+}
+
+function renderLedgerPageView() {
+  const bounds = getReportPeriodBounds();
+  const labelEl = document.getElementById('ledgerPageMonthLabel');
+  if (labelEl) labelEl.textContent = bounds.label;
+
+  const snap = computeAssetsSnapshot(bounds.endStr);
+  const metrics = computePeriodMetrics(bounds.startStr, bounds.endStr);
+
+  const pageInflowEl = document.getElementById('ledgerPageInflowBadge');
+  if (pageInflowEl) {
+    pageInflowEl.textContent = `周期总流入: +${formatMoney(metrics.totalNewInflow)}`;
+  }
+
+  renderFundDetailsSection(metrics, snap);
 }
 
 function buildPrintFinancialStatement(targetBounds = null) {
