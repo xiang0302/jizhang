@@ -1157,27 +1157,36 @@ function renderFundDetailsSection(metrics, snap) {
     summaryRowsHtml = metrics.fundSourcesList.map(src => {
       const pct = totalInflow > 0 ? ((src.amount / totalInflow) * 100).toFixed(1) + '%' : '0.0%';
       const isIncome = src.sourceType.includes('收入');
+      const shortType = isIncome ? '收入' : '外部存入';
       return `
         <tr>
           <td>
-            <strong>${escapeHtml(src.name)}</strong>
-            <span style="font-size: 11px; color: var(--text-muted);">(${src.count}笔)</span>
+            <div class="tbl-primary-title">
+              <strong>${escapeHtml(src.name)}</strong>
+              <span class="tbl-count-note">(${src.count}笔)</span>
+            </div>
+            <div class="tbl-mobile-sub">
+              <span class="tag-pill ${isIncome ? 'badge-income' : 'badge-deposit'}">${shortType}</span>
+              <span class="tbl-acc-chip">${escapeHtml(src.accountsDisplay)}</span>
+            </div>
           </td>
-          <td>
+          <td class="hide-mobile-col">
             <span class="tag-pill ${isIncome ? 'badge-income' : 'badge-deposit'}">${escapeHtml(src.sourceType)}</span>
           </td>
-          <td style="color: var(--text-secondary);">${escapeHtml(src.accountsDisplay)}</td>
-          <td class="num-col text-asset" style="font-weight: 700;">+${formatMoney(src.amount)}</td>
-          <td class="num-col" style="font-weight: 600; color: var(--text-secondary);">${pct}</td>
+          <td class="hide-mobile-col" style="color: var(--text-secondary);">${escapeHtml(src.accountsDisplay)}</td>
+          <td class="num-col text-asset" style="font-weight: 800;">+${formatMoney(src.amount)}</td>
+          <td class="num-col" style="font-weight: 700; color: var(--text-secondary);">${pct}</td>
         </tr>
       `;
     }).join('');
 
     summaryRowsHtml += `
-      <tr style="background: var(--bg-subtle); font-weight: 800;">
-        <td colspan="3">合计新增资金流入（所有外部资金来源总和）</td>
+      <tr class="tbl-summary-total-row">
+        <td class="tbl-total-label-cell">合计新增资金流入</td>
+        <td class="hide-mobile-col"></td>
+        <td class="hide-mobile-col"></td>
         <td class="num-col text-asset">+${formatMoney(totalInflow)}</td>
-        <td class="num-col">100.0%</td>
+        <td class="num-col">100%</td>
       </tr>
     `;
   }
@@ -1186,14 +1195,20 @@ function renderFundDetailsSection(metrics, snap) {
   if (initAccounts.length > 0) {
     const totalInit = initAccounts.reduce((s, a) => s + (a.type === 'liability' ? 0 : Number(a.initialBalance)), 0);
     if (totalInit > 0) {
+      const initDesc = initAccounts
+        .filter(a => a.type !== 'liability')
+        .map(a => `${escapeHtml(a.name)}(${formatMoney(a.initialBalance)})`)
+        .join('、');
       summaryRowsHtml += `
         <tr style="background: rgba(255, 255, 255, 0.02);">
-          <td colspan="3" style="font-size: 12px; color: var(--text-secondary);">
-            <strong>存量本金来源（开账起始资产余额）</strong>：
-            ${initAccounts.filter(a => a.type !== 'liability').map(a => `${escapeHtml(a.name)}(${formatMoney(a.initialBalance)})`).join('、')}
+          <td class="tbl-init-label-cell">
+            <div style="font-weight: 700; color: var(--text-secondary);">存量本金 (期初余额)</div>
+            <div class="tbl-init-sub">${initDesc}</div>
           </td>
+          <td class="hide-mobile-col"></td>
+          <td class="hide-mobile-col"></td>
           <td class="num-col" style="font-weight: 700; color: var(--text-primary);">${formatMoney(totalInit)}</td>
-          <td class="num-col" style="font-size: 11px; color: var(--text-muted);">期初本金</td>
+          <td class="num-col" style="font-size: 10.5px; color: var(--text-muted);">期初本金</td>
         </tr>
       `;
     }
@@ -1282,20 +1297,25 @@ function renderFundDetailsSection(metrics, snap) {
   }
 
   ledgerBody.innerHTML = combinedItems.map(item => {
+    const shortDate = (item.date || '').length === 10 ? item.date.slice(5) : (item.date || '');
     if (item._isTransfer) {
       const fromAcc = appState.accounts.find(a => a.id === item.fromAccountId);
       const toAcc = appState.accounts.find(a => a.id === item.toAccountId);
       const accText = `${fromAcc ? fromAcc.name : '已删账户'} → ${toAcc ? toAcc.name : '已删账户'}`;
       return `
         <tr class="ledger-clickable-row" onclick="deleteTransferFromDetail('${item.id}')" title="点击撤销此笔账户互转">
-          <td style="white-space: nowrap; color: var(--text-secondary);">${item.date}</td>
+          <td class="tbl-date-cell"><span class="date-full">${item.date}</span><span class="date-short">${shortDate}</span></td>
           <td>
-            <strong>账户互转</strong>
-            ${item.note ? `<div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(item.note)}</div>` : ''}
+            <div class="tbl-primary-title"><strong>账户互转</strong></div>
+            <div class="tbl-mobile-sub">
+              <span class="tag-pill badge-deposit">内部互转</span>
+              <span class="tbl-acc-chip">${escapeHtml(accText)}</span>
+            </div>
+            ${item.note ? `<div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">${escapeHtml(item.note)}</div>` : ''}
           </td>
-          <td><span class="tag-pill badge-deposit">内部互转</span></td>
-          <td style="color: var(--text-secondary);">${escapeHtml(accText)}</td>
-          <td class="num-col"><span style="color: #93C5FD; font-weight: 700;">${formatMoney(item.amount)}</span></td>
+          <td class="hide-mobile-col"><span class="tag-pill badge-deposit">内部互转</span></td>
+          <td class="hide-mobile-col" style="color: var(--text-secondary);">${escapeHtml(accText)}</td>
+          <td class="num-col"><span style="color: #93C5FD; font-weight: 800;">${formatMoney(item.amount)}</span></td>
         </tr>
       `;
     }
@@ -1311,32 +1331,41 @@ function renderFundDetailsSection(metrics, snap) {
     }
 
     let typeBadge = '';
+    let shortBadge = '';
     let amountHtml = '';
     if (tx.kind === 'income') {
       typeBadge = `<span class="tag-pill badge-income">收入来源</span>`;
-      amountHtml = `<span class="text-asset" style="font-weight: 700;">+${formatMoney(tx.amount)}</span>`;
+      shortBadge = `<span class="tag-pill badge-income">收入</span>`;
+      amountHtml = `<span class="text-asset" style="font-weight: 800;">+${formatMoney(tx.amount)}</span>`;
     } else if (tx.kind === 'deposit') {
       const isExt = tx.sourceMode !== 'internal';
       typeBadge = `<span class="tag-pill badge-deposit">${isExt ? '外部存入' : '内部转存'}</span>`;
-      amountHtml = `<span style="color: var(--deposit-indigo); font-weight: 700;">+${formatMoney(tx.amount)}</span>`;
+      shortBadge = `<span class="tag-pill badge-deposit">${isExt ? '外部存入' : '内部转存'}</span>`;
+      amountHtml = `<span style="color: var(--deposit-indigo); font-weight: 800;">+${formatMoney(tx.amount)}</span>`;
     } else if (tx.kind === 'repay') {
       typeBadge = `<span class="tag-pill badge-deposit">还债</span>`;
-      amountHtml = `<span style="color: var(--deposit-indigo); font-weight: 700;">-${formatMoney(tx.amount)}</span>`;
+      shortBadge = `<span class="tag-pill badge-deposit">还债</span>`;
+      amountHtml = `<span style="color: var(--deposit-indigo); font-weight: 800;">-${formatMoney(tx.amount)}</span>`;
     } else {
       const isDis = tx.subType === 'discretionary';
       typeBadge = `<span class="tag-pill ${isDis ? 'badge-discretionary' : 'badge-essential'}">${isDis ? '非必要支出' : '维持支出'}</span>`;
-      amountHtml = `<span class="text-debt" style="font-weight: 700;">-${formatMoney(tx.amount)}</span>`;
+      shortBadge = `<span class="tag-pill ${isDis ? 'badge-discretionary' : 'badge-essential'}">${isDis ? '非必要' : '维持'}</span>`;
+      amountHtml = `<span class="text-debt" style="font-weight: 800;">-${formatMoney(tx.amount)}</span>`;
     }
 
     return `
       <tr class="ledger-clickable-row" onclick="openTxDirectlyFromDetail('${tx.id}')" title="点击修改或删除此笔流水">
-        <td style="white-space: nowrap; color: var(--text-secondary);">${tx.date}</td>
+        <td class="tbl-date-cell"><span class="date-full">${tx.date}</span><span class="date-short">${shortDate}</span></td>
         <td>
-          <strong>${escapeHtml(catName)}</strong>
-          ${tx.note ? `<div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(tx.note)}</div>` : ''}
+          <div class="tbl-primary-title"><strong>${escapeHtml(catName)}</strong></div>
+          <div class="tbl-mobile-sub">
+            ${shortBadge}
+            <span class="tbl-acc-chip">${escapeHtml(accText)}</span>
+          </div>
+          ${tx.note ? `<div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">${escapeHtml(tx.note)}</div>` : ''}
         </td>
-        <td>${typeBadge}</td>
-        <td style="color: var(--text-secondary);">${escapeHtml(accText)}</td>
+        <td class="hide-mobile-col">${typeBadge}</td>
+        <td class="hide-mobile-col" style="color: var(--text-secondary);">${escapeHtml(accText)}</td>
         <td class="num-col">${amountHtml}</td>
       </tr>
     `;
