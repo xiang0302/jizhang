@@ -4746,5 +4746,102 @@
   };
 })();
 </script>
+<script>
+(function () {
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="investNewModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'investNewModal')">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <h3 class="modal-title">新增投资账户</h3>
+          <button class="modal-close" onclick="closeModal('investNewModal')">&times;</button>
+        </div>
+        <form onsubmit="saveNewInvest(event)">
+          <div class="form-group">
+            <label class="form-label">投资账户名称</label>
+            <input type="text" id="invNewName" class="form-control" placeholder="例如：长期持仓、美股账户" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">已投入本金（没有就填 0）</label>
+            <input type="number" step="0.01" min="0" id="invNewCost" class="form-control tabular-nums" placeholder="0.00" value="0" required />
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">以后每月入金，用「存入」项目或「互转」记录，本金会自动累加。</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">当前现值（选填，不填则暂按本金计算）</label>
+            <input type="number" step="0.01" min="0" id="invNewValue" class="form-control tabular-nums" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">现值日期</label>
+            <input type="date" id="invNewDate" class="form-control tabular-nums" required />
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('investNewModal')">取消</button>
+            <button type="submit" class="btn btn-primary">确认创建</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `);
+
+  // 不带参数 = 新增投资账户；带账户 id = 沿用原来的「更新现值」
+  const baseOpen = window.openInvestModal;
+  window.openInvestModal = function (accId = null) {
+    if (accId) return baseOpen(accId);
+    document.getElementById('invNewName').value = '';
+    document.getElementById('invNewCost').value = '0';
+    document.getElementById('invNewValue').value = '';
+    document.getElementById('invNewDate').value = formatDateISO(new Date());
+    openModal('investNewModal');
+    setTimeout(() => document.getElementById('invNewName').focus(), 120);
+  };
+
+  window.saveNewInvest = function (e) {
+    e.preventDefault();
+    const name = document.getElementById('invNewName').value.trim();
+    const cost = parseFloat(document.getElementById('invNewCost').value) || 0;
+    const valueStr = document.getElementById('invNewValue').value;
+    const date = document.getElementById('invNewDate').value;
+    if (!name) return;
+    if (cost < 0) {
+      showToast('本金不能为负数');
+      return;
+    }
+
+    const acc = {
+      id: generateId('acc'),
+      name,
+      type: 'asset',
+      initialBalance: Number(cost.toFixed(2)),
+      isInvestment: true
+    };
+    if (valueStr !== '') {
+      const value = parseFloat(valueStr);
+      if (isNaN(value) || value < 0) {
+        showToast('请输入有效的现值');
+        return;
+      }
+      acc.marketValue = Number(value.toFixed(2));
+      acc.valueDate = date;
+    }
+
+    appState.accounts.push(acc);
+    saveState();
+    closeModal('investNewModal');
+    renderAll();
+    showToast(`已创建投资账户「${name}」`);
+  };
+
+  // 把面板上的按钮和空状态提示改成新说法
+  const baseHome = window.renderHomeView;
+  window.renderHomeView = function () {
+    baseHome();
+    const btn = document.querySelector('#investPanel .account-actions button');
+    if (btn) btn.textContent = '+ 新增投资账户';
+    const empty = document.querySelector('#investPanel .empty-state');
+    if (empty) {
+      empty.innerHTML = '点右上「+ 新增投资账户」创建一个，就能看到本金、现值、盈亏和占总资产比例。<br>每月入金用「存入」项目（目标选这个投资账户，从现金账户转入）或「互转」记录即可。';
+    }
+  };
+})();
+</script>
 </body>
 </html>
