@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>智简账本 · 个人资产与现金流管理</title>
-  <link rel="stylesheet" href="style.css?v=10" />
+  <link rel="stylesheet" href="style.css?v=11" />
 </head>
 <body>
 
@@ -42,19 +42,36 @@
         </div>
       </div>
 
-      <!-- 顶部总资产卡片（点击进入总资产详情页） -->
+      <!-- 顶部总资产殿堂级卡片（点击进入总资产详情页） -->
       <div class="hero-asset-card" id="openDetailBtn" role="button" tabindex="0">
+        <div class="hero-glow-orb"></div>
         <div class="hero-top-row">
           <span class="hero-label">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-            总资产 (所有资产类账户之和)
+            总资产 (所有资产账户之和)
           </span>
           <span class="hero-cta-badge">
             资金明细与财报
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
           </span>
         </div>
-        <div class="hero-amount tabular-nums" id="homeTotalAssets">0.00</div>
+
+        <div class="hero-amount-row">
+          <div class="hero-amount tabular-nums" id="homeTotalAssets">0.00</div>
+          <span class="hero-growth-pill tabular-nums" id="homeMonthDeltaBadge">本月 +0.00</span>
+        </div>
+
+        <!-- 净资产里程碑段位进度条 -->
+        <div class="hero-milestone-box">
+          <div class="hero-milestone-top">
+            <span class="milestone-tier-tag" id="homeMilestoneBadge">LV.1 启航 · 起步启航期</span>
+            <span class="milestone-target-text tabular-nums" id="homeMilestoneTarget">距离下一目标 1,000.00</span>
+          </div>
+          <div class="hero-milestone-track">
+            <div class="hero-milestone-fill" id="homeMilestoneBar" style="width: 0%;"></div>
+          </div>
+        </div>
+
         <div class="hero-sub-metrics tabular-nums">
           <div class="hero-sub-item">
             <span>净资产</span>
@@ -64,6 +81,28 @@
             <span>总负债</span>
             <strong id="homeTotalDebt" style="color: #FCA5A5;">0.00</strong>
           </div>
+          <div class="hero-sub-item">
+            <span>储蓄率</span>
+            <strong id="homeSavingsRate" style="color: #93C5FD;">0.0%</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- 本月战报速览条（净储蓄 / 资金流入 / 累计支出 一目了然） -->
+      <div class="home-pulse-strip tabular-nums" id="homePulseStrip">
+        <div class="pulse-cell">
+          <div class="pulse-label">本月净积累</div>
+          <div class="pulse-val" id="pulseNetCreated">+0.00</div>
+        </div>
+        <div class="pulse-divider"></div>
+        <div class="pulse-cell">
+          <div class="pulse-label">本月总流入</div>
+          <div class="pulse-val text-asset" id="pulseInflow">+0.00</div>
+        </div>
+        <div class="pulse-divider"></div>
+        <div class="pulse-cell">
+          <div class="pulse-label">本月总支出</div>
+          <div class="pulse-val" id="pulseExpense" style="color: #CBD5E1;">0.00</div>
         </div>
       </div>
 
@@ -106,7 +145,7 @@
         <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
           <button type="button" class="btn btn-sm btn-secondary" onclick="cycleHomeLayoutMode()" title="点击切换卡片排法，长按项目卡片可直接拖动排序">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-            <span id="layoutModeLabel">排法·混合</span>
+            <span id="layoutModeLabel">排法·焦点舱</span>
           </button>
           <button class="btn btn-sm btn-accent" onclick="openCategoryModal()">
             + 新增项目
@@ -151,11 +190,26 @@
           </div>
         </div>
 
-        <!-- 1. 核心资产概览 -->
+        <!-- 财报级成就勋章横幅（动态评估周期结余、储蓄率与段位） -->
+        <div class="achievement-banner tabular-nums" id="detailAchievementBanner">
+          <div class="ach-banner-top">
+            <div>
+              <div class="ach-kicker" id="achBannerKicker">PERIOD WEALTH REPORT · 财富成绩单</div>
+              <div class="ach-headline" id="achBannerHeadline">本周期净积累 +0.00</div>
+            </div>
+            <div class="ach-score-ring">
+              <div class="ach-score-num" id="achSavingsRateBig">0%</div>
+              <div class="ach-score-sub">储蓄率</div>
+            </div>
+          </div>
+          <div class="ach-tags-row" id="achBadgesRow"></div>
+        </div>
+
+        <!-- 1. 核心资产概览与配置结构 -->
         <div class="detail-card">
           <div class="detail-card-title">
             <span id="detailOverviewTitle">1. 核心资产概览 (截止该月末)</span>
-            <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">实时历史回溯</span>
+            <span class="badge-live-tag">实时历史回溯</span>
           </div>
           <div class="overview-summary-grid tabular-nums">
             <div class="stat-box">
@@ -164,9 +218,12 @@
             </div>
             <div class="stat-box highlight-net">
               <div class="stat-box-label">净资产 (总资产 - 总负债)</div>
-              <div class="stat-box-val" id="detailNetWorth" style="color: #93C5FD;">0.00</div>
+              <div class="stat-box-val" id="detailNetWorth" style="color: #6EE7B7;">0.00</div>
             </div>
           </div>
+
+          <!-- 资产配置比例条（流动资金 / 投资持仓 / 长期锁仓） -->
+          <div id="assetAllocationBarWrap" class="asset-alloc-box"></div>
 
           <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); margin: 14px 0 6px;">
             持有的各个小账户明细列表（支持修改名称、校准起始金额或删除）
@@ -178,6 +235,7 @@
         <div class="detail-card">
           <div class="detail-card-title">
             <span>2. 财务健康度指标</span>
+            <span id="detailDebtRatioBadge" style="font-size: 12px; color: var(--text-secondary);">资产负债率: 0.0%</span>
           </div>
           <div class="health-grid tabular-nums">
             <div class="health-item">
@@ -202,7 +260,7 @@
         <div class="detail-card" id="fundDetailsCard">
           <div class="detail-card-title">
             <span>3. 资金明细与所有资金来源</span>
-            <span class="tabular-nums" style="font-size: 13px; color: #34D399;" id="detailTotalInflowBadge">周期总流入: +0.00</span>
+            <span class="tabular-nums inflow-pill-badge" id="detailTotalInflowBadge">周期总流入: +0.00</span>
           </div>
 
           <!-- 3A. 资金来源结构汇总表 -->
@@ -850,8 +908,8 @@
   </div>
 
   <!-- 按职责拆分的 3 个独立脚本模块 -->
-  <script src="finance.js"></script>
-  <script src="ui.js?v=10"></script>
+  <script src="finance.js?v=11"></script>
+  <script src="ui.js?v=11"></script>
   <script type="module" src="cloud.js"></script>
 </body>
 </html>

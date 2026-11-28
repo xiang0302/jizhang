@@ -2,36 +2,39 @@
    1. 设计令牌 (Design Tokens) & 全局深色模式
    ========================================================================== */
 :root {
-  --bg-app: #090E1A;
-  --bg-card: #111827;
-  --bg-subtle: #1A2333;
-  --bg-hover: #232F44;
-  --text-primary: #F1F5F9;
+  --bg-app: #070B14;
+  --bg-card: #101726;
+  --bg-subtle: #182235;
+  --bg-hover: #212E46;
+  --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
   --text-muted: #64748B;
-  --border-color: #1F2937;
-  --border-strong: #334155;
+  --border-color: rgba(148, 163, 184, 0.12);
+  --border-strong: rgba(148, 163, 184, 0.24);
 
-  /* 语义色彩：深色金融科技配色 */
+  /* 语义色彩：深色私人银行与金融科技配色 */
   --brand-primary: #3B82F6;
   --brand-accent: #2563EB;
   --asset-green: #10B981;
-  --asset-green-bg: rgba(16, 185, 129, 0.14);
+  --asset-green-bright: #34D399;
+  --asset-green-bg: rgba(16, 185, 129, 0.15);
+  --gold-accent: #F59E0B;
+  --gold-bright: #FCD34D;
   --debt-red: #F87171;
-  --debt-red-bg: rgba(239, 68, 68, 0.14);
+  --debt-red-bg: rgba(239, 68, 68, 0.15);
   --discretionary-amber: #FBBF24;
-  --discretionary-amber-bg: rgba(245, 158, 11, 0.15);
+  --discretionary-amber-bg: rgba(245, 158, 11, 0.16);
   --deposit-indigo: #818CF8;
-  --deposit-indigo-bg: rgba(99, 102, 241, 0.16);
+  --deposit-indigo-bg: rgba(99, 102, 241, 0.17);
   --essential-slate: #38BDF8;
-  --essential-slate-bg: rgba(14, 165, 233, 0.15);
+  --essential-slate-bg: rgba(14, 165, 233, 0.16);
 
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 22px;
-  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 12px 28px -6px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.28);
+  --shadow-md: 0 14px 32px -6px rgba(0, 0, 0, 0.52);
+  --shadow-lg: 0 24px 52px -12px rgba(0, 0, 0, 0.72);
 }
 
 * {
@@ -44,6 +47,9 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   background-color: var(--bg-app);
+  background-image:
+    radial-gradient(circle at 18% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 42%),
+    radial-gradient(circle at 85% 6%, rgba(59, 130, 246, 0.09) 0%, transparent 45%);
   color: var(--text-primary);
   line-height: 1.5;
   min-height: 100vh;
@@ -56,11 +62,10 @@ body {
   font-feature-settings: "tnum";
 }
 
-/* 主容器响应式布局 */
 .app-container {
   max-width: 840px;
   margin: 0 auto;
-  padding: 16px 16px 88px;
+  padding: 14px 15px 92px;
 }
 
 @media (min-width: 640px) {
@@ -73,10 +78,11 @@ body {
    顶部云同步与账号状态栏
    ========================================================================== */
 .cloud-sync-bar {
-  background: var(--bg-card);
+  background: rgba(16, 23, 38, 0.88);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 10px 14px;
+  padding: 9px 13px;
   margin-bottom: 12px;
   display: flex;
   align-items: center;
@@ -99,6 +105,7 @@ body {
   border-radius: 50%;
   object-fit: cover;
   background: var(--bg-subtle);
+  border: 1.5px solid rgba(110, 231, 183, 0.4);
   flex-shrink: 0;
 }
 
@@ -154,7 +161,7 @@ body {
 
 .sync-dot.synced {
   background: #10B981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.22);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.24);
 }
 
 .sync-dot.syncing {
@@ -183,7 +190,7 @@ body {
   align-items: center;
   gap: 6px;
   white-space: nowrap;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .btn-google-login:hover {
@@ -226,19 +233,19 @@ button:active {
 }
 
 .btn-primary {
-  background: #2563EB;
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
   color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.32);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.34);
 }
 
 .btn-primary:hover {
-  background: #1D4ED8;
+  filter: brightness(1.08);
 }
 
 .btn-accent {
-  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
   color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.32);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.32);
 }
 
 .btn-accent:hover {
@@ -362,15 +369,18 @@ button:active {
 }
 
 /* ==========================================================================
-   3. 主页顶部：总资产卡片 & 小账户网格区 & 投资面板
+   3. 主页顶部：总资产殿堂级卡片 & 财富里程碑 & 战报速览条
    ========================================================================== */
 .hero-asset-card {
-  background: linear-gradient(135deg, #0F172A 0%, #172554 55%, #064E3B 100%);
+  background: linear-gradient(135deg, #070D1D 0%, #172A5C 48%, #064E3B 100%);
   color: #FFFFFF;
-  border: 1px solid rgba(96, 165, 250, 0.25);
+  border: 1px solid rgba(110, 231, 183, 0.38);
   border-radius: var(--radius-lg);
-  padding: 20px 22px;
-  box-shadow: var(--shadow-md);
+  padding: 20px 20px 18px;
+  box-shadow:
+    0 20px 42px -12px rgba(16, 185, 129, 0.25),
+    0 14px 30px -6px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -379,19 +389,17 @@ button:active {
 
 .hero-asset-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-  border-color: rgba(110, 231, 183, 0.45);
+  border-color: rgba(110, 231, 183, 0.65);
 }
 
-.hero-asset-card::after {
-  content: "";
+.hero-glow-orb {
   position: absolute;
-  right: -30px;
-  top: -40px;
-  width: 170px;
-  height: 170px;
+  right: -35px;
+  top: -45px;
+  width: 190px;
+  height: 190px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.26) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.32) 0%, rgba(59, 130, 246, 0.12) 45%, transparent 72%);
   pointer-events: none;
 }
 
@@ -401,12 +409,14 @@ button:active {
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-label {
   font-size: 13px;
   color: #CBD5E1;
-  font-weight: 500;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -415,51 +425,183 @@ button:active {
 .hero-cta-badge {
   font-size: 11.5px;
   color: #6EE7B7;
-  background: rgba(16, 185, 129, 0.2);
-  border: 1px solid rgba(110, 231, 183, 0.25);
+  background: rgba(16, 185, 129, 0.22);
+  border: 1px solid rgba(110, 231, 183, 0.36);
   padding: 4px 10px;
   border-radius: 999px;
-  font-weight: 600;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   gap: 3px;
   white-space: nowrap;
   flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.2);
+}
+
+.hero-amount-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-amount {
-  font-size: 34px;
+  font-size: 35px;
   font-weight: 800;
   letter-spacing: -0.8px;
-  margin-bottom: 12px;
-  color: #FFFFFF;
+  line-height: 1.1;
+  background: linear-gradient(180deg, #FFFFFF 20%, #D1FAE5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 @media (min-width: 640px) {
   .hero-amount {
-    font-size: 40px;
+    font-size: 42px;
   }
 }
 
-.hero-sub-metrics {
+.hero-growth-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.22);
+  border: 1px solid rgba(110, 231, 183, 0.35);
+  color: #6EE7B7;
+}
+
+.hero-growth-pill.is-negative {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(252, 165, 165, 0.35);
+  color: #FCA5A5;
+}
+
+/* 净资产段位里程碑进度条 */
+.hero-milestone-box {
+  background: rgba(9, 14, 26, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 9px 11px;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-milestone-top {
   display: flex;
-  gap: 20px;
-  padding-top: 12px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.milestone-tier-tag {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #FCD34D;
+  letter-spacing: 0.2px;
+}
+
+.milestone-target-text {
+  font-size: 11px;
+  color: #CBD5E1;
+  font-weight: 600;
+}
+
+.hero-milestone-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.hero-milestone-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #34D399 0%, #60A5FA 55%, #FCD34D 100%);
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.6);
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hero-sub-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding-top: 11px;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
-  font-size: 13px;
+  font-size: 12.5px;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-sub-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .hero-sub-item span:first-child {
+  font-size: 11px;
   color: #94A3B8;
-  margin-right: 6px;
+}
+
+.hero-sub-item strong {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* 本月战报速览条 */
+.home-pulse-strip {
+  margin-top: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 11px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+}
+
+.pulse-cell {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.pulse-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.pulse-val {
+  font-size: 14.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pulse-divider {
+  width: 1px;
+  height: 26px;
+  background: var(--border-strong);
+  flex-shrink: 0;
 }
 
 /* 小账户与投资管理区块 */
 .accounts-section {
-  margin-top: 16px;
+  margin-top: 14px;
   background: var(--bg-card);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 15px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
 }
@@ -502,10 +644,11 @@ button:active {
 }
 
 .account-mini-card {
-  flex: 0 0 148px;
+  flex: 0 0 154px;
   scroll-snap-align: start;
-  background: linear-gradient(160deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  background: linear-gradient(155deg, rgba(24, 34, 53, 0.96) 0%, rgba(12, 18, 32, 0.98) 100%);
   border: 1px solid var(--border-strong);
+  border-top: 2.5px solid #34D399;
   border-radius: 14px;
   padding: 11px 12px;
   display: flex;
@@ -514,6 +657,14 @@ button:active {
   position: relative;
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.account-mini-card.is-debt {
+  border-top-color: #F87171;
+}
+
+.account-mini-card.is-invest {
+  border-top-color: #60A5FA;
 }
 
 .account-mini-card:hover {
@@ -532,7 +683,7 @@ button:active {
 
 .account-name {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   word-break: break-word;
 }
@@ -546,7 +697,7 @@ button:active {
 
 .account-transfer-shortcut {
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.06);
   padding: 2px 6px;
   border-radius: 6px;
   font-size: 11px;
@@ -558,12 +709,12 @@ button:active {
 
 .account-transfer-shortcut:hover {
   color: #93C5FD;
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(59, 130, 246, 0.24);
 }
 
 .account-balance {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 16.5px;
+  font-weight: 800;
 }
 
 .text-asset {
@@ -575,14 +726,15 @@ button:active {
 }
 
 .account-type-tag {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--text-muted);
-  margin-top: 3px;
+  margin-top: 4px;
 }
 
-/* 投资面板样式：手机端 2x2 清晰宫格，桌面端 4 列横排 */
+/* 投资面板样式 */
 #investPanel {
-  background: linear-gradient(135deg, rgba(17, 24, 39, 0.96) 0%, rgba(23, 37, 84, 0.45) 100%);
+  background: linear-gradient(135deg, rgba(16, 23, 38, 0.98) 0%, rgba(23, 37, 84, 0.48) 100%);
+  border-color: rgba(96, 165, 250, 0.22);
 }
 
 .invest-summary {
@@ -590,9 +742,9 @@ button:active {
   grid-template-columns: repeat(2, 1fr);
   gap: 10px 14px;
   padding: 12px 14px;
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(9, 14, 26, 0.65);
   border-radius: 12px;
-  border: 1px solid rgba(96, 165, 250, 0.18);
+  border: 1px solid rgba(96, 165, 250, 0.2);
   margin-bottom: 6px;
 }
 
@@ -650,7 +802,7 @@ button:active {
 }
 
 /* ==========================================================================
-   4. 月份切换器 & 分类板块化记账项目区（支持 4 种排法自由切换）
+   4. 月份切换器 & 分类板块化记账项目区（5 种排法自由切换）
    ========================================================================== */
 .month-switcher-bar {
   display: flex;
@@ -661,7 +813,7 @@ button:active {
   background: var(--bg-card);
   border-radius: var(--radius-md);
   padding: 10px 12px;
-  margin-top: 18px;
+  margin-top: 16px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
 }
@@ -722,19 +874,19 @@ button:active {
 
 .cat-section-title {
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-primary);
 }
 
 .cat-section-count {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-muted);
 }
 
 .cat-section-total {
   margin-left: auto;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .cat-section-empty {
@@ -763,20 +915,136 @@ button:active {
 }
 
 .category-grid-card {
-  background: var(--bg-card);
+  background: linear-gradient(160deg, #131C2E 0%, #0E1524 100%);
   border: 1px solid var(--border-color);
-  border-radius: 14px;
+  border-radius: 15px;
   padding: 12px 13px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 8px;
   cursor: pointer;
-  transition: transform 0.15s, border-color 0.15s, background 0.15s;
+  transition: transform 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
   min-width: 0;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-/* --- 排法 1（默认混合）：第 2 组及之后转为横向单列行（仅在 layout-hybrid 下生效） --- */
+.category-grid-card:hover {
+  border-color: #60A5FA;
+  background: var(--bg-subtle);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* --- 排法 1（焦点舱 layout-bento）：首位项目双列高亮旗舰卡 --- */
+#homeCategoriesList.layout-bento .categories-grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 11px;
+}
+
+@media (min-width: 640px) {
+  #homeCategoriesList.layout-bento .categories-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 13px;
+  }
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child {
+  grid-column: span 2;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 16px;
+  background: linear-gradient(125deg, rgba(16, 185, 129, 0.16) 0%, rgba(24, 34, 53, 0.96) 45%, rgba(59, 130, 246, 0.22) 100%);
+  border: 1.5px solid rgba(110, 231, 183, 0.42);
+  box-shadow: 0 12px 28px -10px rgba(16, 185, 129, 0.25), 0 10px 24px -8px rgba(0, 0, 0, 0.6);
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .cat-grid-top {
+  display: contents;
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .category-icon-box {
+  order: 1;
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+  border-radius: 12px;
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .cat-grid-mid {
+  order: 2;
+  flex: 1;
+  min-width: 0;
+  margin-left: 10px;
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .category-name {
+  font-size: 16px;
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .milestone-rank-chip {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(110, 231, 183, 0.45);
+  color: #6EE7B7;
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .cat-grid-bottom {
+  order: 3;
+  text-align: right;
+  margin-right: 6px;
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .category-month-sum {
+  font-size: 20px;
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .category-action-btns {
+  order: 4;
+}
+
+/* --- 排法 2（阶梯成就流 layout-milestone）：带占比光带条 --- */
+#homeCategoriesList.layout-milestone .categories-grid {
+  grid-template-columns: 1fr;
+  gap: 9px;
+}
+
+#homeCategoriesList.layout-milestone .category-grid-card {
+  position: relative;
+  padding: 12px 14px 14px 16px;
+  border-left: 4px solid #34D399;
+  background: linear-gradient(90deg, rgba(24, 34, 53, 0.85) 0%, rgba(16, 23, 38, 0.98) 50%);
+  overflow: hidden;
+}
+
+#homeCategoriesList.layout-milestone .category-grid-card::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  width: var(--progress-pct, 0%);
+  background: linear-gradient(90deg, #3B82F6 0%, #34D399 100%);
+  border-radius: 0 4px 0 0;
+  transition: width 0.35s ease;
+}
+
+.milestone-rank-chip {
+  font-size: 10px;
+  font-weight: 800;
+  color: #93C5FD;
+  background: rgba(59, 130, 246, 0.16);
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  padding: 1px 5px;
+  border-radius: 6px;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+/* --- 排法 3（混合排法 layout-hybrid） --- */
 #homeCategoriesList.layout-hybrid .cat-section:nth-child(n+2) .categories-grid {
   grid-template-columns: 1fr;
   gap: 8px;
@@ -787,7 +1055,6 @@ button:active {
   align-items: center;
   padding: 11px 12px;
   gap: 10px;
-  background: rgba(17, 24, 39, 0.72);
 }
 
 #homeCategoriesList.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-top {
@@ -831,7 +1098,7 @@ button:active {
   margin-left: 2px;
 }
 
-/* --- 排法 2（双列网格）：所有分类全部采用 2 列方块网格卡片 --- */
+/* --- 排法 4（双列网格 layout-grid） --- */
 #homeCategoriesList.layout-grid .categories-grid {
   grid-template-columns: repeat(2, 1fr);
 }
@@ -842,7 +1109,7 @@ button:active {
   }
 }
 
-/* --- 排法 3（三列紧凑网格）：手机端一排 3 个小方块 --- */
+/* --- 排法 5（三列紧凑网格 layout-grid3） --- */
 #homeCategoriesList.layout-grid3 .categories-grid {
   grid-template-columns: repeat(3, 1fr);
   gap: 7px;
@@ -889,67 +1156,6 @@ button:active {
 
 .layout-grid3 .category-sub {
   font-size: 10px;
-}
-
-/* --- 排法 4（全横向列表）：所有分类全部采用单列横向列表 --- */
-#homeCategoriesList.layout-list .categories-grid {
-  grid-template-columns: 1fr;
-  gap: 8px;
-}
-
-.layout-list .category-grid-card {
-  flex-direction: row;
-  align-items: center;
-  padding: 10px 12px;
-  gap: 10px;
-}
-
-.layout-list .cat-grid-top {
-  display: contents;
-}
-
-.layout-list .cat-grid-top .category-icon-box {
-  order: 1;
-  flex-shrink: 0;
-}
-
-.layout-list .cat-grid-mid {
-  order: 2;
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.layout-list .cat-grid-mid .category-name {
-  margin-bottom: 0;
-}
-
-.layout-list .cat-grid-mid .tag-pill {
-  align-self: flex-start;
-}
-
-.layout-list .cat-grid-bottom {
-  order: 3;
-  padding-top: 0;
-  border-top: none;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.layout-list .cat-grid-top .category-action-btns {
-  order: 4;
-  display: flex;
-  flex-shrink: 0;
-  margin-left: 2px;
-}
-
-.category-grid-card:hover {
-  border-color: #60A5FA;
-  background: var(--bg-subtle);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
 }
 
 .cat-grid-top {
@@ -1005,7 +1211,7 @@ button:active {
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .icon-btn:hover {
@@ -1041,7 +1247,7 @@ button:active {
 }
 
 .category-month-sum {
-  font-size: 17px;
+  font-size: 17.5px;
   font-weight: 800;
   line-height: 1.25;
   white-space: nowrap;
@@ -1058,153 +1264,158 @@ button:active {
   text-overflow: ellipsis;
 }
 
-/* ==========================================================================
-   拖动排序弹窗样式
-   ========================================================================== */
-.sortable-sections-wrap {
-  max-height: 44vh;
-  overflow-y: auto;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 8px;
-  background: var(--bg-app);
+/* 长按直接拖动排序样式 */
+.category-grid-card.card-placeholder {
+  opacity: 0.25 !important;
+  border: 2px dashed #60A5FA !important;
+  background: rgba(37, 99, 235, 0.12) !important;
+  transform: scale(0.95) !important;
 }
 
-.sort-group-block {
-  margin-bottom: 10px;
+.categories-grid.is-sorting .category-grid-card:not(.card-placeholder) {
+  transform: scale(0.97);
 }
 
-.sort-group-block:last-child {
-  margin-bottom: 0;
+.drag-floating-clone {
+  position: fixed !important;
+  margin: 0 !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+  background: #1E293B !important;
+  border: 2px solid #60A5FA !important;
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.78), 0 0 0 4px rgba(96, 165, 250, 0.28) !important;
+  transform: scale(1.05) !important;
+  opacity: 1 !important;
+  transition: none !important;
 }
 
-.sort-group-title {
-  font-size: 11.5px;
+.drag-status-banner {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%);
+  color: #FFFFFF;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--text-secondary);
-  padding: 4px 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.sort-item-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 9px 10px;
-  margin-top: 5px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-strong);
-  border-radius: 9px;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: none;
-  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
-}
-
-.sort-item-row * {
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.sort-move-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-primary);
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-strong);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.sort-move-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.sort-item-row.dragging {
-  opacity: 0.92;
-  border-color: #60A5FA;
-  background: var(--bg-hover);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-  z-index: 10;
-}
-
-.sort-item-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  flex: 1;
-}
-
-.sort-rank-badge {
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  background: var(--bg-subtle);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.sort-group-list .sort-item-row:first-child .sort-rank-badge {
-  background: rgba(59, 130, 246, 0.22);
-  color: #60A5FA;
-}
-
-.sort-item-name {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-primary);
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  pointer-events: none;
+  animation: fadeInDown 0.16s ease;
 }
 
-.sort-item-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.sort-drag-handle {
-  width: 30px;
-  height: 28px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  background: var(--bg-subtle);
-  cursor: grab;
-  font-size: 14px;
-}
-
-.sort-drag-handle:active {
-  cursor: grabbing;
-  color: #60A5FA;
+.cat-section-head .drag-hint-pill {
+  font-size: 10px;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1px 7px;
+  border-radius: 999px;
 }
 
 /* ==========================================================================
-   5. 总资产详情页 & 资金明细 (Detail View)
+   5. 次界面：总资产详情页 & 资金明细 (Detail View 成就感升级)
    ========================================================================== */
 .detail-header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
+}
+
+/* 周期财富成绩单横幅 */
+.achievement-banner {
+  margin-top: 14px;
+  background: linear-gradient(135deg, #0D162C 0%, #172B56 52%, #064E3B 100%);
+  border: 1px solid rgba(110, 231, 183, 0.35);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.ach-banner-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.ach-kicker {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #6EE7B7;
+  margin-bottom: 4px;
+}
+
+.ach-headline {
+  font-size: 20px;
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1.25;
+}
+
+.ach-score-ring {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(9, 14, 26, 0.55);
+  border: 2.5px solid #34D399;
+  box-shadow: 0 0 18px rgba(52, 211, 153, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ach-score-num {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #6EE7B7;
+  line-height: 1.1;
+}
+
+.ach-score-sub {
+  font-size: 10px;
+  color: #CBD5E1;
+  margin-top: 2px;
+}
+
+.ach-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.ach-medal-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #F8FAFC;
+}
+
+.ach-medal-pill.gold {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(252, 211, 77, 0.45);
+  color: #FCD34D;
+}
+
+.ach-medal-pill.emerald {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(110, 231, 183, 0.45);
+  color: #6EE7B7;
 }
 
 .detail-card {
@@ -1218,7 +1429,7 @@ button:active {
 
 .detail-card-title {
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-primary);
   margin-bottom: 14px;
   display: flex;
@@ -1228,11 +1439,31 @@ button:active {
   gap: 8px;
 }
 
+.badge-live-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #93C5FD;
+  background: rgba(59, 130, 246, 0.14);
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.inflow-pill-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6EE7B7;
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(110, 231, 183, 0.3);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
 .overview-summary-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 @media (min-width: 600px) {
@@ -1249,8 +1480,8 @@ button:active {
 }
 
 .stat-box.highlight-net {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.16) 0%, rgba(16, 185, 129, 0.16) 100%);
-  border-color: rgba(96, 165, 250, 0.35);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.16) 0%, rgba(37, 99, 235, 0.16) 100%);
+  border-color: rgba(110, 231, 183, 0.38);
 }
 
 .stat-box-label {
@@ -1261,8 +1492,64 @@ button:active {
 }
 
 .stat-box-val {
-  font-size: 24px;
+  font-size: 25px;
   font-weight: 800;
+}
+
+/* 资产配置比例条 */
+.asset-alloc-box {
+  background: rgba(9, 14, 26, 0.55);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 12px 13px;
+  margin-bottom: 8px;
+}
+
+.alloc-stacked-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--bg-subtle);
+  overflow: hidden;
+  display: flex;
+  gap: 2px;
+  margin: 8px 0 10px;
+}
+
+.alloc-seg-liquid {
+  background: #34D399;
+  height: 100%;
+  transition: width 0.35s ease;
+}
+
+.alloc-seg-invest {
+  background: #60A5FA;
+  height: 100%;
+  transition: width 0.35s ease;
+}
+
+.alloc-seg-locked {
+  background: #A78BFA;
+  height: 100%;
+  transition: width 0.35s ease;
+}
+
+.alloc-legend-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  font-size: 11px;
+}
+
+.alloc-legend-item {
+  color: var(--text-secondary);
+}
+
+.alloc-legend-item strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 12.5px;
+  margin-top: 1px;
 }
 
 .health-grid {
@@ -1292,7 +1579,7 @@ button:active {
 
 .health-item-val {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 /* 图表与占比条 */
@@ -1432,6 +1719,23 @@ button:active {
   white-space: nowrap;
 }
 
+@media (max-width: 520px) {
+  #detailView .detail-card {
+    padding: 14px 12px;
+  }
+  #detailView .ledger-data-table {
+    font-size: 11.5px;
+  }
+  #detailView .ledger-data-table th,
+  #detailView .ledger-data-table td {
+    padding: 8px 6px;
+  }
+  #detailView .ledger-data-table .tag-pill {
+    font-size: 9.5px;
+    padding: 1.5px 5px;
+  }
+}
+
 .filter-chips {
   display: flex;
   flex-wrap: wrap;
@@ -1475,8 +1779,8 @@ button:active {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(2, 6, 23, 0.76);
-  backdrop-filter: blur(4px);
+  background: rgba(2, 6, 23, 0.78);
+  backdrop-filter: blur(5px);
   display: none;
   align-items: flex-end;
   justify-content: center;
@@ -1497,7 +1801,7 @@ button:active {
 }
 
 .modal-panel {
-  background: #111827;
+  background: #101726;
   border: 1px solid var(--border-strong);
   width: 100%;
   max-width: 480px;
@@ -1599,12 +1903,12 @@ button:active {
 .toast-msg {
   background: #1E293B;
   color: #F8FAFC;
-  border: 1px solid #334155;
+  border: 1px solid rgba(110, 231, 183, 0.35);
   padding: 10px 18px;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55);
   animation: fadeInDown 0.2s ease;
 }
 
@@ -1662,6 +1966,7 @@ button:active {
 
   body {
     background: #FFFFFF !important;
+    background-image: none !important;
     color: #000000 !important;
     font-size: 11pt;
     color-scheme: light;
@@ -1818,223 +2123,4 @@ button:active {
   padding: 28px 16px;
   color: var(--text-muted);
   font-size: 13px;
-}
-
-/* ==========================================================================
-   新增高质感排法：仪表舱 Bento 焦点舱（layout-bento）与 阶梯成就流（layout-milestone）
-   ========================================================================== */
-#homeCategoriesList.layout-bento .categories-grid {
-  grid-template-columns: repeat(2, 1fr);
-  gap: 11px;
-}
-
-@media (min-width: 640px) {
-  #homeCategoriesList.layout-bento .categories-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 13px;
-  }
-}
-
-/* 焦点舱模式下，排在首位的项目跨双列成为高亮主卡，更有成就感与层级感 */
-#homeCategoriesList.layout-bento .category-grid-card:first-child {
-  grid-column: span 2;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px 16px;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.96) 0%, rgba(15, 23, 42, 0.98) 60%, rgba(37, 99, 235, 0.18) 100%);
-  border: 1px solid rgba(96, 165, 250, 0.38);
-  box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.55);
-}
-
-#homeCategoriesList.layout-bento .category-grid-card:first-child .cat-grid-top {
-  display: contents;
-}
-
-#homeCategoriesList.layout-bento .category-grid-card:first-child .category-icon-box {
-  order: 1;
-  width: 40px;
-  height: 40px;
-  font-size: 16px;
-  border-radius: 12px;
-}
-
-#homeCategoriesList.layout-bento .category-grid-card:first-child .cat-grid-mid {
-  order: 2;
-  flex: 1;
-  min-width: 0;
-  margin-left: 10px;
-}
-
-#homeCategoriesList.layout-bento .category-grid-card:first-child .category-name {
-  font-size: 16px;
-}
-
-#homeCategoriesList.layout-bento .category-grid-card:first-child .cat-grid-bottom {
-  order: 3;
-  text-align: right;
-  margin-right: 6px;
-}
-
-#homeCategoriesList.layout-bento .category-grid-card:first-child .category-month-sum {
-  font-size: 20px;
-}
-
-#homeCategoriesList.layout-bento .category-grid-card:first-child .category-action-btns {
-  order: 4;
-}
-
-/* 排法·阶梯成就流（layout-milestone）：左侧带顺位勋章与底部占本类进度条 */
-#homeCategoriesList.layout-milestone .categories-grid {
-  grid-template-columns: 1fr;
-  gap: 9px;
-}
-
-#homeCategoriesList.layout-milestone .category-grid-card {
-  position: relative;
-  padding: 12px 14px 14px 16px;
-  border-left: 3.5px solid #3B82F6;
-  background: linear-gradient(90deg, rgba(30, 41, 59, 0.72) 0%, rgba(17, 24, 39, 0.95) 45%);
-  overflow: hidden;
-}
-
-#homeCategoriesList.layout-milestone .category-grid-card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 3px;
-  width: var(--progress-pct, 0%);
-  background: linear-gradient(90deg, #3B82F6 0%, #10B981 100%);
-  opacity: 0.8;
-  transition: width 0.35s ease;
-}
-
-.milestone-rank-chip {
-  font-size: 10.5px;
-  font-weight: 800;
-  color: #93C5FD;
-  background: rgba(59, 130, 246, 0.16);
-  border: 1px solid rgba(96, 165, 250, 0.28);
-  padding: 1px 6px;
-  border-radius: 6px;
-  margin-left: 6px;
-  vertical-align: middle;
-}
-
-/* ==========================================================================
-   主界面长按直接拖动排序样式（浮空克隆跟随 + 原位虚线占位 + 顶部状态横幅）
-   ========================================================================== */
-.category-grid-card {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-  transition: transform 0.16s ease, opacity 0.16s ease, border-color 0.16s ease, background 0.16s ease;
-}
-
-.category-grid-card.card-placeholder {
-  opacity: 0.25 !important;
-  border: 2px dashed #60A5FA !important;
-  background: rgba(37, 99, 235, 0.10) !important;
-  transform: scale(0.95) !important;
-}
-
-.categories-grid.is-sorting .category-grid-card:not(.card-placeholder) {
-  transform: scale(0.97);
-}
-
-.drag-floating-clone {
-  position: fixed !important;
-  margin: 0 !important;
-  z-index: 9999 !important;
-  pointer-events: none !important;
-  background: #1E293B !important;
-  border: 2px solid #60A5FA !important;
-  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.78), 0 0 0 4px rgba(96, 165, 250, 0.28) !important;
-  transform: scale(1.05) !important;
-  opacity: 1 !important;
-  transition: none !important;
-}
-
-.drag-status-banner {
-  position: fixed;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10000;
-  background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%);
-  color: #FFFFFF;
-  padding: 9px 18px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  white-space: nowrap;
-  pointer-events: none;
-  animation: fadeInDown 0.16s ease;
-}
-
-.cat-section-head .drag-hint-pill {
-  font-size: 10.5px;
-  color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.04);
-  padding: 1px 7px;
-  border-radius: 999px;
-}
-
-/* ==========================================================================
-   视觉质感增强与资金明细手机端可读性优化（v10）
-   ========================================================================== */
-.hero-asset-card {
-  background: linear-gradient(135deg, #091124 0%, #1E3A8A 52%, #065F46 100%) !important;
-  border: 1px solid rgba(110, 231, 183, 0.34) !important;
-  box-shadow: 0 18px 38px -10px rgba(16, 185, 129, 0.22), 0 12px 28px -6px rgba(0, 0, 0, 0.55) !important;
-}
-
-#homeCategoriesList.layout-bento .category-grid-card:first-child {
-  background: linear-gradient(125deg, rgba(16, 185, 129, 0.16) 0%, rgba(30, 41, 59, 0.96) 45%, rgba(59, 130, 246, 0.22) 100%) !important;
-  border: 1.5px solid rgba(110, 231, 183, 0.45) !important;
-  box-shadow: 0 14px 30px -10px rgba(16, 185, 129, 0.28), 0 10px 24px -8px rgba(0, 0, 0, 0.6) !important;
-}
-
-#homeCategoriesList.layout-bento .category-grid-card:first-child .milestone-rank-chip {
-  background: rgba(16, 185, 129, 0.22);
-  border-color: rgba(110, 231, 183, 0.45);
-  color: #6EE7B7;
-}
-
-#homeCategoriesList.layout-milestone .category-grid-card {
-  border-left-width: 4px;
-  border-left-color: #34D399;
-}
-
-#homeCategoriesList.layout-milestone .category-grid-card::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 4px;
-  width: var(--progress-pct, 0%);
-  background: linear-gradient(90deg, #3B82F6 0%, #34D399 100%);
-  border-radius: 0 4px 0 0;
-}
-
-@media (max-width: 520px) {
-  #detailView .detail-card {
-    padding: 14px 12px;
-  }
-  #detailView .ledger-data-table {
-    font-size: 11.5px;
-  }
-  #detailView .ledger-data-table th,
-  #detailView .ledger-data-table td {
-    padding: 8px 6px;
-  }
-  #detailView .ledger-data-table .tag-pill {
-    font-size: 9.5px;
-    padding: 1.5px 5px;
-  }
 }

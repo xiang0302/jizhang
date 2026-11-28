@@ -1,8 +1,6 @@
 /* ==========================================================================
-   ui.js — 界面视图渲染、弹窗交互、排法与拖动排序及 PDF/JSON 导出控制
+   ui.js — 界面视图渲染、成就激励模块、弹窗交互、排法与拖动排序及 PDF/JSON 导出
    ========================================================================== */
-const TRASH_ICON_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
-
 const CATEGORY_SECTIONS = [
   { kind: 'expense', title: '支出类', color: 'var(--debt-red)', sign: '-', empty: '暂无支出项目' },
   { kind: 'deposit', title: '存款', color: 'var(--deposit-indigo)', sign: '+', empty: '暂无存款项目' },
@@ -19,7 +17,7 @@ const HOME_LAYOUT_MODES = [
 ];
 const HOME_LAYOUT_STORAGE_KEY = 'zhijian_home_layout_mode';
 const CATEGORY_ORDER_STORAGE_KEY = 'zhijian_category_sort_order_v1';
-let currentHomeLayoutMode = 'hybrid';
+let currentHomeLayoutMode = 'bento';
 
 function getSavedCategoryOrderMap() {
   try {
@@ -59,7 +57,7 @@ function getSortedCategoriesForKind(kind) {
 }
 
 function applyHomeLayoutMode(mode) {
-  const valid = HOME_LAYOUT_MODES.some(m => m.key === mode) ? mode : 'hybrid';
+  const valid = HOME_LAYOUT_MODES.some(m => m.key === mode) ? mode : 'bento';
   currentHomeLayoutMode = valid;
   const listEl = document.getElementById('homeCategoriesList');
   if (listEl) {
@@ -71,18 +69,6 @@ function applyHomeLayoutMode(mode) {
   if (labelEl && found) {
     labelEl.textContent = found.label;
   }
-  document.querySelectorAll('#layoutModePicker .radio-pill').forEach(pill => {
-    pill.classList.toggle('active', pill.getAttribute('data-mode') === valid);
-  });
-}
-
-function selectHomeLayoutMode(mode) {
-  applyHomeLayoutMode(mode);
-  try {
-    localStorage.setItem(HOME_LAYOUT_STORAGE_KEY, mode);
-  } catch (e) {}
-  const found = HOME_LAYOUT_MODES.find(m => m.key === mode);
-  if (found) showToast(`已切换为「${found.label}」`);
 }
 
 function cycleHomeLayoutMode() {
@@ -683,24 +669,65 @@ function renderInvestPanel(snap) {
 
 function renderHomeView() {
   const snap = computeAssetsSnapshot(null);
+  const mBounds = buildBoundsForMonth(currentYear, currentMonth);
+  const mMetrics = computePeriodMetrics(mBounds.startStr, mBounds.endStr);
+  const milestone = computeWealthMilestone(snap.netWorth);
 
   document.getElementById('homeTotalAssets').textContent = formatMoney(snap.totalAssets);
   document.getElementById('homeNetWorth').textContent = formatMoney(snap.netWorth);
   document.getElementById('homeTotalDebt').textContent = snap.totalDebt > 0 ? '-' + formatMoney(snap.totalDebt) : '0.00';
 
-  // 1. 渲染我的小账户卡片（含快捷互转与删除按钮）
+  // 更新总资产卡片上的本月增量胶囊与储蓄率
+  const deltaBadge = document.getElementById('homeMonthDeltaBadge');
+  if (deltaBadge) {
+    const wc = mMetrics.totalWealthCreated;
+    deltaBadge.textContent = `${currentMonth}月净增 ${wc >= 0 ? '+' : '-'}${formatMoney(Math.abs(wc))}`;
+    deltaBadge.classList.toggle('is-negative', wc < 0);
+  }
+  const savingsEl = document.getElementById('homeSavingsRate');
+  if (savingsEl) {
+    savingsEl.textContent = `${mMetrics.savingsRate.toFixed(1)}%`;
+    savingsEl.style.color = mMetrics.savingsRate >= 30 ? '#6EE7B7' : (mMetrics.savingsRate >= 0 ? '#93C5FD' : '#FCA5A5');
+  }
+
+  // 更新净资产里程碑段位进度条
+  const badgeEl = document.getElementById('homeMilestoneBadge');
+  const targetEl = document.getElementById('homeMilestoneTarget');
+  const barEl = document.getElementById('homeMilestoneBar');
+  if (badgeEl && targetEl && barEl) {
+    badgeEl.textContent = `${milestone.badge} · ${milestone.title}`;
+    targetEl.textContent = milestone.remaining > 0
+      ? `距下一阶 ${formatMoney(milestone.target)} (${milestone.progressPct}%)`
+      : `已达成 ${formatMoney(milestone.target)} 目标！`;
+    barEl.style.width = `${milestone.progressPct}%`;
+  }
+
+  // 更新本月战报速览条
+  const pulseNetEl = document.getElementById('pulseNetCreated');
+  if (pulseNetEl) {
+    const wc = mMetrics.totalWealthCreated;
+    pulseNetEl.textContent = `${wc >= 0 ? '+' : '-'}${formatMoney(Math.abs(wc))}`;
+    pulseNetEl.style.color = wc >= 0 ? '#34D399' : '#F87171';
+  }
+  const pulseInEl = document.getElementById('pulseInflow');
+  if (pulseInEl) pulseInEl.textContent = `+${formatMoney(mMetrics.totalNewInflow)}`;
+  const pulseExpEl = document.getElementById('pulseExpense');
+  if (pulseExpEl) pulseExpEl.textContent = formatMoney(mMetrics.totalExpense);
+
+  // 1. 渲染我的小账户卡片
   const gridEl = document.getElementById('homeAccountsGrid');
   if (snap.accountDetails.length === 0) {
     gridEl.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">暂无小账户，点击右上角“+ 添加小账户”开始配置</div>`;
   } else {
     gridEl.innerHTML = snap.accountDetails.map(acc => {
       const isDebt = acc.type === 'liability';
+      const cardModifier = isDebt ? 'is-debt' : (acc.isInvestment ? 'is-invest' : '');
       const displayBal = isDebt
         ? (acc.currentBalance > 0 ? '-' + formatMoney(acc.currentBalance) : '0.00')
         : formatMoney(acc.currentBalance);
       const initBalStr = formatMoney(acc.initialBalance || 0);
       return `
-        <div class="account-mini-card" onclick="openEditAccountModal('${acc.id}')" title="点击设置或修改起始金额">
+        <div class="account-mini-card ${cardModifier}" onclick="openEditAccountModal('${acc.id}')" title="点击设置或修改起始金额">
           <div class="account-mini-top">
             <span class="account-name">${escapeHtml(acc.name)}</span>
             <div class="account-mini-actions" onclick="event.stopPropagation()">
@@ -777,9 +804,75 @@ function renderDetailView() {
   const snap = computeAssetsSnapshot(bounds.endStr);
   const prevSnap = computeAssetsSnapshot(bounds.prevEndStr);
   const metrics = computePeriodMetrics(bounds.startStr, bounds.endStr);
+  const milestone = computeWealthMilestone(snap.netWorth);
+
+  // 渲染顶部周期财富成绩单横幅
+  const headlineEl = document.getElementById('achBannerHeadline');
+  const rateBigEl = document.getElementById('achSavingsRateBig');
+  const badgesRowEl = document.getElementById('achBadgesRow');
+  if (headlineEl && rateBigEl && badgesRowEl) {
+    const wc = metrics.totalWealthCreated;
+    headlineEl.textContent = wc >= 0
+      ? `${bounds.label}净积累 +${formatMoney(wc)}`
+      : `${bounds.label}净变动 -${formatMoney(Math.abs(wc))}`;
+    rateBigEl.textContent = `${metrics.savingsRate.toFixed(0)}%`;
+
+    const medals = [];
+    medals.push(`<span class="ach-medal-pill gold">${milestone.badge} · ${milestone.title}</span>`);
+    if (metrics.savingsRate >= 50) {
+      medals.push(`<span class="ach-medal-pill emerald">超高储蓄率 · 守财大师</span>`);
+    } else if (metrics.savingsRate >= 25) {
+      medals.push(`<span class="ach-medal-pill emerald">稳健储蓄 · 现金流健康</span>`);
+    }
+    if (snap.totalDebt === 0 && snap.totalAssets > 0) {
+      medals.push(`<span class="ach-medal-pill emerald">零负债 · 轻装前行</span>`);
+    }
+    if (metrics.totalNewInflow > 0) {
+      medals.push(`<span class="ach-medal-pill">${metrics.fundSourcesList.length} 路资金来源</span>`);
+    }
+    badgesRowEl.innerHTML = medals.join('');
+  }
 
   document.getElementById('detailTotalAssets').textContent = formatMoney(snap.totalAssets);
   document.getElementById('detailNetWorth').textContent = formatMoney(snap.netWorth);
+
+  // 渲染资产配置比例条
+  const allocWrap = document.getElementById('assetAllocationBarWrap');
+  if (allocWrap) {
+    if (snap.totalAssets <= 0) {
+      allocWrap.classList.add('hidden');
+    } else {
+      allocWrap.classList.remove('hidden');
+      const liqPct = (snap.liquidCash / snap.totalAssets) * 100;
+      const invPct = (snap.investAssets / snap.totalAssets) * 100;
+      const lockPct = Math.max(0, 100 - liqPct - invPct);
+      allocWrap.innerHTML = `
+        <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-secondary);">
+          <span><strong>总资产配置结构</strong></span>
+          <span>流动 · 投资 · 锁仓</span>
+        </div>
+        <div class="alloc-stacked-bar">
+          <div class="alloc-seg-liquid" style="width: ${liqPct.toFixed(1)}%;"></div>
+          <div class="alloc-seg-invest" style="width: ${invPct.toFixed(1)}%;"></div>
+          <div class="alloc-seg-locked" style="width: ${lockPct.toFixed(1)}%;"></div>
+        </div>
+        <div class="alloc-legend-grid tabular-nums">
+          <div class="alloc-legend-item">
+            <span style="color: #34D399;">●</span> 流动资金 (${liqPct.toFixed(0)}%)
+            <strong>${formatMoney(snap.liquidCash)}</strong>
+          </div>
+          <div class="alloc-legend-item">
+            <span style="color: #60A5FA;">●</span> 投资持仓 (${invPct.toFixed(0)}%)
+            <strong>${formatMoney(snap.investAssets)}</strong>
+          </div>
+          <div class="alloc-legend-item">
+            <span style="color: #A78BFA;">●</span> 公积金/定期 (${lockPct.toFixed(0)}%)
+            <strong>${formatMoney(snap.lockedAssets)}</strong>
+          </div>
+        </div>
+      `;
+    }
+  }
 
   const detailAccEl = document.getElementById('detailAccountsList');
   if (snap.accountDetails.length === 0) {
@@ -791,19 +884,27 @@ function renderDetailView() {
         ? (acc.currentBalance > 0 ? '-' + formatMoney(acc.currentBalance) : '0.00')
         : formatMoney(acc.currentBalance);
       const typeDesc = isDebt ? '负债账户' : (acc.isInvestment ? '投资账户' : '资产账户');
+      const shareStr = (!isDebt && snap.totalAssets > 0)
+        ? ` · 占比 ${((acc.currentBalance / snap.totalAssets) * 100).toFixed(1)}%`
+        : '';
       return `
         <div class="detail-account-row">
           <div>
             <div style="font-weight: 700; font-size: 14px;">${escapeHtml(acc.name)}</div>
-            <div style="font-size: 11px; color: var(--text-muted);">${typeDesc} · 初始设定: ${formatMoney(acc.initialBalance)}</div>
+            <div style="font-size: 11px; color: var(--text-muted);">${typeDesc} · 初始: ${formatMoney(acc.initialBalance)}${shareStr}</div>
           </div>
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
-            <span class="tabular-nums ${isDebt ? 'text-debt' : 'text-asset'}" style="font-weight: 700; font-size: 15px;">${displayBal}</span>
+            <span class="tabular-nums ${isDebt ? 'text-debt' : 'text-asset'}" style="font-weight: 800; font-size: 15px;">${displayBal}</span>
             <button class="btn btn-sm btn-secondary no-print" onclick="openEditAccountModal('${acc.id}')">修改/校准</button>
           </div>
         </div>
       `;
     }).join('');
+  }
+
+  const debtRatioEl = document.getElementById('detailDebtRatioBadge');
+  if (debtRatioEl) {
+    debtRatioEl.textContent = `资产负债率: ${snap.debtRatio.toFixed(1)}%`;
   }
 
   document.getElementById('detailCashRetention').textContent = formatMoney(snap.liquidCash);
@@ -848,7 +949,7 @@ function renderDetailView() {
 }
 
 function renderFundDetailsSection(metrics, snap) {
-  document.getElementById('detailTotalInflowBadge').textContent = `周期新增资金总流入: +${formatMoney(metrics.totalNewInflow)}`;
+  document.getElementById('detailTotalInflowBadge').textContent = `周期总流入: +${formatMoney(metrics.totalNewInflow)}`;
 
   const summaryBody = document.getElementById('fundSourcesSummaryBody');
   const totalInflow = metrics.totalNewInflow;

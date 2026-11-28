@@ -1,5 +1,5 @@
 /* ==========================================================================
-   finance.js — 核心数据状态、本地持久化存储、实时余额与财报计算引擎
+   finance.js — 核心数据状态、本地持久化存储、实时余额与财报/成就计算引擎
    ========================================================================== */
 const STORAGE_KEY = 'zhijian_ledger_v1_clean';
 const DEFAULT_TODAY = '2026-11-27';
@@ -22,6 +22,48 @@ let appState = {
   transactions: [],
   transfers: []
 };
+
+/* ==========================================================================
+   财富里程碑段位阶梯（动态激励与阶段成就目标）
+   ========================================================================== */
+const WEALTH_TIERS = [
+  { min: -Infinity, target: 1000, title: '起步启航期', badge: 'LV.1 启航', desc: '建立清晰账本，迈出第一笔正结余' },
+  { min: 1000, target: 5000, title: '积微成著期', badge: 'LV.2 积微', desc: '应急备用金逐步成形，掌控现金流' },
+  { min: 5000, target: 10000, title: '破万稳健期', badge: 'LV.3 稳健', desc: '抗风险护城河初具雏形' },
+  { min: 10000, target: 30000, title: '三万蓄势期', badge: 'LV.4 蓄势', desc: '从存钱走向复利配置的关键跃迁' },
+  { min: 30000, target: 50000, title: '五万进阶期', badge: 'LV.5 进阶', desc: '拥有坚实的财务底气与选择权' },
+  { min: 50000, target: 100000, title: '十万里程碑', badge: 'LV.6 里程碑', desc: '迈入六位数净资产俱乐部' },
+  { min: 100000, target: 250000, title: '复利加速期', badge: 'LV.7 复利', desc: '资产规模效应开始显现' },
+  { min: 250000, target: 500000, title: '半百基石期', badge: 'LV.8 基石', desc: '构建长期被动收入的坚固底座' },
+  { min: 500000, target: 1000000, title: '百万跨越期', badge: 'LV.9 跨越', desc: '向百万净资产巅峰全力冲刺' },
+  { min: 1000000, target: 3000000, title: '百万财富自由者', badge: 'LV.MAX 自由', desc: '时间与资本的双重掌控者' }
+];
+
+function computeWealthMilestone(netWorth) {
+  const nw = Number(netWorth) || 0;
+  let tierIdx = 0;
+  for (let i = 0; i < WEALTH_TIERS.length; i++) {
+    if (nw >= WEALTH_TIERS[i].min) {
+      tierIdx = i;
+    }
+  }
+  const tier = WEALTH_TIERS[tierIdx];
+  const baseFloor = tier.min === -Infinity ? 0 : tier.min;
+  const span = Math.max(1, tier.target - baseFloor);
+  const rawPct = nw <= baseFloor ? 0 : ((nw - baseFloor) / span) * 100;
+  const progressPct = Math.min(100, Math.max(0, rawPct));
+  const remaining = Math.max(0, tier.target - nw);
+
+  return {
+    tierIdx: tierIdx + 1,
+    badge: tier.badge,
+    title: tier.title,
+    desc: tier.desc,
+    target: tier.target,
+    progressPct: Number(progressPct.toFixed(1)),
+    remaining: Number(remaining.toFixed(2))
+  };
+}
 
 /* ==========================================================================
    双引擎本地存储读写 (localStorage + IndexedDB + 云端桥接)
@@ -257,6 +299,8 @@ function computeAssetsSnapshot(upToDateStr = null) {
   let totalAssets = 0;
   let totalDebt = 0;
   let liquidCash = 0;
+  let investAssets = 0;
+  let lockedAssets = 0;
 
   const accountDetails = appState.accounts.map(acc => {
     const rawBal = calculateAccountBalance(acc.id, upToDateStr);
@@ -276,10 +320,13 @@ function computeAssetsSnapshot(upToDateStr = null) {
         effectiveBal = Number(mv.toFixed(2));
       }
       totalAssets += effectiveBal;
+      investAssets += effectiveBal;
     } else {
       totalAssets += rawBal;
       if (!isNonLiquidAccountName(acc.name)) {
         liquidCash += rawBal;
+      } else {
+        lockedAssets += rawBal;
       }
     }
 
@@ -291,11 +338,16 @@ function computeAssetsSnapshot(upToDateStr = null) {
   });
 
   const netWorth = totalAssets - totalDebt;
+  const debtRatio = totalAssets > 0 ? Number(((totalDebt / totalAssets) * 100).toFixed(1)) : 0;
+
   return {
     totalAssets: Number(totalAssets.toFixed(2)),
     totalDebt: Number(totalDebt.toFixed(2)),
     netWorth: Number(netWorth.toFixed(2)),
     liquidCash: Number(liquidCash.toFixed(2)),
+    investAssets: Number(investAssets.toFixed(2)),
+    lockedAssets: Number(lockedAssets.toFixed(2)),
+    debtRatio,
     accountDetails
   };
 }
@@ -390,7 +442,11 @@ function computePeriodMetrics(startStr, endStr) {
   const totalNewInflow = totalIncome + externalDeposit;
   const totalExpense = essentialExpense + discretionaryExpense;
   const netProfit = totalIncome - totalExpense;
+  const totalWealthCreated = totalNewInflow - totalExpense;
   const freeCashAfterEssential = totalIncome - essentialExpense;
+  const savingsRate = totalNewInflow > 0
+    ? Number((((totalNewInflow - totalExpense) / totalNewInflow) * 100).toFixed(1))
+    : 0;
 
   const fundSourcesList = Object.values(inflowBySource)
     .map(item => ({
@@ -412,7 +468,9 @@ function computePeriodMetrics(startStr, endStr) {
     totalDeposit: Number(totalDeposit.toFixed(2)),
     totalRepay: Number(totalRepay.toFixed(2)),
     netProfit: Number(netProfit.toFixed(2)),
+    totalWealthCreated: Number(totalWealthCreated.toFixed(2)),
     freeCashAfterEssential: Number(freeCashAfterEssential.toFixed(2)),
+    savingsRate,
     expenseByCategory: Object.values(expenseByCategory).sort((a, b) => b.amount - a.amount),
     fundSourcesList
   };
