@@ -972,6 +972,9 @@ function renderDetailView() {
 
   document.getElementById('tableDepositTotal').textContent = formatMoney(metrics.totalDeposit);
 
+  // 渲染净资产爬坡与收支对比趋势图
+  renderWealthAndCashflowTrends(bounds);
+
   // 同步更新财报级打印 DOM
   buildPrintFinancialStatement(bounds);
 }
@@ -2448,3 +2451,139 @@ function escapeHtml(str) {
 }
 
 window.onload = initApp;
+
+function formatCompactAxisNum(num) {
+  const n = Number(num) || 0;
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 1000000) return `${sign}${(abs / 1000000).toFixed(1)}M`;
+  if (abs >= 10000) return `${sign}${(abs / 1000).toFixed(1)}k`;
+  if (abs >= 1000) return `${sign}${(abs / 1000).toFixed(1)}k`;
+  return `${sign}${abs.toFixed(0)}`;
+}
+
+function renderWealthAndCashflowTrends(bounds) {
+  const series = computeWealthTrendSeries(bounds, 6);
+  const titleEl = document.getElementById('detailTrendTitle');
+  const badgeEl = document.getElementById('detailTrendSummaryBadge');
+  const netHost = document.getElementById('netWorthTrendChart');
+  const cfHost = document.getElementById('cashflowBarTrendChart');
+
+  if (!netHost || !cfHost || series.length === 0) return;
+
+  const unitWord = bounds.mode === 'year' ? '年' : (bounds.mode === 'week' ? '周' : '月');
+  if (titleEl) {
+    titleEl.textContent = `净资产爬坡与收支对比 (近6${unitWord})`;
+  }
+
+  const firstNet = series[0].netWorth;
+  const lastNet = series[series.length - 1].netWorth;
+  const spanDelta = Number((lastNet - firstNet).toFixed(2));
+  if (badgeEl) {
+    badgeEl.textContent = `近6${unitWord}净资产变动 ${spanDelta >= 0 ? '+' : '-'}${formatMoney(Math.abs(spanDelta))}`;
+  }
+
+  // 图 A：净资产走势 SVG 折线面积图
+  const W = 340, H = 165;
+  const padL = 42, padR = 12, padT = 22, padB = 26;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  const netVals = series.map(s => s.netWorth);
+  let minVal = Math.min(...netVals, 0);
+  let maxVal = Math.max(...netVals, 100);
+  if (minVal === maxVal) {
+    maxVal = minVal + 100;
+  }
+  const rangeVal = maxVal - minVal;
+
+  const getX = (idx) => {
+    if (series.length === 1) return padL + plotW / 2;
+    return padL + (idx / (series.length - 1)) * plotW;
+  };
+  const getY = (val) => {
+    return padT + (1 - (val - minVal) / rangeVal) * plotH;
+  };
+
+  const zeroY = Math.min(padT + plotH, Math.max(padT, getY(0)));
+  const pts = series.map((s, i) => ({ x: getX(i), y: getY(s.netWorth), item: s }));
+  const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const areaPath = pts.length > 0
+    ? `${linePath} L ${pts[pts.length - 1].x.toFixed(1)} ${zeroY.toFixed(1)} L ${pts[0].x.toFixed(1)} ${zeroY.toFixed(1)} Z`
+    : '';
+
+  const gridLines = [0, 0.5, 1].map(ratio => {
+    const yPos = padT + ratio * plotH;
+    const axisVal = maxVal - ratio * rangeVal;
+    return `
+      <line x1="${padL}" y1="${yPos.toFixed(1)}" x2="${W - padR}" y2="${yPos.toFixed(1)}" stroke="rgba(148,163,184,0.14)" stroke-dasharray="3 3" />
+      <text x="${padL - 5}" y="${(yPos + 3.5).toFixed(1)}" text-anchor="end" fill="#64748B" font-size="9">${formatCompactAxisNum(axisVal)}</text>
+    `;
+  }).join('');
+
+  const nodesSvg = pts.map((p, i) => {
+    const isCurrent = i === pts.length - 1;
+    const rDot = isCurrent ? 4.5 : 3.2;
+    const fillDot = isCurrent ? '#FCD34D' : '#34D399';
+    return `
+      <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${rDot}" fill="${fillDot}" stroke="#070B14" stroke-width="1.5" />
+      <text x="${p.x.toFixed(1)}" y="${(p.y - 7).toFixed(1)}" text-anchor="middle" fill="${isCurrent ? '#FCD34D' : '#CBD5E1'}" font-size="8.5" font-weight="${isCurrent ? '800' : '600'}">${formatCompactAxisNum(p.item.netWorth)}</text>
+      <text x="${p.x.toFixed(1)}" y="${H - 8}" text-anchor="middle" fill="${isCurrent ? '#6EE7B7' : '#94A3B8'}" font-size="9.5" font-weight="${isCurrent ? '700' : '500'}">${escapeHtml(p.item.label)}</text>
+    `;
+  }).join('');
+
+  netHost.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="净资产走势图">
+      <defs>
+        <linearGradient id="netWorthAreaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#34D399" stop-opacity="0.34" />
+          <stop offset="100%" stop-color="#34D399" stop-opacity="0.02" />
+        </linearGradient>
+      </defs>
+      ${gridLines}
+      <path d="${areaPath}" fill="url(#netWorthAreaGrad)" />
+      <path d="${linePath}" fill="none" stroke="#34D399" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+      ${nodesSvg}
+    </svg>
+  `;
+
+  // 图 B：资金流入 vs 支出双柱对比图
+  const maxCf = Math.max(
+    ...series.map(s => Math.max(s.inflow, s.expense)),
+    100
+  );
+  const slotW = plotW / series.length;
+  const barW = Math.min(11, Math.max(5, slotW * 0.28));
+
+  const cfGrid = [0, 0.5, 1].map(ratio => {
+    const yPos = padT + ratio * plotH;
+    const axisVal = maxCf * (1 - ratio);
+    return `
+      <line x1="${padL}" y1="${yPos.toFixed(1)}" x2="${W - padR}" y2="${yPos.toFixed(1)}" stroke="rgba(148,163,184,0.14)" stroke-dasharray="3 3" />
+      <text x="${padL - 5}" y="${(yPos + 3.5).toFixed(1)}" text-anchor="end" fill="#64748B" font-size="9">${formatCompactAxisNum(axisVal)}</text>
+    `;
+  }).join('');
+
+  const barsSvg = series.map((s, i) => {
+    const cx = padL + i * slotW + slotW / 2;
+    const inH = Math.max(1.5, (s.inflow / maxCf) * plotH);
+    const exH = Math.max(1.5, (s.expense / maxCf) * plotH);
+    const inY = padT + plotH - inH;
+    const exY = padT + plotH - exH;
+    const isCurrent = i === series.length - 1;
+
+    return `
+      <rect x="${(cx - barW - 1).toFixed(1)}" y="${(s.inflow > 0 ? inY : padT + plotH).toFixed(1)}" width="${barW}" height="${(s.inflow > 0 ? inH : 0).toFixed(1)}" rx="2" fill="#60A5FA" opacity="${s.inflow > 0 ? '0.92' : '0.15'}" />
+      <rect x="${(cx + 1).toFixed(1)}" y="${(s.expense > 0 ? exY : padT + plotH).toFixed(1)}" width="${barW}" height="${(s.expense > 0 ? exH : 0).toFixed(1)}" rx="2" fill="#FBBF24" opacity="${s.expense > 0 ? '0.92' : '0.15'}" />
+      <text x="${cx.toFixed(1)}" y="${H - 8}" text-anchor="middle" fill="${isCurrent ? '#93C5FD' : '#94A3B8'}" font-size="9.5" font-weight="${isCurrent ? '700' : '500'}">${escapeHtml(s.label)}</text>
+    `;
+  }).join('');
+
+  cfHost.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="资金流入与支出对比图">
+      ${cfGrid}
+      <line x1="${padL}" y1="${(padT + plotH).toFixed(1)}" x2="${W - padR}" y2="${(padT + plotH).toFixed(1)}" stroke="rgba(148,163,184,0.28)" />
+      ${barsSvg}
+    </svg>
+  `;
+}

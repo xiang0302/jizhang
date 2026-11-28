@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>智简账本 · 个人资产与现金流管理</title>
-  <link rel="stylesheet" href="style.css?v=15" />
+  <link rel="stylesheet" href="style.css?v=16" />
 </head>
 <body>
 
@@ -267,6 +267,30 @@
               <div class="health-item-label">总负债 (所有负债账户之和)</div>
               <div class="health-item-val text-debt" id="detailTotalDebt">0.00</div>
               <div class="health-item-sub">含信用卡及贷款欠款</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 净资产爬坡与收支对比趋势 -->
+        <div class="detail-card">
+          <div class="detail-card-title">
+            <span id="detailTrendTitle">净资产爬坡与收支对比 (近6期)</span>
+            <span class="badge-live-tag" id="detailTrendSummaryBadge">区间净增 +0.00</span>
+          </div>
+          <div class="trend-dual-grid">
+            <div class="trend-panel-box">
+              <div class="trend-panel-head">
+                <span class="trend-panel-title">净资产走势</span>
+                <span class="trend-legend-note"><i class="dot-emerald"></i> 净资产</span>
+              </div>
+              <div id="netWorthTrendChart" class="svg-trend-host tabular-nums"></div>
+            </div>
+            <div class="trend-panel-box">
+              <div class="trend-panel-head">
+                <span class="trend-panel-title">资金流入 vs 支出</span>
+                <span class="trend-legend-note"><i class="dot-blue"></i> 流入 <i class="dot-amber"></i> 支出</span>
+              </div>
+              <div id="cashflowBarTrendChart" class="svg-trend-host tabular-nums"></div>
             </div>
           </div>
         </div>
@@ -933,8 +957,8 @@
   </div>
 
   <!-- 按职责拆分的 3 个独立脚本模块 -->
-  <script src="finance.js?v=15"></script>
-  <script src="ui.js?v=15"></script>
+  <script src="finance.js?v=16"></script>
+  <script src="ui.js?v=16"></script>
   <script type="module" src="cloud.js"></script>
 </body>
 </html>

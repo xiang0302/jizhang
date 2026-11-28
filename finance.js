@@ -586,3 +586,79 @@ function computeFinancialHealthMetrics(snap, metrics, bounds) {
     debtCoverColor
   };
 }
+
+function computeWealthTrendSeries(bounds, pointsCount = 6) {
+  const series = [];
+
+  if (bounds.mode === 'year') {
+    const startYear = currentYear - (pointsCount - 1);
+    for (let i = 0; i < pointsCount; i++) {
+      const y = startYear + i;
+      const yb = buildBoundsForYear(y);
+      const snapEnd = computeAssetsSnapshot(yb.endStr);
+      const snapPrev = computeAssetsSnapshot(yb.prevEndStr);
+      const metrics = computePeriodMetrics(yb.startStr, yb.endStr);
+      series.push({
+        label: `${String(y).slice(-2)}年`,
+        fullLabel: `${y}全年`,
+        netWorth: snapEnd.netWorth,
+        prevNetWorth: snapPrev.netWorth,
+        netDelta: Number((snapEnd.netWorth - snapPrev.netWorth).toFixed(2)),
+        inflow: metrics.totalNewInflow,
+        expense: metrics.totalExpense
+      });
+    }
+    return series;
+  }
+
+  if (bounds.mode === 'week') {
+    const anchorDt = parseDateISO(reportWeekAnchor);
+    for (let i = pointsCount - 1; i >= 0; i--) {
+      const dt = new Date(anchorDt);
+      dt.setDate(anchorDt.getDate() - i * 7);
+      const wk = getWeekRange(formatDateISO(dt));
+      const prevDt = new Date(dt);
+      prevDt.setDate(dt.getDate() - 7);
+      const prevWk = getWeekRange(formatDateISO(prevDt));
+      const snapEnd = computeAssetsSnapshot(wk.endStr);
+      const snapPrev = computeAssetsSnapshot(prevWk.endStr);
+      const metrics = computePeriodMetrics(wk.startStr, wk.endStr);
+      const parts = wk.endStr.split('-');
+      series.push({
+        label: `${Number(parts[1])}/${Number(parts[2])}`,
+        fullLabel: wk.label,
+        netWorth: snapEnd.netWorth,
+        prevNetWorth: snapPrev.netWorth,
+        netDelta: Number((snapEnd.netWorth - snapPrev.netWorth).toFixed(2)),
+        inflow: metrics.totalNewInflow,
+        expense: metrics.totalExpense
+      });
+    }
+    return series;
+  }
+
+  // 默认月度模式：回溯最近 pointsCount 个自然月（含当前选定月份）
+  for (let i = pointsCount - 1; i >= 0; i--) {
+    let y = currentYear;
+    let m = currentMonth - i;
+    while (m < 1) {
+      m += 12;
+      y -= 1;
+    }
+    const mb = buildBoundsForMonth(y, m);
+    const snapEnd = computeAssetsSnapshot(mb.endStr);
+    const snapPrev = computeAssetsSnapshot(mb.prevEndStr);
+    const metrics = computePeriodMetrics(mb.startStr, mb.endStr);
+    series.push({
+      label: `${m}月`,
+      fullLabel: `${y}年${m}月`,
+      netWorth: snapEnd.netWorth,
+      prevNetWorth: snapPrev.netWorth,
+      netDelta: Number((snapEnd.netWorth - snapPrev.netWorth).toFixed(2)),
+      inflow: metrics.totalNewInflow,
+      expense: metrics.totalExpense
+    });
+  }
+
+  return series;
+}
