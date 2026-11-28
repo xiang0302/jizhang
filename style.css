@@ -471,22 +471,25 @@ button:active {
 }
 
 .accounts-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
   gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
 }
 
-@media (min-width: 640px) {
-  .accounts-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+.accounts-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .account-mini-card {
-  background: var(--bg-subtle);
+  flex: 0 0 148px;
+  scroll-snap-align: start;
+  background: linear-gradient(160deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 12px;
+  border-radius: 14px;
+  padding: 11px 12px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -559,37 +562,46 @@ button:active {
   margin-top: 3px;
 }
 
-/* 投资面板样式 */
+/* 投资面板样式：横向指标带（破除方框堆砌） */
+#investPanel {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.96) 0%, rgba(23, 37, 84, 0.45) 100%);
+}
+
 .invest-summary {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.65);
+  border-radius: 12px;
+  border: 1px solid rgba(96, 165, 250, 0.18);
+  margin-bottom: 6px;
+  overflow-x: auto;
 }
 
 .invest-stat {
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  flex: 1;
+  min-width: 72px;
 }
 
 .invest-stat-label {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--text-secondary);
   margin-bottom: 2px;
 }
 
 .invest-stat-val {
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 800;
 }
 
 .invest-row {
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 12px;
+  background: transparent;
+  border: none;
+  border-top: 1px dashed var(--border-strong);
+  border-radius: 0;
+  padding: 12px 2px 4px;
   margin-top: 8px;
 }
 
@@ -712,7 +724,7 @@ button:active {
   border-radius: var(--radius-md);
 }
 
-/* 项目栏：响应式网格布局（手机2列，宽屏3列） */
+/* 项目栏：首组(支出类)保留紧凑双列，其余大类(存款/收入/还债)转为通栏横向列表行 */
 .categories-grid {
   margin-top: 10px;
   display: grid;
@@ -729,17 +741,59 @@ button:active {
 
 .category-grid-card {
   background: var(--bg-card);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  padding: 13px 13px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 12px 13px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 10px;
-  box-shadow: var(--shadow-sm);
+  gap: 8px;
   cursor: pointer;
-  transition: transform 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  transition: transform 0.15s, border-color 0.15s, background 0.15s;
   min-width: 0;
+}
+
+/* 第 2 个及之后的分类板块（存款、收入、还债）改用横向单列行排版 */
+.cat-section:nth-child(n+2) .categories-grid {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.cat-section:nth-child(n+2) .category-grid-card {
+  flex-direction: row;
+  align-items: center;
+  padding: 11px 14px;
+  gap: 12px;
+  background: rgba(17, 24, 39, 0.72);
+}
+
+.cat-section:nth-child(n+2) .cat-grid-top {
+  order: 1;
+  flex-shrink: 0;
+}
+
+.cat-section:nth-child(n+2) .cat-grid-top .category-action-btns {
+  display: none;
+}
+
+.cat-section:nth-child(n+2) .cat-grid-mid {
+  order: 2;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cat-section:nth-child(n+2) .cat-grid-mid .category-name {
+  margin-bottom: 0;
+}
+
+.cat-section:nth-child(n+2) .cat-grid-bottom {
+  order: 3;
+  padding-top: 0;
+  border-top: none;
+  text-align: right;
+  flex-shrink: 0;
 }
 
 .category-grid-card:hover {
@@ -834,8 +888,7 @@ button:active {
 }
 
 .cat-grid-bottom {
-  padding-top: 8px;
-  border-top: 1px solid var(--border-color);
+  padding-top: 2px;
 }
 
 .category-month-sum {
