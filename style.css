@@ -776,13 +776,13 @@ button:active {
   min-width: 0;
 }
 
-/* --- 排法 1（默认混合）：第 2 组及之后转为横向单列行 --- */
-.layout-hybrid .cat-section:nth-child(n+2) .categories-grid {
+/* --- 排法 1（默认混合）：第 2 组及之后转为横向单列行（仅在 layout-hybrid 下生效） --- */
+#homeCategoriesList.layout-hybrid .cat-section:nth-child(n+2) .categories-grid {
   grid-template-columns: 1fr;
   gap: 8px;
 }
 
-.layout-hybrid .cat-section:nth-child(n+2) .category-grid-card {
+#homeCategoriesList.layout-hybrid .cat-section:nth-child(n+2) .category-grid-card {
   flex-direction: row;
   align-items: center;
   padding: 11px 12px;
@@ -790,16 +790,16 @@ button:active {
   background: rgba(17, 24, 39, 0.72);
 }
 
-.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-top {
+#homeCategoriesList.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-top {
   display: contents;
 }
 
-.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-top .category-icon-box {
+#homeCategoriesList.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-top .category-icon-box {
   order: 1;
   flex-shrink: 0;
 }
 
-.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-mid {
+#homeCategoriesList.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-mid {
   order: 2;
   flex: 1;
   min-width: 0;
@@ -808,15 +808,15 @@ button:active {
   gap: 3px;
 }
 
-.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-mid .category-name {
+#homeCategoriesList.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-mid .category-name {
   margin-bottom: 0;
 }
 
-.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-mid .tag-pill {
+#homeCategoriesList.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-mid .tag-pill {
   align-self: flex-start;
 }
 
-.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-bottom {
+#homeCategoriesList.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-bottom {
   order: 3;
   padding-top: 0;
   border-top: none;
@@ -824,7 +824,7 @@ button:active {
   flex-shrink: 0;
 }
 
-.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-top .category-action-btns {
+#homeCategoriesList.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-top .category-action-btns {
   order: 4;
   display: flex;
   flex-shrink: 0;
@@ -832,24 +832,24 @@ button:active {
 }
 
 /* --- 排法 2（双列网格）：所有分类全部采用 2 列方块网格卡片 --- */
-.layout-grid .categories-grid {
+#homeCategoriesList.layout-grid .categories-grid {
   grid-template-columns: repeat(2, 1fr);
 }
 
 @media (min-width: 640px) {
-  .layout-grid .categories-grid {
+  #homeCategoriesList.layout-grid .categories-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
 /* --- 排法 3（三列紧凑网格）：手机端一排 3 个小方块 --- */
-.layout-grid3 .categories-grid {
+#homeCategoriesList.layout-grid3 .categories-grid {
   grid-template-columns: repeat(3, 1fr);
   gap: 7px;
 }
 
 @media (min-width: 640px) {
-  .layout-grid3 .categories-grid {
+  #homeCategoriesList.layout-grid3 .categories-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 10px;
   }
@@ -892,7 +892,7 @@ button:active {
 }
 
 /* --- 排法 4（全横向列表）：所有分类全部采用单列横向列表 --- */
-.layout-list .categories-grid {
+#homeCategoriesList.layout-list .categories-grid {
   grid-template-columns: 1fr;
   gap: 8px;
 }
@@ -1099,8 +1099,33 @@ button:active {
   border: 1px solid var(--border-strong);
   border-radius: 9px;
   user-select: none;
+  -webkit-user-select: none;
   touch-action: none;
   transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.sort-item-row * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sort-move-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-strong);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sort-move-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .sort-item-row.dragging {

@@ -20,25 +20,31 @@ const HOME_LAYOUT_STORAGE_KEY = 'zhijian_home_layout_mode';
 const CATEGORY_ORDER_STORAGE_KEY = 'zhijian_category_sort_order_v1';
 let currentHomeLayoutMode = 'hybrid';
 
-function getSavedCategoryOrder() {
+function getSavedCategoryOrderMap() {
   try {
     const raw = localStorage.getItem(CATEGORY_ORDER_STORAGE_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    return Array.isArray(arr) ? arr : [];
+    const parsed = raw ? JSON.parse(raw) : {};
+    if (Array.isArray(parsed)) {
+      return { _legacy: parsed };
+    }
+    return parsed && typeof parsed === 'object' ? parsed : {};
   } catch (e) {
-    return [];
+    return {};
   }
 }
 
-function saveCategoryOrder(orderIds) {
+function saveCategoryOrderForKind(kind, orderIds) {
   try {
-    localStorage.setItem(CATEGORY_ORDER_STORAGE_KEY, JSON.stringify(orderIds));
+    const map = getSavedCategoryOrderMap();
+    map[kind] = orderIds;
+    localStorage.setItem(CATEGORY_ORDER_STORAGE_KEY, JSON.stringify(map));
   } catch (e) {}
 }
 
 function getSortedCategoriesForKind(kind) {
   const items = appState.categories.filter(c => c.kind === kind);
-  const orderIds = getSavedCategoryOrder();
+  const map = getSavedCategoryOrderMap();
+  const orderIds = Array.isArray(map[kind]) ? map[kind] : (Array.isArray(map._legacy) ? map._legacy : []);
   if (orderIds.length === 0) return items;
 
   const rankMap = new Map();
@@ -104,7 +110,9 @@ function renderSortableCategoryList() {
           <span class="sort-item-name">${escapeHtml(cat.name)}</span>
         </div>
         <div class="sort-item-actions">
-          ${index > 0 ? `<button type="button" class="icon-btn" title="置顶排第一位" onclick="pinCategoryFirst('${sec.kind}', '${cat.id}')">置顶</button>` : `<span style="font-size: 11px; color: #60A5FA; padding: 0 4px;">首位</span>`}
+          <button type="button" class="sort-move-btn" title="上移一位" ${index === 0 ? 'disabled' : ''} onclick="moveCategoryStep('${sec.kind}', '${cat.id}', -1)">↑</button>
+          <button type="button" class="sort-move-btn" title="下移一位" ${index === items.length - 1 ? 'disabled' : ''} onclick="moveCategoryStep('${sec.kind}', '${cat.id}', 1)">↓</button>
+          ${index > 0 ? `<button type="button" class="icon-btn" style="width:auto; padding:0 6px; font-size:11px;" title="排第一位" onclick="pinCategoryFirst('${sec.kind}', '${cat.id}')">置顶</button>` : `<span style="font-size: 11px; color: #60A5FA; padding: 0 4px;">首位</span>`}
           <span class="sort-drag-handle" title="按住上下拖动">☰</span>
         </div>
       </div>
@@ -114,14 +122,28 @@ function renderSortableCategoryList() {
       <div class="sort-group-block">
         <div class="sort-group-title">
           <span style="display:inline-block; width:4px; height:12px; border-radius:2px; background:${sec.color};"></span>
-          <span>${sec.title}（拖动可调先后顺序）</span>
+          <span>${sec.title}（共 ${items.length} 项 · 可拖动或点 ↑↓ 排序）</span>
         </div>
         <div class="sort-group-list" data-kind="${sec.kind}">${rowsHtml}</div>
       </div>
     `;
   }).join('');
 
-  bindPointerDragSort(container);
+  bindTouchAndMouseDragSort(container);
+}
+
+function moveCategoryStep(kind, catId, delta) {
+  const items = getSortedCategoriesForKind(kind);
+  const idx = items.findIndex(c => c.id === catId);
+  const targetIdx = idx + delta;
+  if (idx < 0 || targetIdx < 0 || targetIdx >= items.length) return;
+  const temp = items[idx];
+  items[idx] = items[targetIdx];
+  items[targetIdx] = temp;
+
+  saveCategoryOrderForKind(kind, items.map(c => c.id));
+  renderSortableCategoryList();
+  renderHomeView();
 }
 
 function pinCategoryFirst(kind, catId) {
@@ -131,53 +153,41 @@ function pinCategoryFirst(kind, catId) {
   const [picked] = items.splice(idx, 1);
   items.unshift(picked);
 
-  persistGroupOrder(kind, items.map(c => c.id));
+  saveCategoryOrderForKind(kind, items.map(c => c.id));
   renderSortableCategoryList();
   renderHomeView();
   showToast(`已将「${picked.name}」排在第一位`);
 }
 
-function persistGroupOrder(kind, newKindIds) {
-  const fullOrder = [];
-  CATEGORY_SECTIONS.forEach(sec => {
-    if (sec.kind === kind) {
-      fullOrder.push(...newKindIds);
-    } else {
-      fullOrder.push(...getSortedCategoriesForKind(sec.kind).map(c => c.id));
-    }
-  });
-  saveCategoryOrder(fullOrder);
-}
-
-function bindPointerDragSort(container) {
+function bindTouchAndMouseDragSort(container) {
   container.querySelectorAll('.sort-group-list').forEach(listEl => {
     const kind = listEl.getAttribute('data-kind');
     let draggingRow = null;
-    let pointerId = null;
 
-    listEl.addEventListener('pointerdown', function (e) {
-      const handle = e.target.closest('.sort-drag-handle');
-      if (!handle) return;
-      const row = handle.closest('.sort-item-row');
+    const getClientY = (e) => {
+      if (e.touches && e.touches.length > 0) return e.touches[0].clientY;
+      if (e.changedTouches && e.changedTouches.length > 0) return e.changedTouches[0].clientY;
+      return e.clientY;
+    };
+
+    const onStart = (e) => {
+      if (e.target.closest('button')) return;
+      const row = e.target.closest('.sort-item-row');
       if (!row) return;
-
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       draggingRow = row;
-      pointerId = e.pointerId;
       draggingRow.classList.add('dragging');
-      if (handle.setPointerCapture) {
-        try { handle.setPointerCapture(pointerId); } catch (err) {}
-      }
-    });
+    };
 
-    listEl.addEventListener('pointermove', function (e) {
-      if (!draggingRow || e.pointerId !== pointerId) return;
+    const onMove = (e) => {
+      if (!draggingRow) return;
+      if (e.cancelable) e.preventDefault();
+      const clientY = getClientY(e);
       const siblings = Array.from(listEl.querySelectorAll('.sort-item-row:not(.dragging)'));
       let insertBeforeEl = null;
       for (const sib of siblings) {
         const rect = sib.getBoundingClientRect();
-        const midY = rect.top + rect.height / 2;
-        if (e.clientY < midY) {
+        if (clientY < rect.top + rect.height / 2) {
           insertBeforeEl = sib;
           break;
         }
@@ -187,22 +197,27 @@ function bindPointerDragSort(container) {
       } else {
         listEl.appendChild(draggingRow);
       }
-    });
+    };
 
-    const finishDrag = function (e) {
-      if (!draggingRow || (e.pointerId !== undefined && e.pointerId !== pointerId)) return;
+    const onEnd = () => {
+      if (!draggingRow) return;
       draggingRow.classList.remove('dragging');
       draggingRow = null;
-      pointerId = null;
 
       const newIds = Array.from(listEl.querySelectorAll('.sort-item-row')).map(r => r.getAttribute('data-cat-id'));
-      persistGroupOrder(kind, newIds);
+      saveCategoryOrderForKind(kind, newIds);
       renderSortableCategoryList();
       renderHomeView();
     };
 
-    listEl.addEventListener('pointerup', finishDrag);
-    listEl.addEventListener('pointercancel', finishDrag);
+    listEl.addEventListener('touchstart', onStart, { passive: false });
+    listEl.addEventListener('touchmove', onMove, { passive: false });
+    listEl.addEventListener('touchend', onEnd);
+    listEl.addEventListener('touchcancel', onEnd);
+
+    listEl.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
   });
 }
 
@@ -1702,8 +1717,12 @@ function confirmDeleteCategory(deleteHistory) {
   const catName = cat ? cat.name : '已删除项目';
 
   appState.categories = appState.categories.filter(c => c.id !== pendingDeleteCategoryId);
-  const cleanedOrder = getSavedCategoryOrder().filter(id => id !== pendingDeleteCategoryId);
-  saveCategoryOrder(cleanedOrder);
+  if (cat && cat.kind) {
+    const cleanedOrder = getSortedCategoriesForKind(cat.kind)
+      .filter(c => c.id !== pendingDeleteCategoryId)
+      .map(c => c.id);
+    saveCategoryOrderForKind(cat.kind, cleanedOrder);
+  }
 
   if (deleteHistory) {
     appState.transactions = appState.transactions.filter(t => t.categoryId !== pendingDeleteCategoryId);
