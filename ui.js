@@ -878,24 +878,120 @@ function renderDetailView() {
   if (snap.accountDetails.length === 0) {
     detailAccEl.innerHTML = `<div class="empty-state">暂无小账户</div>`;
   } else {
-    detailAccEl.innerHTML = snap.accountDetails.map(acc => {
-      const isDebt = acc.type === 'liability';
-      const displayBal = isDebt
-        ? (acc.currentBalance > 0 ? '-' + formatMoney(acc.currentBalance) : '0.00')
-        : formatMoney(acc.currentBalance);
-      const typeDesc = isDebt ? '负债账户' : (acc.isInvestment ? '投资账户' : '资产账户');
-      const shareStr = (!isDebt && snap.totalAssets > 0)
-        ? ` · 占比 ${((acc.currentBalance / snap.totalAssets) * 100).toFixed(1)}%`
-        : '';
-      return `
-        <div class="detail-account-row">
-          <div>
-            <div style="font-weight: 700; font-size: 14px;">${escapeHtml(acc.name)}</div>
-            <div style="font-size: 11px; color: var(--text-muted);">${typeDesc} · 初始: ${formatMoney(acc.initialBalance)}${shareStr}</div>
+    const pools = [
+      {
+        key: 'liquid',
+        title: '高流动性现金池',
+        dotColor: '#34D399',
+        isDebtPool: false,
+        items: snap.accountDetails.filter(a => a.type !== 'liability' && !a.isInvestment && !isNonLiquidAccountName(a.name))
+      },
+      {
+        key: 'invest',
+        title: '投资权益池',
+        dotColor: '#60A5FA',
+        isDebtPool: false,
+        items: snap.accountDetails.filter(a => a.type !== 'liability' && a.isInvestment)
+      },
+      {
+        key: 'locked',
+        title: '稳健 / 长期锁仓池 (公积金·定期)',
+        dotColor: '#A78BFA',
+        isDebtPool: false,
+        items: snap.accountDetails.filter(a => a.type !== 'liability' && !a.isInvestment && isNonLiquidAccountName(a.name))
+      },
+      {
+        key: 'debt',
+        title: '负债账户池',
+        dotColor: '#F87171',
+        isDebtPool: true,
+        items: snap.accountDetails.filter(a => a.type === 'liability')
+      }
+    ].filter(p => p.items.length > 0);
+
+    detailAccEl.innerHTML = pools.map(pool => {
+      const poolSum = pool.items.reduce((s, a) => s + (Number(a.currentBalance) || 0), 0);
+      const poolShareText = pool.isDebtPool
+        ? (snap.totalAssets > 0 ? `负债率 ${((poolSum / snap.totalAssets) * 100).toFixed(1)}%` : '负债项')
+        : (snap.totalAssets > 0 ? `占总资产 ${((poolSum / snap.totalAssets) * 100).toFixed(1)}%` : '0.0%');
+      const poolSumDisplay = pool.isDebtPool
+        ? (poolSum > 0 ? '-' + formatMoney(poolSum) : '0.00')
+        : formatMoney(poolSum);
+
+      const rowsHtml = pool.items.map(acc => {
+        const isDebt = acc.type === 'liability';
+        const displayBal = isDebt
+          ? (acc.currentBalance > 0 ? '-' + formatMoney(acc.currentBalance) : '0.00')
+          : formatMoney(acc.currentBalance);
+        const shareStr = (!isDebt && snap.totalAssets > 0)
+          ? ` · 占比 ${((acc.currentBalance / snap.totalAssets) * 100).toFixed(1)}%`
+          : '';
+
+        let subHtml = `<div style="font-size: 11px; color: var(--text-muted);">初始设定: ${formatMoney(acc.initialBalance)}${shareStr}</div>`;
+
+        if (acc.isInvestment && !isDebt) {
+          const cost = Number(acc.costBalance) || 0;
+          const valued = acc.marketValue != null && acc.marketValue !== '' && isFinite(Number(acc.marketValue));
+          const val = valued ? Number(acc.currentBalance) : cost;
+          const pnl = valued ? Number((val - cost).toFixed(2)) : 0;
+          const pnlPct = valued && cost > 0 ? ((pnl / cost) * 100).toFixed(2) : null;
+          let pillClass = 'neutral';
+          let pnlLabel = '未录入现值 · 暂按本金计';
+          if (valued) {
+            if (pnl >= 0) {
+              pillClass = 'gain';
+              pnlLabel = `盈亏 +${formatMoney(pnl)}${pnlPct !== null ? ` (+${pnlPct}%)` : ''}`;
+            } else {
+              pillClass = 'loss';
+              pnlLabel = `盈亏 -${formatMoney(Math.abs(pnl))}${pnlPct !== null ? ` (${pnlPct}%)` : ''}`;
+            }
+          }
+          subHtml = `
+            <div class="invest-detail-subline tabular-nums">
+              <span>本金 <strong>${formatMoney(cost)}</strong></span>
+              <span>·</span>
+              <span>现值 <strong>${valued ? formatMoney(val) : '--'}</strong></span>
+              <span class="invest-pnl-pill ${pillClass}">${pnlLabel}</span>
+              ${shareStr ? `<span style="color: var(--text-muted);">${shareStr.replace(' · ', '')}</span>` : ''}
+            </div>
+          `;
+        }
+
+        const actionBtnHtml = (acc.isInvestment && !isDebt)
+          ? `<button class="btn btn-sm btn-secondary no-print" onclick="openInvestModal('${acc.id}')">更新现值</button>
+             <button class="btn btn-sm btn-secondary no-print" onclick="openEditAccountModal('${acc.id}')">校准</button>`
+          : `<button class="btn btn-sm btn-secondary no-print" onclick="openEditAccountModal('${acc.id}')">修改/校准</button>`;
+
+        return `
+          <div class="detail-account-row">
+            <div style="min-width: 0; flex: 1;">
+              <div style="font-weight: 700; font-size: 14px;">${escapeHtml(acc.name)}</div>
+              ${subHtml}
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; flex-shrink: 0;">
+              <span class="tabular-nums ${isDebt ? 'text-debt' : 'text-asset'}" style="font-weight: 800; font-size: 15px;">${displayBal}</span>
+              ${actionBtnHtml}
+            </div>
           </div>
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
-            <span class="tabular-nums ${isDebt ? 'text-debt' : 'text-asset'}" style="font-weight: 800; font-size: 15px;">${displayBal}</span>
-            <button class="btn btn-sm btn-secondary no-print" onclick="openEditAccountModal('${acc.id}')">修改/校准</button>
+        `;
+      }).join('');
+
+      return `
+        <div class="account-pool-group" data-pool="${pool.key}">
+          <div class="account-pool-head" onclick="this.parentElement.classList.toggle('collapsed')">
+            <div class="account-pool-title-wrap">
+              <span class="pool-dot" style="background: ${pool.dotColor};"></span>
+              <span class="account-pool-title">${pool.title}</span>
+              <span class="account-pool-count">(${pool.items.length})</span>
+            </div>
+            <div class="account-pool-right tabular-nums">
+              <span class="account-pool-share">${poolShareText}</span>
+              <span class="account-pool-sum ${pool.isDebtPool ? 'text-debt' : 'text-asset'}">${poolSumDisplay}</span>
+              <span class="pool-chevron">▼</span>
+            </div>
+          </div>
+          <div class="account-pool-body">
+            ${rowsHtml}
           </div>
         </div>
       `;
@@ -1248,7 +1344,15 @@ function buildPrintFinancialStatement(targetBounds = null) {
 
   const assetRows = snap.accountDetails.map(acc => {
     const isDebt = acc.type === 'liability';
-    const kindDesc = isDebt ? '负债类账户' : (acc.isInvestment ? '投资类账户' : '资产类账户');
+    let kindDesc = isDebt ? '负债类账户' : (acc.isInvestment ? '投资权益类账户' : (isNonLiquidAccountName(acc.name) ? '长期锁仓资产' : '高流动性资产'));
+    if (acc.isInvestment && !isDebt) {
+      const cost = Number(acc.costBalance) || 0;
+      const valued = acc.marketValue != null && acc.marketValue !== '' && isFinite(Number(acc.marketValue));
+      if (valued) {
+        const pnl = Number((acc.currentBalance - cost).toFixed(2));
+        kindDesc += ` (累计本金 ${formatMoney(cost)}，盈亏 ${pnl >= 0 ? '+' : '-'}${formatMoney(Math.abs(pnl))})`;
+      }
+    }
     return `
       <tr>
         <td>${escapeHtml(acc.name)}</td>
