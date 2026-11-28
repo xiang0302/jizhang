@@ -256,9 +256,6 @@ function buildCategoryCardHtml(cat, mKey) {
           <button class="icon-btn" title="编辑项目" onclick="openCategoryModal('${cat.id}')">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
-          <button class="icon-btn" title="删除项目" style="color: var(--debt-red);" onclick="openDeleteCategoryModal('${cat.id}')">
-            ${TRASH_ICON_SVG}
-          </button>
         </div>
       </div>
 
@@ -409,9 +406,6 @@ function renderHomeView() {
               <button class="account-transfer-shortcut" title="从此账户转出" onclick="openTransferModal('${acc.id}')">
                 互转
               </button>
-              <button type="button" class="icon-btn" title="删除账户" style="color: var(--debt-red);" onclick="openDeleteAccountModal('${acc.id}')">
-                ${TRASH_ICON_SVG}
-              </button>
             </div>
           </div>
           <div>
@@ -502,7 +496,6 @@ function renderDetailView() {
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
             <span class="tabular-nums ${isDebt ? 'text-debt' : 'text-asset'}" style="font-weight: 700; font-size: 15px;">${displayBal}</span>
             <button class="btn btn-sm btn-secondary no-print" onclick="openEditAccountModal('${acc.id}')">修改/校准</button>
-            <button type="button" class="btn btn-sm btn-danger no-print" onclick="openDeleteAccountModal('${acc.id}')">删除</button>
           </div>
         </div>
       `;
@@ -997,6 +990,7 @@ function openAddAccountModal() {
   document.getElementById('accBalanceLabel').textContent = '起始金额 (默认为 0)';
   document.getElementById('accBalanceHint').classList.remove('hidden');
   document.getElementById('accCalibrateGroup').classList.add('hidden');
+  toggleModalDeleteBtn('accountForm', false);
   selectAccountType('asset');
   openModal('accountModal');
 }
@@ -1018,6 +1012,10 @@ function openEditAccountModal(accId) {
 
   document.getElementById('accCalibrateGroup').classList.remove('hidden');
   document.getElementById('accCalibrateCurrentInput').value = currentBal.toFixed(2);
+  toggleModalDeleteBtn('accountForm', true, '删除此账户', function () {
+    closeModal('accountModal');
+    openDeleteAccountModal(acc.id);
+  });
 
   openModal('accountModal');
 }
@@ -1399,6 +1397,7 @@ function openCategoryModal(catId = null) {
     selectDepositSourceMode('external');
     const firstDebt = appState.accounts.find(a => a.type === 'liability');
     if (firstDebt) document.getElementById('repayLiabilityAccountSelect').value = firstDebt.id;
+    toggleModalDeleteBtn('#categoryModal form', false);
   } else {
     const cat = appState.categories.find(c => c.id === catId);
     if (!cat) return;
@@ -1421,6 +1420,10 @@ function openCategoryModal(catId = null) {
       populateAccountSelect('repayLiabilityAccountSelect', cat.defaultAccountId);
       if (cat.fromAccountId) repayFromEl.value = cat.fromAccountId;
     }
+    toggleModalDeleteBtn('#categoryModal form', true, '删除此项目', function () {
+      closeModal('categoryModal');
+      openDeleteCategoryModal(cat.id);
+    });
   }
   openModal('categoryModal');
 }
@@ -1657,7 +1660,6 @@ function openTxHistoryModal(catId) {
           </div>
           <div style="display: flex; gap: 6px;">
             <button class="btn btn-sm btn-secondary" onclick="startEditSingleTx('${tx.id}')">修改</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteSingleTx('${tx.id}')">删除</button>
           </div>
         </div>
       `;
@@ -1674,7 +1676,24 @@ function startEditSingleTx(txId) {
   document.getElementById('editTxDate').value = tx.date;
   populateAccountSelect('editTxAccount', tx.accountId);
   document.getElementById('editTxNote').value = tx.note || '';
-  document.getElementById('editSingleTxBox').classList.remove('hidden');
+  const editBox = document.getElementById('editSingleTxBox');
+  editBox.classList.remove('hidden');
+  const actionRow = editBox.querySelector('div:last-child');
+  if (actionRow) {
+    actionRow.style.justifyContent = 'space-between';
+    let delBtn = document.getElementById('editTxInlineDeleteBtn');
+    if (!delBtn) {
+      delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.id = 'editTxInlineDeleteBtn';
+      delBtn.className = 'btn btn-sm btn-danger';
+      delBtn.textContent = '删除此笔';
+      actionRow.insertBefore(delBtn, actionRow.firstChild);
+    }
+    delBtn.onclick = function () {
+      deleteSingleTx(tx.id);
+    };
+  }
 }
 
 function cancelEditSingleTx() {
@@ -1777,6 +1796,36 @@ function promptClearAllData() {
 /* ==========================================================================
    通用弹窗控制与辅助工具
    ========================================================================== */
+function toggleModalDeleteBtn(formSelector, show, labelText = '', onClickFn = null) {
+  const formEl = formSelector.startsWith('#')
+    ? document.querySelector(formSelector)
+    : document.getElementById(formSelector);
+  if (!formEl) return;
+
+  let zone = formEl.querySelector('.hidden-danger-zone');
+  if (!zone) {
+    zone = document.createElement('div');
+    zone.className = 'hidden-danger-zone';
+    zone.style.cssText = 'margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border-strong); text-align: center;';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-sm btn-danger';
+    btn.style.width = '100%';
+    zone.appendChild(btn);
+    formEl.appendChild(zone);
+  }
+
+  const btn = zone.querySelector('button');
+  if (!show) {
+    zone.classList.add('hidden');
+    btn.onclick = null;
+  } else {
+    zone.classList.remove('hidden');
+    btn.textContent = labelText;
+    btn.onclick = onClickFn;
+  }
+}
+
 function openModal(id) {
   document.getElementById(id).classList.add('open');
 }
