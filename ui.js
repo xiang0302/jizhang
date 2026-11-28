@@ -739,7 +739,7 @@ function renderHomeView() {
           <div>
             <div class="account-balance tabular-nums ${isDebt ? 'text-debt' : 'text-asset'}">${displayBal}</div>
             <div class="account-type-tag" style="display: flex; justify-content: space-between; align-items: center;">
-              <span>${isDebt ? '负债账户' : (acc.isInvestment ? '投资账户' : '资产账户')}</span>
+              <span>${isDebt ? '负债账户' : (acc.isInvestment ? '投资账户' : (isLockedPoolAccount(acc) ? '长期锁仓' : '资产账户'))}</span>
               <span class="tabular-nums">起始: ${initBalStr}</span>
             </div>
           </div>
@@ -884,7 +884,7 @@ function renderDetailView() {
         title: '高流动性现金池',
         dotColor: '#34D399',
         isDebtPool: false,
-        items: snap.accountDetails.filter(a => a.type !== 'liability' && !a.isInvestment && !isNonLiquidAccountName(a.name))
+        items: snap.accountDetails.filter(a => a.type !== 'liability' && !a.isInvestment && !isLockedPoolAccount(a))
       },
       {
         key: 'invest',
@@ -895,10 +895,10 @@ function renderDetailView() {
       },
       {
         key: 'locked',
-        title: '稳健 / 长期锁仓池 (公积金·定期)',
+        title: '稳健 / 长期锁仓池 (公积金·定期·锁仓)',
         dotColor: '#A78BFA',
         isDebtPool: false,
-        items: snap.accountDetails.filter(a => a.type !== 'liability' && !a.isInvestment && isNonLiquidAccountName(a.name))
+        items: snap.accountDetails.filter(a => a.type !== 'liability' && !a.isInvestment && isLockedPoolAccount(a))
       },
       {
         key: 'debt',
@@ -1648,10 +1648,21 @@ function renderExpenseDonutChart(metrics) {
 /* ==========================================================================
    交互逻辑：小账户添加、起始金额设置、删除确认、互转与投资账户管理
    ========================================================================== */
+function selectAssetPoolType(poolType) {
+  const val = poolType === 'locked' ? 'locked' : 'liquid';
+  document.getElementById('accAssetPoolInput').value = val;
+  document.getElementById('pillPoolLiquid').className = val === 'liquid' ? 'radio-pill active-green' : 'radio-pill';
+  document.getElementById('pillPoolLocked').className = val === 'locked' ? 'radio-pill active-indigo' : 'radio-pill';
+}
+
 function selectAccountType(type) {
   document.getElementById('accTypeInput').value = type;
   document.getElementById('pillAsset').className = type === 'asset' ? 'radio-pill active-green' : 'radio-pill';
   document.getElementById('pillLiability').className = type === 'liability' ? 'radio-pill active-red' : 'radio-pill';
+  const poolGroup = document.getElementById('accAssetPoolGroup');
+  if (poolGroup) {
+    poolGroup.classList.toggle('hidden', type !== 'asset');
+  }
 }
 
 function openAddAccountModal() {
@@ -1665,6 +1676,7 @@ function openAddAccountModal() {
   document.getElementById('accCalibrateGroup').classList.add('hidden');
   toggleModalDeleteBtn('accountForm', false);
   selectAccountType('asset');
+  selectAssetPoolType('liquid');
   openModal('accountModal');
 }
 
@@ -1678,6 +1690,15 @@ function openEditAccountModal(accId) {
   document.getElementById('accNameInput').value = acc.name;
   document.getElementById('accTypeInput').value = acc.type;
   document.getElementById('accTypeGroup').classList.add('hidden');
+  const poolGroup = document.getElementById('accAssetPoolGroup');
+  if (poolGroup) {
+    if (acc.type !== 'liability' && !acc.isInvestment) {
+      poolGroup.classList.remove('hidden');
+      selectAssetPoolType(isLockedPoolAccount(acc) ? 'locked' : 'liquid');
+    } else {
+      poolGroup.classList.add('hidden');
+    }
+  }
 
   document.getElementById('accBalanceLabel').textContent = '起始金额 (开账初始余额)';
   document.getElementById('accInitialInput').value = Number(acc.initialBalance || 0).toFixed(2);
@@ -1731,11 +1752,16 @@ function saveAccountForm(e) {
 
   if (!name) return;
 
+  const poolType = type === 'asset'
+    ? (document.getElementById('accAssetPoolInput').value === 'locked' ? 'locked' : 'liquid')
+    : 'liquid';
+
   if (!editId) {
     appState.accounts.push({
       id: generateId('acc'),
       name,
       type,
+      poolType,
       initialBalance: Number(Math.abs(inputInitVal).toFixed(2))
     });
     showToast(`已创建小账户「${name}」`);
@@ -1743,6 +1769,9 @@ function saveAccountForm(e) {
     const acc = appState.accounts.find(a => a.id === editId);
     if (acc) {
       acc.name = name;
+      if (acc.type !== 'liability' && !acc.isInvestment) {
+        acc.poolType = poolType;
+      }
       acc.initialBalance = Number(inputInitVal.toFixed(2));
       showToast(`已更新账户「${name}」起始金额`);
     }

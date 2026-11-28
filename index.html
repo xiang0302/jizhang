@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>智简账本 · 个人资产与现金流管理</title>
-  <link rel="stylesheet" href="style.css?v=17" />
+  <link rel="stylesheet" href="style.css?v=18" />
 </head>
 <body>
 
@@ -473,10 +473,21 @@
         <div class="form-group" id="accTypeGroup">
           <label class="form-label">账户类型</label>
           <div class="radio-pills cols-2">
-            <div class="radio-pill active-green" id="pillAsset" onclick="selectAccountType('asset')">资产账户 (存款/现金)</div>
+            <div class="radio-pill active-green" id="pillAsset" onclick="selectAccountType('asset')">资产账户</div>
             <div class="radio-pill" id="pillLiability" onclick="selectAccountType('liability')">负债账户 (信用卡/贷款)</div>
           </div>
           <input type="hidden" id="accTypeInput" value="asset" />
+        </div>
+        <div class="form-group" id="accAssetPoolGroup">
+          <label class="form-label">资产性质归类（决定流动现金 vs 长期锁仓）</label>
+          <div class="radio-pills cols-2">
+            <div class="radio-pill active" id="pillPoolLiquid" onclick="selectAssetPoolType('liquid')">高流动性资金 (银行/现金)</div>
+            <div class="radio-pill" id="pillPoolLocked" onclick="selectAssetPoolType('locked')">长期锁仓资产 (公积金/定期/锁仓)</div>
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+            选「长期锁仓资产」后，该账户仍计入总资产与净资产，但会自动归入「长期锁仓池」且不计入随时可花现金。
+          </div>
+          <input type="hidden" id="accAssetPoolInput" value="liquid" />
         </div>
         <div class="form-group" id="accInitialGroup">
           <label class="form-label" id="accBalanceLabel">起始金额 (默认为 0)</label>
@@ -957,8 +968,8 @@
   </div>
 
   <!-- 按职责拆分的 3 个独立脚本模块 -->
-  <script src="finance.js?v=17"></script>
-  <script src="ui.js?v=17"></script>
+  <script src="finance.js?v=18"></script>
+  <script src="ui.js?v=18"></script>
   <script type="module" src="cloud.js"></script>
 </body>
 </html>

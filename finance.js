@@ -151,9 +151,19 @@ function generateId(prefix) {
 /* ==========================================================================
    实时余额与历史快照核心引擎 (Single Source of Truth)
    ========================================================================== */
-function isNonLiquidAccountName(name) {
-  const lower = (name || '').toLowerCase();
+function isLockedPoolAccount(accOrName) {
+  if (!accOrName) return false;
+  if (typeof accOrName === 'object') {
+    if (accOrName.poolType === 'locked') return true;
+    const lower = (accOrName.name || '').toLowerCase();
+    return LIQUID_EXCLUDE_KEYWORDS.some(k => lower.includes(k));
+  }
+  const lower = String(accOrName).toLowerCase();
   return LIQUID_EXCLUDE_KEYWORDS.some(k => lower.includes(k));
+}
+
+function isNonLiquidAccountName(name) {
+  return isLockedPoolAccount(name);
 }
 
 function getMonthKey(year, month) {
@@ -332,7 +342,7 @@ function computeAssetsSnapshot(upToDateStr = null) {
       investAssets += effectiveBal;
     } else {
       totalAssets += rawBal;
-      if (!isNonLiquidAccountName(acc.name)) {
+      if (!isLockedPoolAccount(acc)) {
         liquidCash += rawBal;
       } else {
         lockedAssets += rawBal;
