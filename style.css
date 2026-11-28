@@ -753,7 +753,7 @@ button:active {
   min-width: 0;
 }
 
-/* 第 2 个及之后的分类板块（存款、收入、还债）改用横向单列行排版 */
+/* 第 2 个及之后的分类板块（存款、收入、还债）改用横向单列行排版，并保留编辑与明细按钮 */
 .cat-section:nth-child(n+2) .categories-grid {
   grid-template-columns: 1fr;
   gap: 8px;
@@ -762,30 +762,35 @@ button:active {
 .cat-section:nth-child(n+2) .category-grid-card {
   flex-direction: row;
   align-items: center;
-  padding: 11px 14px;
-  gap: 12px;
+  padding: 11px 12px;
+  gap: 10px;
   background: rgba(17, 24, 39, 0.72);
 }
 
 .cat-section:nth-child(n+2) .cat-grid-top {
-  order: 1;
-  flex-shrink: 0;
+  display: contents;
 }
 
-.cat-section:nth-child(n+2) .cat-grid-top .category-action-btns {
-  display: none;
+.cat-section:nth-child(n+2) .cat-grid-top .category-icon-box {
+  order: 1;
+  flex-shrink: 0;
 }
 
 .cat-section:nth-child(n+2) .cat-grid-mid {
   order: 2;
   flex: 1;
+  min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .cat-section:nth-child(n+2) .cat-grid-mid .category-name {
   margin-bottom: 0;
+}
+
+.cat-section:nth-child(n+2) .cat-grid-mid .tag-pill {
+  align-self: flex-start;
 }
 
 .cat-section:nth-child(n+2) .cat-grid-bottom {
@@ -794,6 +799,13 @@ button:active {
   border-top: none;
   text-align: right;
   flex-shrink: 0;
+}
+
+.cat-section:nth-child(n+2) .cat-grid-top .category-action-btns {
+  order: 4;
+  display: flex;
+  flex-shrink: 0;
+  margin-left: 2px;
 }
 
 .category-grid-card:hover {
