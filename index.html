@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>智简账本 · 个人资产与现金流管理</title>
-  <link rel="stylesheet" href="style.css?v=18" />
+  <link rel="stylesheet" href="style.css?v=19" />
 </head>
 <body>
 
@@ -365,6 +365,7 @@
             <span id="detailExpenseChartTitle">周期支出占比分析</span>
             <span class="tabular-nums" style="font-size: 13px; color: var(--text-secondary);" id="detailTotalExpenseBadge">总支出: 0.00</span>
           </div>
+          <div id="expenseInsightsStrip" class="expense-insights-grid tabular-nums"></div>
           <div class="chart-layout">
             <div class="donut-wrapper">
               <svg id="expenseDonutSvg" width="170" height="170" viewBox="0 0 170 170"></svg>
@@ -381,43 +382,64 @@
         <div class="detail-card">
           <div class="detail-card-title">
             <span id="detailFinanceTableTitle">现金流与利润表</span>
+            <span class="badge-live-tag" id="detailMomCompareBadge">含较上期环比变动</span>
           </div>
-          <table class="finance-table tabular-nums">
+          <table class="finance-table finance-table-mom tabular-nums">
+            <thead>
+              <tr>
+                <th>报表项目</th>
+                <th class="num-col">本期金额</th>
+                <th class="num-col">较上期变动</th>
+              </tr>
+            </thead>
             <tbody>
               <tr>
                 <td>
                   <strong>周期总收入</strong>
                   <span class="table-sub-note">所选周期内所有“收入”类项目入账总和</span>
                 </td>
-                <td class="text-asset" id="tableIncome">+0.00</td>
+                <td class="num-col text-asset" id="tableIncome">+0.00</td>
+                <td class="num-col" id="tableIncomeDelta">--</td>
               </tr>
               <tr>
                 <td>
                   <strong>净利润</strong>
-                  <span class="table-sub-note">周期总收入 - 周期总支出（注：“存入”与“还债”不扣减净利润）</span>
+                  <span class="table-sub-note">周期总收入 - 周期总支出（“存入”与“还债”不扣减净利润）</span>
                 </td>
-                <td id="tableNetProfit">0.00</td>
+                <td class="num-col" id="tableNetProfit">0.00</td>
+                <td class="num-col" id="tableNetProfitDelta">--</td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>维持性支出</strong>
+                  <span class="table-sub-note">所选周期内刚性生活必需支出总和</span>
+                </td>
+                <td class="num-col" style="color: var(--essential-slate);" id="tableEssential">0.00</td>
+                <td class="num-col" id="tableEssentialDelta">--</td>
               </tr>
               <tr>
                 <td>
                   <strong>非必要支出</strong>
                   <span class="table-sub-note">所选周期内归类为“非必要”的弹性消费总和</span>
                 </td>
-                <td style="color: var(--discretionary-amber);" id="tableDiscretionary">0.00</td>
+                <td class="num-col" style="color: var(--discretionary-amber);" id="tableDiscretionary">0.00</td>
+                <td class="num-col" id="tableDiscretionaryDelta">--</td>
               </tr>
               <tr>
                 <td>
-                  <strong>扣除维持性开支后可用的现金</strong>
-                  <span class="table-sub-note">周期总收入 - 周期维持性支出（评估真实自由支配现金流）</span>
+                  <strong>扣除维持性开支后可用现金</strong>
+                  <span class="table-sub-note">周期总收入 - 周期维持性支出（真实自由支配现金流）</span>
                 </td>
-                <td style="color: #60A5FA;" id="tableFreeCash">0.00</td>
+                <td class="num-col" style="color: #60A5FA;" id="tableFreeCash">0.00</td>
+                <td class="num-col" id="tableFreeCashDelta">--</td>
               </tr>
               <tr>
                 <td>
                   <strong>强制储蓄 / 存入总额</strong>
                   <span class="table-sub-note">所选周期内所有“存入”类项目累计（参考项）</span>
                 </td>
-                <td style="color: var(--deposit-indigo);" id="tableDepositTotal">0.00</td>
+                <td class="num-col" style="color: var(--deposit-indigo);" id="tableDepositTotal">0.00</td>
+                <td class="num-col" id="tableDepositDelta">--</td>
               </tr>
             </tbody>
           </table>
@@ -968,8 +990,8 @@
   </div>
 
   <!-- 按职责拆分的 3 个独立脚本模块 -->
-  <script src="finance.js?v=18"></script>
-  <script src="ui.js?v=18"></script>
+  <script src="finance.js?v=19"></script>
+  <script src="ui.js?v=19"></script>
   <script type="module" src="cloud.js"></script>
 </body>
 </html>

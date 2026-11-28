@@ -672,3 +672,27 @@ function computeWealthTrendSeries(bounds, pointsCount = 6) {
 
   return series;
 }
+
+function getPreviousPeriodBounds(bounds) {
+  if (bounds.mode === 'year') {
+    return buildBoundsForYear(currentYear - 1);
+  }
+  if (bounds.mode === 'week') {
+    const prevAnchorDt = parseDateISO(reportWeekAnchor);
+    prevAnchorDt.setDate(prevAnchorDt.getDate() - 7);
+    const prevWeek = getWeekRange(formatDateISO(prevAnchorDt));
+    return {
+      mode: 'week',
+      label: prevWeek.label,
+      startStr: prevWeek.startStr,
+      endStr: prevWeek.endStr
+    };
+  }
+  let prevY = currentYear;
+  let prevM = currentMonth - 1;
+  if (prevM < 1) {
+    prevM = 12;
+    prevY -= 1;
+  }
+  return buildBoundsForMonth(prevY, prevM);
+}

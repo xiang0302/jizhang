@@ -1050,23 +1050,36 @@ function renderDetailView() {
   // 渲染第 3 板块：资金明细与所有资金来源
   renderFundDetailsSection(metrics, snap);
 
-  // 渲染第 4 板块：支出占比图表
+  const prevBounds = getPreviousPeriodBounds(bounds);
+  const prevMetrics = computePeriodMetrics(prevBounds.startStr, prevBounds.endStr);
+
+  // 渲染第 4 板块：支出占比图表与洞察双卡
   document.getElementById('detailTotalExpenseBadge').textContent = `总支出: ${formatMoney(metrics.totalExpense)}`;
   document.getElementById('donutCenterTotal').textContent = formatMoney(metrics.totalExpense);
-  renderExpenseDonutChart(metrics);
+  renderExpenseDonutChart(metrics, prevMetrics);
 
-  // 渲染第 5 板块：现金流与利润表
+  // 渲染第 5 板块：现金流与利润表（含较上期环比变动）
   document.getElementById('tableIncome').textContent = `+${formatMoney(metrics.totalIncome)}`;
+  renderMomDeltaCell('tableIncomeDelta', metrics.totalIncome - prevMetrics.totalIncome, true);
+
   const netProfitEl = document.getElementById('tableNetProfit');
   netProfitEl.textContent = `${metrics.netProfit >= 0 ? '+' : ''}${formatMoney(metrics.netProfit)}`;
   netProfitEl.style.color = metrics.netProfit >= 0 ? '#34D399' : '#F87171';
+  renderMomDeltaCell('tableNetProfitDelta', metrics.netProfit - prevMetrics.netProfit, true);
+
+  document.getElementById('tableEssential').textContent = `-${formatMoney(metrics.essentialExpense)}`;
+  renderMomDeltaCell('tableEssentialDelta', metrics.essentialExpense - prevMetrics.essentialExpense, false);
 
   document.getElementById('tableDiscretionary').textContent = `-${formatMoney(metrics.discretionaryExpense)}`;
+  renderMomDeltaCell('tableDiscretionaryDelta', metrics.discretionaryExpense - prevMetrics.discretionaryExpense, false);
+
   const freeCashEl = document.getElementById('tableFreeCash');
   freeCashEl.textContent = `${metrics.freeCashAfterEssential >= 0 ? '+' : ''}${formatMoney(metrics.freeCashAfterEssential)}`;
   freeCashEl.style.color = metrics.freeCashAfterEssential >= 0 ? '#60A5FA' : '#F87171';
+  renderMomDeltaCell('tableFreeCashDelta', metrics.freeCashAfterEssential - prevMetrics.freeCashAfterEssential, true);
 
   document.getElementById('tableDepositTotal').textContent = formatMoney(metrics.totalDeposit);
+  renderMomDeltaCell('tableDepositDelta', metrics.totalDeposit - prevMetrics.totalDeposit, true);
 
   // 渲染净资产爬坡与收支对比趋势图
   renderWealthAndCashflowTrends(bounds);
@@ -1573,10 +1586,81 @@ function buildPrintFinancialStatement(targetBounds = null) {
   `;
 }
 
-function renderExpenseDonutChart(metrics) {
+function renderMomDeltaCell(elId, diff, higherIsGood = true) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const val = Number(diff) || 0;
+  if (Math.abs(val) < 0.005) {
+    el.innerHTML = `<span class="mom-delta-pill flat">持平 0.00</span>`;
+    return;
+  }
+  const isPositive = val > 0;
+  const isGood = higherIsGood ? isPositive : !isPositive;
+  const arrow = isPositive ? '↑' : '↓';
+  const sign = isPositive ? '+' : '-';
+  el.innerHTML = `<span class="mom-delta-pill ${isGood ? 'good' : 'warn'}">${sign}${formatMoney(Math.abs(val))} ${arrow}</span>`;
+}
+
+function renderExpenseDonutChart(metrics, prevMetrics = null) {
   const svg = document.getElementById('expenseDonutSvg');
   const breakdownEl = document.getElementById('expenseBreakdownArea');
+  const insightsEl = document.getElementById('expenseInsightsStrip');
   const total = metrics.totalExpense;
+
+  if (insightsEl) {
+    if (total <= 0 && (!prevMetrics || prevMetrics.totalExpense <= 0)) {
+      insightsEl.classList.add('hidden');
+    } else {
+      insightsEl.classList.remove('hidden');
+      const topItem = metrics.expenseByCategory[0] || null;
+      const topCardHtml = topItem
+        ? `<div class="insight-mini-card">
+             <div class="insight-mini-kicker">本期最大支出项</div>
+             <div class="insight-mini-main">
+               <span>${escapeHtml(topItem.name)}</span>
+               <span style="color: #FBBF24;">${formatMoney(topItem.amount)}</span>
+             </div>
+             <div class="insight-mini-sub">占总支出 ${total > 0 ? ((topItem.amount / total) * 100).toFixed(1) : '0.0'}% · ${topItem.subType === 'discretionary' ? '非必要消费' : '维持性开支'}</div>
+           </div>`
+        : `<div class="insight-mini-card">
+             <div class="insight-mini-kicker">本期最大支出项</div>
+             <div class="insight-mini-main"><span>本周期零支出</span><span style="color: #34D399;">0.00</span></div>
+             <div class="insight-mini-sub">消费自律满分</div>
+           </div>`;
+
+      let bestSaved = null;
+      if (prevMetrics && Array.isArray(prevMetrics.expenseByCategory)) {
+        const currMap = new Map(metrics.expenseByCategory.map(c => [c.name, c.amount]));
+        for (const prevCat of prevMetrics.expenseByCategory) {
+          const currAmt = currMap.get(prevCat.name) || 0;
+          const saved = Number((prevCat.amount - currAmt).toFixed(2));
+          if (saved > 0 && (!bestSaved || saved > bestSaved.saved)) {
+            bestSaved = { name: prevCat.name, saved, prevAmt: prevCat.amount, currAmt };
+          }
+        }
+      }
+
+      const savedCardHtml = bestSaved
+        ? `<div class="insight-mini-card">
+             <div class="insight-mini-kicker">较上期节省最多</div>
+             <div class="insight-mini-main">
+               <span>${escapeHtml(bestSaved.name)}</span>
+               <span style="color: #34D399;">省 ${formatMoney(bestSaved.saved)} ↓</span>
+             </div>
+             <div class="insight-mini-sub">上期 ${formatMoney(bestSaved.prevAmt)} → 本期 ${formatMoney(bestSaved.currAmt)}</div>
+           </div>`
+        : `<div class="insight-mini-card">
+             <div class="insight-mini-kicker">较上期总支出对比</div>
+             <div class="insight-mini-main">
+               <span>${prevMetrics ? (total <= prevMetrics.totalExpense ? '总支出有所控制' : '总支出较上期增加') : '暂无上期对比'}</span>
+               <span style="color: ${prevMetrics && total <= prevMetrics.totalExpense ? '#34D399' : '#94A3B8'};">${prevMetrics ? `${total - prevMetrics.totalExpense >= 0 ? '+' : '-'}${formatMoney(Math.abs(total - prevMetrics.totalExpense))}` : '--'}</span>
+             </div>
+             <div class="insight-mini-sub">上期总支出: ${prevMetrics ? formatMoney(prevMetrics.totalExpense) : '0.00'}</div>
+           </div>`;
+
+      insightsEl.innerHTML = topCardHtml + savedCardHtml;
+    }
+  }
 
   const cx = 85, cy = 85, r = 64;
   const circumference = 2 * Math.PI * r;
