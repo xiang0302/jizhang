@@ -271,7 +271,7 @@ button:active {
 }
 
 .btn-sm {
-  padding: 6px 11px;
+  padding: 6px 10px;
   font-size: 12.5px;
   min-height: 33px;
   border-radius: 8px;
@@ -650,7 +650,7 @@ button:active {
 }
 
 /* ==========================================================================
-   4. 月份切换器 & 分类板块化记账项目区（支持 3 种排法自由切换）
+   4. 月份切换器 & 分类板块化记账项目区（支持 4 种排法自由切换）
    ========================================================================== */
 .month-switcher-bar {
   display: flex;
@@ -660,7 +660,7 @@ button:active {
   gap: 8px;
   background: var(--bg-card);
   border-radius: var(--radius-md);
-  padding: 10px 14px;
+  padding: 10px 12px;
   margin-top: 18px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
@@ -669,12 +669,12 @@ button:active {
 .month-nav-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .month-arrow-btn {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--bg-subtle);
   border: 1px solid var(--border-strong);
@@ -691,10 +691,10 @@ button:active {
 }
 
 .current-month-label {
-  font-size: 15.5px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
-  min-width: 98px;
+  min-width: 92px;
   text-align: center;
 }
 
@@ -831,7 +831,7 @@ button:active {
   margin-left: 2px;
 }
 
-/* --- 排法 2（全网格卡片）：所有分类全部采用方块网格卡片 --- */
+/* --- 排法 2（双列网格）：所有分类全部采用 2 列方块网格卡片 --- */
 .layout-grid .categories-grid {
   grid-template-columns: repeat(2, 1fr);
 }
@@ -842,7 +842,56 @@ button:active {
   }
 }
 
-/* --- 排法 3（紧凑列表）：所有分类全部采用单列横向列表 --- */
+/* --- 排法 3（三列紧凑网格）：手机端一排 3 个小方块 --- */
+.layout-grid3 .categories-grid {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+@media (min-width: 640px) {
+  .layout-grid3 .categories-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+}
+
+.layout-grid3 .category-grid-card {
+  padding: 9px 8px;
+  border-radius: 12px;
+  gap: 6px;
+}
+
+.layout-grid3 .category-icon-box {
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+.layout-grid3 .icon-btn {
+  width: 22px;
+  height: 22px;
+}
+
+.layout-grid3 .category-name {
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.layout-grid3 .tag-pill {
+  font-size: 9.5px;
+  padding: 1px 5px;
+}
+
+.layout-grid3 .category-month-sum {
+  font-size: 14px;
+}
+
+.layout-grid3 .category-sub {
+  font-size: 10px;
+}
+
+/* --- 排法 4（全横向列表）：所有分类全部采用单列横向列表 --- */
 .layout-list .categories-grid {
   grid-template-columns: 1fr;
   gap: 8px;
@@ -907,7 +956,7 @@ button:active {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 4px;
 }
 
 .category-icon-box {
@@ -1007,6 +1056,120 @@ button:active {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   拖动排序弹窗样式
+   ========================================================================== */
+.sortable-sections-wrap {
+  max-height: 44vh;
+  overflow-y: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  background: var(--bg-app);
+}
+
+.sort-group-block {
+  margin-bottom: 10px;
+}
+
+.sort-group-block:last-child {
+  margin-bottom: 0;
+}
+
+.sort-group-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sort-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px;
+  margin-top: 5px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  user-select: none;
+  touch-action: none;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.sort-item-row.dragging {
+  opacity: 0.92;
+  border-color: #60A5FA;
+  background: var(--bg-hover);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+}
+
+.sort-item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sort-rank-badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sort-group-list .sort-item-row:first-child .sort-rank-badge {
+  background: rgba(59, 130, 246, 0.22);
+  color: #60A5FA;
+}
+
+.sort-item-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sort-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.sort-drag-handle {
+  width: 30px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
+  cursor: grab;
+  font-size: 14px;
+}
+
+.sort-drag-handle:active {
+  cursor: grabbing;
+  color: #60A5FA;
 }
 
 /* ==========================================================================

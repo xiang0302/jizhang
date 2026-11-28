@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ui.js — 界面视图渲染、弹窗交互与 PDF/JSON 导出控制
+   ui.js — 界面视图渲染、弹窗交互、排法与拖动排序及 PDF/JSON 导出控制
    ========================================================================== */
 const TRASH_ICON_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
 
@@ -11,19 +11,52 @@ const CATEGORY_SECTIONS = [
 ];
 
 const HOME_LAYOUT_MODES = [
-  { key: 'hybrid', label: '默认混合' },
-  { key: 'grid', label: '全网格卡片' },
-  { key: 'list', label: '紧凑列表' }
+  { key: 'hybrid', label: '排法·混合' },
+  { key: 'grid', label: '排法·双列网格' },
+  { key: 'grid3', label: '排法·三列网格' },
+  { key: 'list', label: '排法·横向列表' }
 ];
 const HOME_LAYOUT_STORAGE_KEY = 'zhijian_home_layout_mode';
+const CATEGORY_ORDER_STORAGE_KEY = 'zhijian_category_sort_order_v1';
 let currentHomeLayoutMode = 'hybrid';
+
+function getSavedCategoryOrder() {
+  try {
+    const raw = localStorage.getItem(CATEGORY_ORDER_STORAGE_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveCategoryOrder(orderIds) {
+  try {
+    localStorage.setItem(CATEGORY_ORDER_STORAGE_KEY, JSON.stringify(orderIds));
+  } catch (e) {}
+}
+
+function getSortedCategoriesForKind(kind) {
+  const items = appState.categories.filter(c => c.kind === kind);
+  const orderIds = getSavedCategoryOrder();
+  if (orderIds.length === 0) return items;
+
+  const rankMap = new Map();
+  orderIds.forEach((id, idx) => rankMap.set(id, idx));
+
+  return [...items].sort((a, b) => {
+    const ra = rankMap.has(a.id) ? rankMap.get(a.id) : 999999;
+    const rb = rankMap.has(b.id) ? rankMap.get(b.id) : 999999;
+    return ra - rb;
+  });
+}
 
 function applyHomeLayoutMode(mode) {
   const valid = HOME_LAYOUT_MODES.some(m => m.key === mode) ? mode : 'hybrid';
   currentHomeLayoutMode = valid;
   const listEl = document.getElementById('homeCategoriesList');
   if (listEl) {
-    listEl.classList.remove('layout-hybrid', 'layout-grid', 'layout-list');
+    listEl.classList.remove('layout-hybrid', 'layout-grid', 'layout-grid3', 'layout-list');
     listEl.classList.add('layout-' + valid);
   }
   const labelEl = document.getElementById('layoutModeLabel');
@@ -31,16 +64,146 @@ function applyHomeLayoutMode(mode) {
   if (labelEl && found) {
     labelEl.textContent = found.label;
   }
+  document.querySelectorAll('#layoutModePicker .radio-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.getAttribute('data-mode') === valid);
+  });
 }
 
-function cycleHomeLayoutMode() {
-  const idx = HOME_LAYOUT_MODES.findIndex(m => m.key === currentHomeLayoutMode);
-  const next = HOME_LAYOUT_MODES[(idx + 1) % HOME_LAYOUT_MODES.length];
-  applyHomeLayoutMode(next.key);
+function selectHomeLayoutMode(mode) {
+  applyHomeLayoutMode(mode);
   try {
-    localStorage.setItem(HOME_LAYOUT_STORAGE_KEY, next.key);
+    localStorage.setItem(HOME_LAYOUT_STORAGE_KEY, mode);
   } catch (e) {}
-  showToast(`已切换为「${next.label}」排法`);
+  const found = HOME_LAYOUT_MODES.find(m => m.key === mode);
+  if (found) showToast(`已切换为「${found.label}」`);
+}
+
+function openLayoutSettingsModal() {
+  applyHomeLayoutMode(currentHomeLayoutMode);
+  renderSortableCategoryList();
+  openModal('layoutSettingsModal');
+}
+
+function renderSortableCategoryList() {
+  const container = document.getElementById('sortableCategoryContainer');
+  if (!container) return;
+
+  if (appState.categories.length === 0) {
+    container.innerHTML = `<div class="empty-state" style="padding: 16px;">暂无记账项目，请先新增项目后再排序</div>`;
+    return;
+  }
+
+  container.innerHTML = CATEGORY_SECTIONS.map(sec => {
+    const items = getSortedCategoriesForKind(sec.kind);
+    if (items.length === 0) return '';
+
+    const rowsHtml = items.map((cat, index) => `
+      <div class="sort-item-row" data-cat-id="${cat.id}" data-kind="${sec.kind}">
+        <div class="sort-item-left">
+          <span class="sort-rank-badge tabular-nums">${index + 1}</span>
+          <span class="sort-item-name">${escapeHtml(cat.name)}</span>
+        </div>
+        <div class="sort-item-actions">
+          ${index > 0 ? `<button type="button" class="icon-btn" title="置顶排第一位" onclick="pinCategoryFirst('${sec.kind}', '${cat.id}')">置顶</button>` : `<span style="font-size: 11px; color: #60A5FA; padding: 0 4px;">首位</span>`}
+          <span class="sort-drag-handle" title="按住上下拖动">☰</span>
+        </div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="sort-group-block">
+        <div class="sort-group-title">
+          <span style="display:inline-block; width:4px; height:12px; border-radius:2px; background:${sec.color};"></span>
+          <span>${sec.title}（拖动可调先后顺序）</span>
+        </div>
+        <div class="sort-group-list" data-kind="${sec.kind}">${rowsHtml}</div>
+      </div>
+    `;
+  }).join('');
+
+  bindPointerDragSort(container);
+}
+
+function pinCategoryFirst(kind, catId) {
+  const items = getSortedCategoriesForKind(kind);
+  const idx = items.findIndex(c => c.id === catId);
+  if (idx <= 0) return;
+  const [picked] = items.splice(idx, 1);
+  items.unshift(picked);
+
+  persistGroupOrder(kind, items.map(c => c.id));
+  renderSortableCategoryList();
+  renderHomeView();
+  showToast(`已将「${picked.name}」排在第一位`);
+}
+
+function persistGroupOrder(kind, newKindIds) {
+  const fullOrder = [];
+  CATEGORY_SECTIONS.forEach(sec => {
+    if (sec.kind === kind) {
+      fullOrder.push(...newKindIds);
+    } else {
+      fullOrder.push(...getSortedCategoriesForKind(sec.kind).map(c => c.id));
+    }
+  });
+  saveCategoryOrder(fullOrder);
+}
+
+function bindPointerDragSort(container) {
+  container.querySelectorAll('.sort-group-list').forEach(listEl => {
+    const kind = listEl.getAttribute('data-kind');
+    let draggingRow = null;
+    let pointerId = null;
+
+    listEl.addEventListener('pointerdown', function (e) {
+      const handle = e.target.closest('.sort-drag-handle');
+      if (!handle) return;
+      const row = handle.closest('.sort-item-row');
+      if (!row) return;
+
+      e.preventDefault();
+      draggingRow = row;
+      pointerId = e.pointerId;
+      draggingRow.classList.add('dragging');
+      if (handle.setPointerCapture) {
+        try { handle.setPointerCapture(pointerId); } catch (err) {}
+      }
+    });
+
+    listEl.addEventListener('pointermove', function (e) {
+      if (!draggingRow || e.pointerId !== pointerId) return;
+      const siblings = Array.from(listEl.querySelectorAll('.sort-item-row:not(.dragging)'));
+      let insertBeforeEl = null;
+      for (const sib of siblings) {
+        const rect = sib.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        if (e.clientY < midY) {
+          insertBeforeEl = sib;
+          break;
+        }
+      }
+      if (insertBeforeEl) {
+        listEl.insertBefore(draggingRow, insertBeforeEl);
+      } else {
+        listEl.appendChild(draggingRow);
+      }
+    });
+
+    const finishDrag = function (e) {
+      if (!draggingRow || (e.pointerId !== undefined && e.pointerId !== pointerId)) return;
+      draggingRow.classList.remove('dragging');
+      draggingRow = null;
+      pointerId = null;
+
+      const newIds = Array.from(listEl.querySelectorAll('.sort-item-row')).map(r => r.getAttribute('data-cat-id'));
+      persistGroupOrder(kind, newIds);
+      renderSortableCategoryList();
+      renderHomeView();
+    };
+
+    listEl.addEventListener('pointerup', finishDrag);
+    listEl.addEventListener('pointercancel', finishDrag);
+  });
 }
 
 async function initApp() {
@@ -352,7 +515,7 @@ function renderInvestPanel(snap) {
         : '--';
 
       return `
-        <div class="invest-row">
+        <div class="invest-row" ${list.length === 1 ? 'style="border-top: none; margin-top: 0; padding-top: 2px;"' : ''}>
           <div class="invest-row-top">
             <strong style="font-size: 14px;">${escapeHtml(a.name)}</strong>
             <div style="display: flex; align-items: center; gap: 6px;">
@@ -384,7 +547,7 @@ function renderInvestPanel(snap) {
     const totalGainColor = gainSum >= 0 ? '#34D399' : '#F87171';
     const totalGainSign = gainSum >= 0 ? '+' : '-';
 
-    bodyHtml = `
+    const summaryHtml = list.length > 1 ? `
       <div class="invest-summary tabular-nums">
         <div class="invest-stat">
           <div class="invest-stat-label">投入本金合计</div>
@@ -403,8 +566,9 @@ function renderInvestPanel(snap) {
           <div class="invest-stat-val" style="color: #60A5FA;">${totalShare.toFixed(1)}%</div>
         </div>
       </div>
-      ${rowsHtml}
-    `;
+    ` : '';
+
+    bodyHtml = `${summaryHtml}${rowsHtml}`;
   }
 
   panelEl.innerHTML = `
@@ -464,7 +628,7 @@ function renderHomeView() {
   // 2. 渲染我的投资面板
   renderInvestPanel(snap);
 
-  // 3. 按大类板块分组渲染当月记账项目栏
+  // 3. 按大类板块与自定义排序渲染当月记账项目栏
   const mKey = getMonthKey(currentYear, currentMonth);
   const listEl = document.getElementById('homeCategoriesList');
   applyHomeLayoutMode(currentHomeLayoutMode);
@@ -482,7 +646,7 @@ function renderHomeView() {
   });
 
   listEl.innerHTML = CATEGORY_SECTIONS.map(sec => {
-    const items = appState.categories.filter(c => c.kind === sec.kind);
+    const items = getSortedCategoriesForKind(sec.kind);
     if (items.length === 0 && sec.hideIfEmpty) return '';
 
     const total = items.reduce((acc, c) => acc + (sumByCatId[c.id] || 0), 0);
@@ -1538,6 +1702,8 @@ function confirmDeleteCategory(deleteHistory) {
   const catName = cat ? cat.name : '已删除项目';
 
   appState.categories = appState.categories.filter(c => c.id !== pendingDeleteCategoryId);
+  const cleanedOrder = getSavedCategoryOrder().filter(id => id !== pendingDeleteCategoryId);
+  saveCategoryOrder(cleanedOrder);
 
   if (deleteHistory) {
     appState.transactions = appState.transactions.filter(t => t.categoryId !== pendingDeleteCategoryId);
