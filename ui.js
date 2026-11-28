@@ -798,7 +798,7 @@ function renderHomeView() {
 function renderDetailView() {
   const bounds = getReportPeriodBounds();
   document.getElementById('detailMonthLabel').textContent = bounds.label;
-  document.getElementById('detailOverviewTitle').textContent = `1. 核心资产概览 (${bounds.endPointTitle})`;
+  document.getElementById('detailOverviewTitle').textContent = `核心资产概览 (${bounds.endPointTitle})`;
   document.getElementById('detailGrowthLabel').textContent = bounds.growthLabel;
 
   const snap = computeAssetsSnapshot(bounds.endStr);
@@ -948,8 +948,58 @@ function renderDetailView() {
   buildPrintFinancialStatement(bounds);
 }
 
+function setLedgerAccountFilter(accId) {
+  ledgerAccountFilter = accId || 'all';
+  renderDetailView();
+}
+
+function setLedgerSearchQuery(val) {
+  ledgerSearchQuery = (val || '').trim().toLowerCase();
+  renderDetailView();
+}
+
+function openTxDirectlyFromDetail(txId) {
+  const tx = appState.transactions.find(t => t.id === txId);
+  if (!tx) return;
+  const txMonthStr = (tx.date || '').slice(0, 7);
+  if (/^\d{4}-\d{2}$/.test(txMonthStr)) {
+    const [yy, mm] = txMonthStr.split('-').map(Number);
+    currentYear = yy;
+    currentMonth = mm;
+  }
+  activeHistoryCategoryId = tx.categoryId;
+  openTxHistoryModal(tx.categoryId);
+  setTimeout(() => {
+    startEditSingleTx(tx.id);
+  }, 60);
+}
+
+function deleteTransferFromDetail(trId) {
+  showConfirmModal(
+    '撤销账户互转',
+    '确定要撤销这笔账户互转记录吗？撤销后对应转出与转入账户余额将自动恢复。',
+    function () {
+      appState.transfers = appState.transfers.filter(t => t.id !== trId);
+      saveState();
+      renderAll();
+      showToast('已撤销该笔账户互转');
+    }
+  );
+}
+
 function renderFundDetailsSection(metrics, snap) {
   document.getElementById('detailTotalInflowBadge').textContent = `周期总流入: +${formatMoney(metrics.totalNewInflow)}`;
+
+  // 同步更新账户筛选下拉框选项
+  const accFilterSel = document.getElementById('ledgerAccountFilter');
+  if (accFilterSel) {
+    const prevVal = ledgerAccountFilter;
+    const opts = ['<option value="all">全部小账户</option>']
+      .concat(appState.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`));
+    accFilterSel.innerHTML = opts.join('');
+    accFilterSel.value = appState.accounts.some(a => a.id === prevVal) ? prevVal : 'all';
+    ledgerAccountFilter = accFilterSel.value;
+  }
 
   const summaryBody = document.getElementById('fundSourcesSummaryBody');
   const totalInflow = metrics.totalNewInflow;
@@ -1010,18 +1060,77 @@ function renderFundDetailsSection(metrics, snap) {
   }
   summaryBody.innerHTML = summaryRowsHtml;
 
-  const ledgerBody = document.getElementById('fundLedgerTableBody');
-  let filteredTxs = [...metrics.periodTxs].sort((a, b) => b.date.localeCompare(a.date));
+  const bounds = getReportPeriodBounds();
+  const periodTransfers = appState.transfers
+    .filter(tr => tr.date && tr.date >= bounds.startStr && tr.date <= bounds.endStr)
+    .map(tr => ({
+      ...tr,
+      _isTransfer: true,
+      kind: 'transfer'
+    }));
 
-  if (ledgerFilterMode === 'inflow') {
-    filteredTxs = filteredTxs.filter(t => t.kind === 'income' || (t.kind === 'deposit' && t.sourceMode !== 'internal'));
+  let combinedItems = [];
+
+  if (ledgerFilterMode === 'transfer') {
+    combinedItems = periodTransfers;
+  } else if (ledgerFilterMode === 'all') {
+    combinedItems = [
+      ...metrics.periodTxs.map(t => ({ ...t, _isTransfer: false })),
+      ...periodTransfers
+    ];
+  } else if (ledgerFilterMode === 'inflow') {
+    combinedItems = metrics.periodTxs
+      .filter(t => t.kind === 'income' || (t.kind === 'deposit' && t.sourceMode !== 'internal'))
+      .map(t => ({ ...t, _isTransfer: false }));
   } else if (ledgerFilterMode === 'income') {
-    filteredTxs = filteredTxs.filter(t => t.kind === 'income');
+    combinedItems = metrics.periodTxs
+      .filter(t => t.kind === 'income')
+      .map(t => ({ ...t, _isTransfer: false }));
   } else if (ledgerFilterMode === 'ext_deposit') {
-    filteredTxs = filteredTxs.filter(t => t.kind === 'deposit' && t.sourceMode !== 'internal');
+    combinedItems = metrics.periodTxs
+      .filter(t => t.kind === 'deposit' && t.sourceMode !== 'internal')
+      .map(t => ({ ...t, _isTransfer: false }));
   }
 
-  if (filteredTxs.length === 0) {
+  // 按账户筛选
+  if (ledgerAccountFilter && ledgerAccountFilter !== 'all') {
+    combinedItems = combinedItems.filter(item => {
+      if (item._isTransfer) {
+        return item.fromAccountId === ledgerAccountFilter || item.toAccountId === ledgerAccountFilter;
+      }
+      return item.accountId === ledgerAccountFilter || item.fromAccountId === ledgerAccountFilter;
+    });
+  }
+
+  // 按关键词搜索（项目名 / 账户名 / 备注）
+  if (ledgerSearchQuery) {
+    combinedItems = combinedItems.filter(item => {
+      let label = '';
+      let accNames = '';
+      if (item._isTransfer) {
+        const fAcc = appState.accounts.find(a => a.id === item.fromAccountId);
+        const tAcc = appState.accounts.find(a => a.id === item.toAccountId);
+        label = '账户互转';
+        accNames = `${fAcc ? fAcc.name : ''} ${tAcc ? tAcc.name : ''}`;
+      } else {
+        const catObj = appState.categories.find(c => c.id === item.categoryId);
+        label = catObj ? catObj.name : (item.categoryNameSnapshot || '');
+        const tAcc = appState.accounts.find(a => a.id === item.accountId);
+        const fAcc = item.fromAccountId ? appState.accounts.find(a => a.id === item.fromAccountId) : null;
+        accNames = `${tAcc ? tAcc.name : ''} ${fAcc ? fAcc.name : ''}`;
+      }
+      const hay = `${label} ${accNames} ${item.note || ''} ${item.date || ''}`.toLowerCase();
+      return hay.includes(ledgerSearchQuery);
+    });
+  }
+
+  combinedItems.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  const countEl = document.getElementById('ledgerResultCount');
+  if (countEl) countEl.textContent = `${combinedItems.length} 条`;
+
+  const ledgerBody = document.getElementById('fundLedgerTableBody');
+  if (combinedItems.length === 0) {
     ledgerBody.innerHTML = `
       <tr>
         <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">
@@ -1032,7 +1141,26 @@ function renderFundDetailsSection(metrics, snap) {
     return;
   }
 
-  ledgerBody.innerHTML = filteredTxs.map(tx => {
+  ledgerBody.innerHTML = combinedItems.map(item => {
+    if (item._isTransfer) {
+      const fromAcc = appState.accounts.find(a => a.id === item.fromAccountId);
+      const toAcc = appState.accounts.find(a => a.id === item.toAccountId);
+      const accText = `${fromAcc ? fromAcc.name : '已删账户'} → ${toAcc ? toAcc.name : '已删账户'}`;
+      return `
+        <tr class="ledger-clickable-row" onclick="deleteTransferFromDetail('${item.id}')" title="点击撤销此笔账户互转">
+          <td style="white-space: nowrap; color: var(--text-secondary);">${item.date}</td>
+          <td>
+            <strong>账户互转</strong>
+            ${item.note ? `<div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(item.note)}</div>` : ''}
+          </td>
+          <td><span class="tag-pill badge-deposit">内部互转</span></td>
+          <td style="color: var(--text-secondary);">${escapeHtml(accText)}</td>
+          <td class="num-col"><span style="color: #93C5FD; font-weight: 700;">${formatMoney(item.amount)}</span></td>
+        </tr>
+      `;
+    }
+
+    const tx = item;
     const catObj = appState.categories.find(c => c.id === tx.categoryId);
     const catName = catObj ? catObj.name : (tx.categoryNameSnapshot || '已删除项目');
     const targetAcc = appState.accounts.find(a => a.id === tx.accountId);
@@ -1061,7 +1189,7 @@ function renderFundDetailsSection(metrics, snap) {
     }
 
     return `
-      <tr>
+      <tr class="ledger-clickable-row" onclick="openTxDirectlyFromDetail('${tx.id}')" title="点击修改或删除此笔流水">
         <td style="white-space: nowrap; color: var(--text-secondary);">${tx.date}</td>
         <td>
           <strong>${escapeHtml(catName)}</strong>

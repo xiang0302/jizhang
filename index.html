@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>智简账本 · 个人资产与现金流管理</title>
-  <link rel="stylesheet" href="style.css?v=11" />
+  <link rel="stylesheet" href="style.css?v=13" />
 </head>
 <body>
 
@@ -208,7 +208,7 @@
         <!-- 1. 核心资产概览与配置结构 -->
         <div class="detail-card">
           <div class="detail-card-title">
-            <span id="detailOverviewTitle">1. 核心资产概览 (截止该月末)</span>
+            <span id="detailOverviewTitle">核心资产概览 (截止该月末)</span>
             <span class="badge-live-tag">实时历史回溯</span>
           </div>
           <div class="overview-summary-grid tabular-nums">
@@ -234,7 +234,7 @@
         <!-- 2. 财务健康度指标 -->
         <div class="detail-card">
           <div class="detail-card-title">
-            <span>2. 财务健康度指标</span>
+            <span>财务健康度指标</span>
             <span id="detailDebtRatioBadge" style="font-size: 12px; color: var(--text-secondary);">资产负债率: 0.0%</span>
           </div>
           <div class="health-grid tabular-nums">
@@ -259,7 +259,7 @@
         <!-- 3. 资金明细与所有资金来源溯源 -->
         <div class="detail-card" id="fundDetailsCard">
           <div class="detail-card-title">
-            <span>3. 资金明细与所有资金来源</span>
+            <span>资金明细与所有资金来源</span>
             <span class="tabular-nums inflow-pill-badge" id="detailTotalInflowBadge">周期总流入: +0.00</span>
           </div>
 
@@ -291,8 +291,18 @@
               <button type="button" class="filter-chip active" data-filter="inflow" onclick="setLedgerFilter('inflow')">全部资金来源 (流入)</button>
               <button type="button" class="filter-chip" data-filter="income" onclick="setLedgerFilter('income')">仅收入类</button>
               <button type="button" class="filter-chip" data-filter="ext_deposit" onclick="setLedgerFilter('ext_deposit')">外部存入</button>
-              <button type="button" class="filter-chip" data-filter="all" onclick="setLedgerFilter('all')">全部收支明细</button>
+              <button type="button" class="filter-chip" data-filter="transfer" onclick="setLedgerFilter('transfer')">账户互转</button>
+              <button type="button" class="filter-chip" data-filter="all" onclick="setLedgerFilter('all')">全部明细</button>
             </div>
+          </div>
+          <div class="ledger-subfilter-bar no-print">
+            <select id="ledgerAccountFilter" class="form-control ledger-mini-select" onchange="setLedgerAccountFilter(this.value)">
+              <option value="all">全部小账户</option>
+            </select>
+            <input type="text" id="ledgerSearchInput" class="form-control ledger-mini-search" placeholder="搜索项目名或备注..." oninput="setLedgerSearchQuery(this.value)" />
+            <span id="ledgerResultCount" class="ledger-count-pill tabular-nums">0 条</span>
+          </div>
+          <div class="ledger-hint-line">提示：点击任意一行流水或互转记录，可直接修改或撤销</div>
           </div>
           <div class="ledger-data-table-wrap">
             <table class="ledger-data-table tabular-nums">
@@ -313,7 +323,7 @@
         <!-- 4. 周期支出占比分析 -->
         <div class="detail-card">
           <div class="detail-card-title">
-            <span id="detailExpenseChartTitle">4. 周期支出占比分析</span>
+            <span id="detailExpenseChartTitle">周期支出占比分析</span>
             <span class="tabular-nums" style="font-size: 13px; color: var(--text-secondary);" id="detailTotalExpenseBadge">总支出: 0.00</span>
           </div>
           <div class="chart-layout">
@@ -331,7 +341,7 @@
         <!-- 5. 周期现金流与利润表 -->
         <div class="detail-card">
           <div class="detail-card-title">
-            <span id="detailFinanceTableTitle">5. 现金流与利润表</span>
+            <span id="detailFinanceTableTitle">现金流与利润表</span>
           </div>
           <table class="finance-table tabular-nums">
             <tbody>
@@ -377,7 +387,7 @@
         <!-- 6. 底部数据安全区 -->
         <div class="detail-card no-print">
           <div class="detail-card-title">
-            <span>6. 数据安全备份与恢复（防清理缓存丢失）</span>
+            <span>数据安全备份与恢复（防清理缓存丢失）</span>
           </div>
           <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">
             登录 Google 账号后账目会自动同步至您的云端私人空间；您也可以随时手动导出 JSON 备份文件妥善保管。
@@ -908,8 +918,8 @@
   </div>
 
   <!-- 按职责拆分的 3 个独立脚本模块 -->
-  <script src="finance.js?v=11"></script>
-  <script src="ui.js?v=11"></script>
+  <script src="finance.js?v=13"></script>
+  <script src="ui.js?v=13"></script>
   <script type="module" src="cloud.js"></script>
 </body>
 </html>

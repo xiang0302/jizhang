@@ -2124,3 +2124,58 @@ button:active {
   color: var(--text-muted);
   font-size: 13px;
 }
+
+/* ==========================================================================
+   步骤一：资金明细双维度筛选与单笔点击直达交互样式
+   ========================================================================== */
+.ledger-subfilter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.ledger-mini-select {
+  flex: 1 1 140px;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  min-height: 34px;
+}
+
+.ledger-mini-search {
+  flex: 1.4 1 160px;
+  padding: 7px 11px;
+  font-size: 12.5px;
+  min-height: 34px;
+}
+
+.ledger-count-pill {
+  font-size: 11px;
+  font-weight: 700;
+  color: #93C5FD;
+  background: rgba(59, 130, 246, 0.14);
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.ledger-hint-line {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.ledger-clickable-row {
+  cursor: pointer;
+  transition: background 0.14s ease;
+}
+
+.ledger-clickable-row:hover td {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.ledger-clickable-row:active td {
+  background: rgba(59, 130, 246, 0.16);
+}
