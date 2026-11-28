@@ -2,15 +2,22 @@
    finance.js — 核心数据状态、本地持久化存储、实时余额与财报/成就计算引擎
    ========================================================================== */
 const STORAGE_KEY = 'zhijian_ledger_v1_clean';
-const DEFAULT_TODAY = '2026-11-27';
+function getTodayISO() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 const LIQUID_EXCLUDE_KEYWORDS = ['epf', '公积金', '定投', '定期'];
 
-let currentYear = 2026;
-let currentMonth = 11; // 1 - 12
+const _initNow = new Date();
+let currentYear = _initNow.getFullYear();
+let currentMonth = _initNow.getMonth() + 1; // 1 - 12
 let currentView = 'home'; // 'home' | 'detail'
 let reportPeriodMode = 'month'; // 'year' | 'month' | 'week'
-let reportWeekAnchor = DEFAULT_TODAY; // 周视图基准日期 YYYY-MM-DD
+let reportWeekAnchor = getTodayISO(); // 周视图基准日期 YYYY-MM-DD
 let ledgerFilterMode = 'inflow'; // 'inflow' | 'income' | 'ext_deposit' | 'transfer' | 'all'
 let ledgerAccountFilter = 'all';
 let ledgerSearchQuery = '';

@@ -1293,7 +1293,7 @@ function buildPrintFinancialStatement(targetBounds = null) {
         </div>
       </div>
       <div class="stmt-meta">
-        <div>编制基准日：${DEFAULT_TODAY}</div>
+        <div>编制基准日：${getTodayISO()}</div>
         <div>货币单位：元（标准会计精度 0.00）</div>
       </div>
     </div>
@@ -1784,7 +1784,7 @@ function openTransferModal(presetFromId = null) {
   if (otherAcc) toSel.value = otherAcc.id;
 
   document.getElementById('transferAmountInput').value = '';
-  document.getElementById('transferDateInput').value = DEFAULT_TODAY;
+  document.getElementById('transferDateInput').value = getTodayISO();
   document.getElementById('transferNoteInput').value = '';
   openModal('transferModal');
 }
@@ -2103,7 +2103,7 @@ function openQuickRecordModal(catId) {
 
   populateAccountSelect('qrPrimaryAccountSelect', cat.defaultAccountId);
   document.getElementById('qrAmountInput').value = '';
-  document.getElementById('qrDateInput').value = DEFAULT_TODAY;
+  document.getElementById('qrDateInput').value = getTodayISO();
   document.getElementById('qrNoteInput').value = '';
 
   openModal('quickRecordModal');
@@ -2284,7 +2284,7 @@ function exportBackupJSON() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `智简记账本备份_${DEFAULT_TODAY}.json`;
+  a.download = `智简记账本备份_${getTodayISO()}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
