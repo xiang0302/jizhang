@@ -129,11 +129,18 @@ body {
 }
 
 .cloud-sync-badge {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 5px;
   font-size: 11px;
   color: var(--text-secondary);
+  min-width: 0;
+}
+
+.cloud-sync-badge span:last-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sync-dot {
@@ -142,6 +149,7 @@ body {
   border-radius: 50%;
   background: #64748B;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .sync-dot.synced {
@@ -181,6 +189,13 @@ body {
 .btn-google-login:hover {
   background: var(--bg-hover);
   border-color: #60A5FA;
+}
+
+@media (max-width: 390px) {
+  .btn-google-login {
+    padding: 6px 10px;
+    font-size: 11.5px;
+  }
 }
 
 /* ==========================================================================
@@ -256,9 +271,9 @@ button:active {
 }
 
 .btn-sm {
-  padding: 6px 12px;
-  font-size: 13px;
-  min-height: 34px;
+  padding: 6px 11px;
+  font-size: 12.5px;
+  min-height: 33px;
   border-radius: 8px;
 }
 
@@ -354,7 +369,7 @@ button:active {
   color: #FFFFFF;
   border: 1px solid rgba(96, 165, 250, 0.25);
   border-radius: var(--radius-lg);
-  padding: 22px 24px;
+  padding: 20px 22px;
   box-shadow: var(--shadow-md);
   cursor: pointer;
   position: relative;
@@ -384,6 +399,7 @@ button:active {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
@@ -397,7 +413,7 @@ button:active {
 }
 
 .hero-cta-badge {
-  font-size: 12px;
+  font-size: 11.5px;
   color: #6EE7B7;
   background: rgba(16, 185, 129, 0.2);
   border: 1px solid rgba(110, 231, 183, 0.25);
@@ -406,7 +422,9 @@ button:active {
   font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .hero-amount {
@@ -466,7 +484,7 @@ button:active {
 
 .account-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
@@ -562,37 +580,40 @@ button:active {
   margin-top: 3px;
 }
 
-/* 投资面板样式：横向指标带（破除方框堆砌） */
+/* 投资面板样式：手机端 2x2 清晰宫格，桌面端 4 列横排 */
 #investPanel {
   background: linear-gradient(135deg, rgba(17, 24, 39, 0.96) 0%, rgba(23, 37, 84, 0.45) 100%);
 }
 
 .invest-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 14px;
+  padding: 12px 14px;
   background: rgba(15, 23, 42, 0.65);
   border-radius: 12px;
   border: 1px solid rgba(96, 165, 250, 0.18);
   margin-bottom: 6px;
-  overflow-x: auto;
+}
+
+@media (min-width: 600px) {
+  .invest-summary {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .invest-stat {
-  flex: 1;
-  min-width: 72px;
+  min-width: 0;
 }
 
 .invest-stat-label {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--text-secondary);
   margin-bottom: 2px;
 }
 
 .invest-stat-val {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
 }
 
@@ -629,12 +650,14 @@ button:active {
 }
 
 /* ==========================================================================
-   4. 月份切换器 & 分类板块化记账项目区
+   4. 月份切换器 & 分类板块化记账项目区（支持 3 种排法自由切换）
    ========================================================================== */
 .month-switcher-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
   background: var(--bg-card);
   border-radius: var(--radius-md);
   padding: 10px 14px;
@@ -646,7 +669,7 @@ button:active {
 .month-nav-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .month-arrow-btn {
@@ -668,10 +691,10 @@ button:active {
 }
 
 .current-month-label {
-  font-size: 16px;
+  font-size: 15.5px;
   font-weight: 700;
   color: var(--text-primary);
-  min-width: 105px;
+  min-width: 98px;
   text-align: center;
 }
 
@@ -724,7 +747,7 @@ button:active {
   border-radius: var(--radius-md);
 }
 
-/* 项目栏：首组(支出类)保留紧凑双列，其余大类(存款/收入/还债)转为通栏横向列表行 */
+/* 基础网格容器 */
 .categories-grid {
   margin-top: 10px;
   display: grid;
@@ -753,13 +776,13 @@ button:active {
   min-width: 0;
 }
 
-/* 第 2 个及之后的分类板块（存款、收入、还债）改用横向单列行排版，并保留编辑与明细按钮 */
-.cat-section:nth-child(n+2) .categories-grid {
+/* --- 排法 1（默认混合）：第 2 组及之后转为横向单列行 --- */
+.layout-hybrid .cat-section:nth-child(n+2) .categories-grid {
   grid-template-columns: 1fr;
   gap: 8px;
 }
 
-.cat-section:nth-child(n+2) .category-grid-card {
+.layout-hybrid .cat-section:nth-child(n+2) .category-grid-card {
   flex-direction: row;
   align-items: center;
   padding: 11px 12px;
@@ -767,16 +790,16 @@ button:active {
   background: rgba(17, 24, 39, 0.72);
 }
 
-.cat-section:nth-child(n+2) .cat-grid-top {
+.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-top {
   display: contents;
 }
 
-.cat-section:nth-child(n+2) .cat-grid-top .category-icon-box {
+.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-top .category-icon-box {
   order: 1;
   flex-shrink: 0;
 }
 
-.cat-section:nth-child(n+2) .cat-grid-mid {
+.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-mid {
   order: 2;
   flex: 1;
   min-width: 0;
@@ -785,15 +808,15 @@ button:active {
   gap: 3px;
 }
 
-.cat-section:nth-child(n+2) .cat-grid-mid .category-name {
+.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-mid .category-name {
   margin-bottom: 0;
 }
 
-.cat-section:nth-child(n+2) .cat-grid-mid .tag-pill {
+.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-mid .tag-pill {
   align-self: flex-start;
 }
 
-.cat-section:nth-child(n+2) .cat-grid-bottom {
+.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-bottom {
   order: 3;
   padding-top: 0;
   border-top: none;
@@ -801,7 +824,72 @@ button:active {
   flex-shrink: 0;
 }
 
-.cat-section:nth-child(n+2) .cat-grid-top .category-action-btns {
+.layout-hybrid .cat-section:nth-child(n+2) .cat-grid-top .category-action-btns {
+  order: 4;
+  display: flex;
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+
+/* --- 排法 2（全网格卡片）：所有分类全部采用方块网格卡片 --- */
+.layout-grid .categories-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (min-width: 640px) {
+  .layout-grid .categories-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* --- 排法 3（紧凑列表）：所有分类全部采用单列横向列表 --- */
+.layout-list .categories-grid {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.layout-list .category-grid-card {
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 12px;
+  gap: 10px;
+}
+
+.layout-list .cat-grid-top {
+  display: contents;
+}
+
+.layout-list .cat-grid-top .category-icon-box {
+  order: 1;
+  flex-shrink: 0;
+}
+
+.layout-list .cat-grid-mid {
+  order: 2;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.layout-list .cat-grid-mid .category-name {
+  margin-bottom: 0;
+}
+
+.layout-list .cat-grid-mid .tag-pill {
+  align-self: flex-start;
+}
+
+.layout-list .cat-grid-bottom {
+  order: 3;
+  padding-top: 0;
+  border-top: none;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.layout-list .cat-grid-top .category-action-btns {
   order: 4;
   display: flex;
   flex-shrink: 0;

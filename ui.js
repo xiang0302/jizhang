@@ -10,10 +10,51 @@ const CATEGORY_SECTIONS = [
   { kind: 'repay', title: '还债', color: 'var(--deposit-indigo)', sign: '-', empty: '', hideIfEmpty: true }
 ];
 
+const HOME_LAYOUT_MODES = [
+  { key: 'hybrid', label: '默认混合' },
+  { key: 'grid', label: '全网格卡片' },
+  { key: 'list', label: '紧凑列表' }
+];
+const HOME_LAYOUT_STORAGE_KEY = 'zhijian_home_layout_mode';
+let currentHomeLayoutMode = 'hybrid';
+
+function applyHomeLayoutMode(mode) {
+  const valid = HOME_LAYOUT_MODES.some(m => m.key === mode) ? mode : 'hybrid';
+  currentHomeLayoutMode = valid;
+  const listEl = document.getElementById('homeCategoriesList');
+  if (listEl) {
+    listEl.classList.remove('layout-hybrid', 'layout-grid', 'layout-list');
+    listEl.classList.add('layout-' + valid);
+  }
+  const labelEl = document.getElementById('layoutModeLabel');
+  const found = HOME_LAYOUT_MODES.find(m => m.key === valid);
+  if (labelEl && found) {
+    labelEl.textContent = found.label;
+  }
+}
+
+function cycleHomeLayoutMode() {
+  const idx = HOME_LAYOUT_MODES.findIndex(m => m.key === currentHomeLayoutMode);
+  const next = HOME_LAYOUT_MODES[(idx + 1) % HOME_LAYOUT_MODES.length];
+  applyHomeLayoutMode(next.key);
+  try {
+    localStorage.setItem(HOME_LAYOUT_STORAGE_KEY, next.key);
+  } catch (e) {}
+  showToast(`已切换为「${next.label}」排法`);
+}
+
 async function initApp() {
   try {
     localStorage.removeItem('zhijian_ledger_v1');
   } catch (e) {}
+
+  try {
+    const savedLayout = localStorage.getItem(HOME_LAYOUT_STORAGE_KEY);
+    if (savedLayout) applyHomeLayoutMode(savedLayout);
+    else applyHomeLayoutMode('hybrid');
+  } catch (e) {
+    applyHomeLayoutMode('hybrid');
+  }
 
   let loaded = null;
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -426,6 +467,7 @@ function renderHomeView() {
   // 3. 按大类板块分组渲染当月记账项目栏
   const mKey = getMonthKey(currentYear, currentMonth);
   const listEl = document.getElementById('homeCategoriesList');
+  applyHomeLayoutMode(currentHomeLayoutMode);
 
   if (appState.categories.length === 0) {
     listEl.innerHTML = `<div class="detail-card empty-state">暂无记账项目，点击上方“+ 新增项目”创建您的第一个账目分类</div>`;

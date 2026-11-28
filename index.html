@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>智简账本 · 个人资产与现金流管理</title>
-  <link rel="stylesheet" href="style.css?v=2" />
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
 
@@ -34,7 +34,7 @@
         <div id="cloudAuthActions" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
           <button type="button" class="btn-google-login" id="btnGoogleSignIn" onclick="handleGoogleSignIn()">
             <svg width="15" height="15" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/><path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.1.74-2.51 1.18-4.22 1.18-3.24 0-5.99-2.19-6.97-5.13H1.02v3.14C3.05 21.2 7.24 24 12 24Z"/><path fill="#FBBC05" d="M5.03 14.04c-.25-.74-.39-1.54-.39-2.36 0-.82.14-1.62.39-2.36V6.18H1.02C.37 7.47 0 8.91 0 10.45v2.46c0 1.54.37 2.98 1.02 4.27l4.01-3.14Z"/><path fill="#EA4335" d="M12 4.75c1.79 0 3.41.62 4.68 1.82l3.51-3.51C18.07 1.19 15.3 0 12 0 7.24 0 3.05 2.8 1.02 6.82l4.01 3.14c.98-2.94 3.73-5.21 6.97-5.21Z"/></svg>
-            Google 登录同步
+            <span class="btn-google-text">Google 登录同步</span>
           </button>
           <button type="button" class="btn btn-sm btn-secondary hidden" id="btnGoogleSignOut" onclick="handleGoogleSignOut()">
             退出
@@ -96,16 +96,22 @@
       <!-- 我的投资面板 -->
       <section id="investPanel" class="accounts-section"></section>
 
-      <!-- 主页核心区：月份切换器与分类化记账项目列表 -->
+      <!-- 主页核心区：月份切换器与排法切换 + 分类化记账项目列表 -->
       <div class="month-switcher-bar">
         <div class="month-nav-group">
           <button class="month-arrow-btn" onclick="changeMonth(-1)" aria-label="上个月">&lt;</button>
           <span class="current-month-label tabular-nums" id="homeMonthLabel">2026年11月</span>
           <button class="month-arrow-btn" onclick="changeMonth(1)" aria-label="下个月">&gt;</button>
         </div>
-        <button class="btn btn-sm btn-accent" onclick="openCategoryModal()">
-          + 新增项目
-        </button>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <button type="button" class="btn btn-sm btn-secondary" id="btnCycleLayout" onclick="cycleHomeLayoutMode()" title="切换记账项目卡片排法">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+            <span id="layoutModeLabel">默认混合</span>
+          </button>
+          <button class="btn btn-sm btn-accent" onclick="openCategoryModal()">
+            + 新增项目
+          </button>
+        </div>
       </div>
 
       <!-- 记账项目分类板块区 -->
