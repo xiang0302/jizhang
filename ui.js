@@ -119,8 +119,12 @@ function bindHomeCardLongPressDrag() {
     let pressTimer = null;
     let draggingCard = null;
     let floatingClone = null;
+    let lastSwappedCard = null;
+    let swapCooldownUntil = 0;
     let offsetX = 0;
     let offsetY = 0;
+    let cardW = 0;
+    let cardH = 0;
     let startX = 0;
     let startY = 0;
 
@@ -139,44 +143,34 @@ function bindHomeCardLongPressDrag() {
 
     const startDragMode = (card, pt) => {
       draggingCard = card;
+      lastSwappedCard = null;
+      swapCooldownUntil = 0;
+
       const rect = card.getBoundingClientRect();
+      cardW = rect.width;
+      cardH = rect.height;
       offsetX = pt.x - rect.left;
       offsetY = pt.y - rect.top;
 
-      // 创建独立不透明浮空克隆体跟随手指
       floatingClone = card.cloneNode(true);
       floatingClone.classList.add('drag-floating-clone');
-      floatingClone.style.width = rect.width + 'px';
-      floatingClone.style.height = rect.height + 'px';
+      floatingClone.style.width = cardW + 'px';
+      floatingClone.style.height = cardH + 'px';
       floatingClone.style.left = rect.left + 'px';
       floatingClone.style.top = rect.top + 'px';
       document.body.appendChild(floatingClone);
 
-      // 原卡片变为虚线坑位，彻底避免文字重叠
       gridEl.classList.add('is-sorting');
       draggingCard.classList.add('card-placeholder');
 
       const nameEl = card.querySelector('.category-name');
       const cardName = nameEl ? nameEl.textContent.trim() : '项目';
-      showDragStatusBanner(`拖动中：「${cardName}」 · 移到目标位置松手`);
+      showDragStatusBanner(`拖动中：「${cardName}」 · 拖到目标卡片上松手`);
 
       suppressCardClickUntil = Date.now() + 800;
       if (navigator.vibrate) {
         try { navigator.vibrate(30); } catch (err) {}
       }
-    };
-
-    const onTouchStart = (e) => {
-      if (e.target.closest('button')) return;
-      const card = e.target.closest('.category-grid-card[data-cat-id]');
-      if (!card) return;
-      const pt = getPoint(e);
-      startX = pt.x;
-      startY = pt.y;
-      clearTimer();
-      pressTimer = setTimeout(() => {
-        startDragMode(card, pt);
-      }, 260);
     };
 
     const onTouchMove = (e) => {
@@ -191,29 +185,48 @@ function bindHomeCardLongPressDrag() {
       if (e.cancelable) e.preventDefault();
       suppressCardClickUntil = Date.now() + 800;
 
-      // 实时移动浮空克隆卡片
+      const cloneLeft = pt.x - offsetX;
+      const cloneTop = pt.y - offsetY;
       if (floatingClone) {
-        floatingClone.style.left = (pt.x - offsetX) + 'px';
-        floatingClone.style.top = (pt.y - offsetY) + 'px';
+        floatingClone.style.left = cloneLeft + 'px';
+        floatingClone.style.top = cloneTop + 'px';
       }
+
+      const centerX = cloneLeft + cardW / 2;
+      const centerY = cloneTop + cardH / 2;
+
+      const now = Date.now();
+      if (now < swapCooldownUntil) return;
 
       const cards = Array.from(gridEl.querySelectorAll('.category-grid-card[data-cat-id]'));
       let targetCard = null;
-      let minDist = Infinity;
 
       for (const c of cards) {
         if (c === draggingCard) continue;
         const r = c.getBoundingClientRect();
-        const cx = r.left + r.width / 2;
-        const cy = r.top + r.height / 2;
-        const dist = Math.hypot(pt.x - cx, pt.y - cy);
-        if (pt.x >= r.left - 4 && pt.x <= r.right + 4 && pt.y >= r.top - 4 && pt.y <= r.bottom + 4) {
+        const padX = Math.min(18, r.width * 0.16);
+        const padY = Math.min(14, r.height * 0.16);
+        const insideCenter =
+          centerX >= r.left + padX &&
+          centerX <= r.right - padX &&
+          centerY >= r.top + padY &&
+          centerY <= r.bottom - padY;
+
+        if (insideCenter) {
+          if (c === lastSwappedCard) {
+            return;
+          }
           targetCard = c;
           break;
         }
-        if (dist < minDist) {
-          minDist = dist;
-          targetCard = c;
+      }
+
+      if (lastSwappedCard) {
+        const lr = lastSwappedCard.getBoundingClientRect();
+        const stillOverLast =
+          centerX >= lr.left && centerX <= lr.right && centerY >= lr.top && centerY <= lr.bottom;
+        if (!stillOverLast) {
+          lastSwappedCard = null;
         }
       }
 
@@ -226,7 +239,22 @@ function bindHomeCardLongPressDrag() {
         } else {
           gridEl.insertBefore(draggingCard, targetCard);
         }
+        lastSwappedCard = targetCard;
+        swapCooldownUntil = now + 220;
       }
+    };
+
+    const onTouchStart = (e) => {
+      if (e.target.closest('button')) return;
+      const card = e.target.closest('.category-grid-card[data-cat-id]');
+      if (!card) return;
+      const pt = getPoint(e);
+      startX = pt.x;
+      startY = pt.y;
+      clearTimer();
+      pressTimer = setTimeout(() => {
+        startDragMode(card, pt);
+      }, 280);
     };
 
     const onTouchEnd = () => {
@@ -240,6 +268,8 @@ function bindHomeCardLongPressDrag() {
       gridEl.classList.remove('is-sorting');
       draggingCard.classList.remove('card-placeholder');
       draggingCard = null;
+      lastSwappedCard = null;
+      swapCooldownUntil = 0;
       hideDragStatusBanner();
       suppressCardClickUntil = Date.now() + 500;
 
@@ -262,7 +292,7 @@ function bindHomeCardLongPressDrag() {
       startX = pt.x;
       startY = pt.y;
       clearTimer();
-      pressTimer = setTimeout(() => startDragMode(card, pt), 260);
+      pressTimer = setTimeout(() => startDragMode(card, pt), 280);
     });
     window.addEventListener('mousemove', onTouchMove);
     window.addEventListener('mouseup', onTouchEnd);
