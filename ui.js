@@ -96,12 +96,31 @@ function cycleHomeLayoutMode() {
 
 let suppressCardClickUntil = 0;
 
+function showDragStatusBanner(text) {
+  let banner = document.getElementById('dragStatusBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'dragStatusBanner';
+    banner.className = 'drag-status-banner';
+    document.body.appendChild(banner);
+  }
+  banner.textContent = text;
+}
+
+function hideDragStatusBanner() {
+  const banner = document.getElementById('dragStatusBanner');
+  if (banner) banner.remove();
+}
+
 function bindHomeCardLongPressDrag() {
   const grids = document.querySelectorAll('#homeCategoriesList .categories-grid[data-kind]');
   grids.forEach(gridEl => {
     const kind = gridEl.getAttribute('data-kind');
     let pressTimer = null;
     let draggingCard = null;
+    let floatingClone = null;
+    let offsetX = 0;
+    let offsetY = 0;
     let startX = 0;
     let startY = 0;
 
@@ -118,12 +137,32 @@ function bindHomeCardLongPressDrag() {
       }
     };
 
-    const startDragMode = (card) => {
+    const startDragMode = (card, pt) => {
       draggingCard = card;
-      draggingCard.classList.add('card-dragging');
-      suppressCardClickUntil = Date.now() + 600;
+      const rect = card.getBoundingClientRect();
+      offsetX = pt.x - rect.left;
+      offsetY = pt.y - rect.top;
+
+      // 创建独立不透明浮空克隆体跟随手指
+      floatingClone = card.cloneNode(true);
+      floatingClone.classList.add('drag-floating-clone');
+      floatingClone.style.width = rect.width + 'px';
+      floatingClone.style.height = rect.height + 'px';
+      floatingClone.style.left = rect.left + 'px';
+      floatingClone.style.top = rect.top + 'px';
+      document.body.appendChild(floatingClone);
+
+      // 原卡片变为虚线坑位，彻底避免文字重叠
+      gridEl.classList.add('is-sorting');
+      draggingCard.classList.add('card-placeholder');
+
+      const nameEl = card.querySelector('.category-name');
+      const cardName = nameEl ? nameEl.textContent.trim() : '项目';
+      showDragStatusBanner(`拖动中：「${cardName}」 · 移到目标位置松手`);
+
+      suppressCardClickUntil = Date.now() + 800;
       if (navigator.vibrate) {
-        try { navigator.vibrate(25); } catch (err) {}
+        try { navigator.vibrate(30); } catch (err) {}
       }
     };
 
@@ -136,8 +175,8 @@ function bindHomeCardLongPressDrag() {
       startY = pt.y;
       clearTimer();
       pressTimer = setTimeout(() => {
-        startDragMode(card);
-      }, 280);
+        startDragMode(card, pt);
+      }, 260);
     };
 
     const onTouchMove = (e) => {
@@ -150,7 +189,13 @@ function bindHomeCardLongPressDrag() {
       }
 
       if (e.cancelable) e.preventDefault();
-      suppressCardClickUntil = Date.now() + 600;
+      suppressCardClickUntil = Date.now() + 800;
+
+      // 实时移动浮空克隆卡片
+      if (floatingClone) {
+        floatingClone.style.left = (pt.x - offsetX) + 'px';
+        floatingClone.style.top = (pt.y - offsetY) + 'px';
+      }
 
       const cards = Array.from(gridEl.querySelectorAll('.category-grid-card[data-cat-id]'));
       let targetCard = null;
@@ -162,7 +207,7 @@ function bindHomeCardLongPressDrag() {
         const cx = r.left + r.width / 2;
         const cy = r.top + r.height / 2;
         const dist = Math.hypot(pt.x - cx, pt.y - cy);
-        if (pt.x >= r.left - 6 && pt.x <= r.right + 6 && pt.y >= r.top - 6 && pt.y <= r.bottom + 6) {
+        if (pt.x >= r.left - 4 && pt.x <= r.right + 4 && pt.y >= r.top - 4 && pt.y <= r.bottom + 4) {
           targetCard = c;
           break;
         }
@@ -187,14 +232,21 @@ function bindHomeCardLongPressDrag() {
     const onTouchEnd = () => {
       clearTimer();
       if (!draggingCard) return;
-      draggingCard.classList.remove('card-dragging');
+
+      if (floatingClone) {
+        floatingClone.remove();
+        floatingClone = null;
+      }
+      gridEl.classList.remove('is-sorting');
+      draggingCard.classList.remove('card-placeholder');
       draggingCard = null;
+      hideDragStatusBanner();
       suppressCardClickUntil = Date.now() + 500;
 
       const newIds = Array.from(gridEl.querySelectorAll('.category-grid-card[data-cat-id]'))
         .map(el => el.getAttribute('data-cat-id'));
       saveCategoryOrderForKind(kind, newIds);
-      showToast('已更新项目排列顺序');
+      showToast('已保存新的排列顺序');
     };
 
     gridEl.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -206,10 +258,11 @@ function bindHomeCardLongPressDrag() {
       if (e.button !== 0 || e.target.closest('button')) return;
       const card = e.target.closest('.category-grid-card[data-cat-id]');
       if (!card) return;
-      startX = e.clientX;
-      startY = e.clientY;
+      const pt = { x: e.clientX, y: e.clientY };
+      startX = pt.x;
+      startY = pt.y;
       clearTimer();
-      pressTimer = setTimeout(() => startDragMode(card), 280);
+      pressTimer = setTimeout(() => startDragMode(card, pt), 260);
     });
     window.addEventListener('mousemove', onTouchMove);
     window.addEventListener('mouseup', onTouchEnd);

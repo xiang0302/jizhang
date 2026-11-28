@@ -1821,22 +1821,60 @@ button:active {
 }
 
 /* ==========================================================================
-   主界面长按直接拖动排序样式
+   主界面长按直接拖动排序样式（浮空克隆跟随 + 原位虚线占位 + 顶部状态横幅）
    ========================================================================== */
 .category-grid-card {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
+  transition: transform 0.16s ease, opacity 0.16s ease, border-color 0.16s ease, background 0.16s ease;
 }
 
-.category-grid-card.card-dragging {
-  opacity: 0.94;
-  transform: scale(1.04) !important;
-  border-color: #60A5FA !important;
-  background: var(--bg-hover) !important;
-  box-shadow: 0 14px 32px rgba(37, 99, 235, 0.45) !important;
-  z-index: 50;
-  position: relative;
+/* 原位留下的半透明虚线坑位，彻底杜绝文字重叠 */
+.category-grid-card.card-placeholder {
+  opacity: 0.25 !important;
+  border: 2px dashed #60A5FA !important;
+  background: rgba(37, 99, 235, 0.10) !important;
+  transform: scale(0.95) !important;
+}
+
+/* 拖拽进行时，其余未拖动卡片微微缩小退让，视觉更清晰 */
+.categories-grid.is-sorting .category-grid-card:not(.card-placeholder) {
+  transform: scale(0.97);
+}
+
+/* 跟随手指移动的独立不透明浮空卡片 */
+.drag-floating-clone {
+  position: fixed !important;
+  margin: 0 !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+  background: #1E293B !important;
+  border: 2px solid #60A5FA !important;
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.78), 0 0 0 4px rgba(96, 165, 250, 0.28) !important;
+  transform: scale(1.05) !important;
+  opacity: 1 !important;
+  transition: none !important;
+}
+
+/* 拖拽期间顶部固定操作提示条 */
+.drag-status-banner {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%);
+  color: #FFFFFF;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: fadeInDown 0.16s ease;
 }
 
 .cat-section-head .drag-hint-pill {
