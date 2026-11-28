@@ -84,140 +84,135 @@ function selectHomeLayoutMode(mode) {
   if (found) showToast(`已切换为「${found.label}」`);
 }
 
-function openLayoutSettingsModal() {
-  applyHomeLayoutMode(currentHomeLayoutMode);
-  renderSortableCategoryList();
-  openModal('layoutSettingsModal');
+function cycleHomeLayoutMode() {
+  const idx = HOME_LAYOUT_MODES.findIndex(m => m.key === currentHomeLayoutMode);
+  const next = HOME_LAYOUT_MODES[(idx + 1) % HOME_LAYOUT_MODES.length];
+  applyHomeLayoutMode(next.key);
+  try {
+    localStorage.setItem(HOME_LAYOUT_STORAGE_KEY, next.key);
+  } catch (e) {}
+  showToast(`已切换为「${next.label}」（长按卡片可直接拖动排序）`);
 }
 
-function renderSortableCategoryList() {
-  const container = document.getElementById('sortableCategoryContainer');
-  if (!container) return;
+let suppressCardClickUntil = 0;
 
-  if (appState.categories.length === 0) {
-    container.innerHTML = `<div class="empty-state" style="padding: 16px;">暂无记账项目，请先新增项目后再排序</div>`;
-    return;
-  }
+function bindHomeCardLongPressDrag() {
+  const grids = document.querySelectorAll('#homeCategoriesList .categories-grid[data-kind]');
+  grids.forEach(gridEl => {
+    const kind = gridEl.getAttribute('data-kind');
+    let pressTimer = null;
+    let draggingCard = null;
+    let startX = 0;
+    let startY = 0;
 
-  container.innerHTML = CATEGORY_SECTIONS.map(sec => {
-    const items = getSortedCategoriesForKind(sec.kind);
-    if (items.length === 0) return '';
-
-    const rowsHtml = items.map((cat, index) => `
-      <div class="sort-item-row" data-cat-id="${cat.id}" data-kind="${sec.kind}">
-        <div class="sort-item-left">
-          <span class="sort-rank-badge tabular-nums">${index + 1}</span>
-          <span class="sort-item-name">${escapeHtml(cat.name)}</span>
-        </div>
-        <div class="sort-item-actions">
-          <button type="button" class="sort-move-btn" title="上移一位" ${index === 0 ? 'disabled' : ''} onclick="moveCategoryStep('${sec.kind}', '${cat.id}', -1)">↑</button>
-          <button type="button" class="sort-move-btn" title="下移一位" ${index === items.length - 1 ? 'disabled' : ''} onclick="moveCategoryStep('${sec.kind}', '${cat.id}', 1)">↓</button>
-          ${index > 0 ? `<button type="button" class="icon-btn" style="width:auto; padding:0 6px; font-size:11px;" title="排第一位" onclick="pinCategoryFirst('${sec.kind}', '${cat.id}')">置顶</button>` : `<span style="font-size: 11px; color: #60A5FA; padding: 0 4px;">首位</span>`}
-          <span class="sort-drag-handle" title="按住上下拖动">☰</span>
-        </div>
-      </div>
-    `).join('');
-
-    return `
-      <div class="sort-group-block">
-        <div class="sort-group-title">
-          <span style="display:inline-block; width:4px; height:12px; border-radius:2px; background:${sec.color};"></span>
-          <span>${sec.title}（共 ${items.length} 项 · 可拖动或点 ↑↓ 排序）</span>
-        </div>
-        <div class="sort-group-list" data-kind="${sec.kind}">${rowsHtml}</div>
-      </div>
-    `;
-  }).join('');
-
-  bindTouchAndMouseDragSort(container);
-}
-
-function moveCategoryStep(kind, catId, delta) {
-  const items = getSortedCategoriesForKind(kind);
-  const idx = items.findIndex(c => c.id === catId);
-  const targetIdx = idx + delta;
-  if (idx < 0 || targetIdx < 0 || targetIdx >= items.length) return;
-  const temp = items[idx];
-  items[idx] = items[targetIdx];
-  items[targetIdx] = temp;
-
-  saveCategoryOrderForKind(kind, items.map(c => c.id));
-  renderSortableCategoryList();
-  renderHomeView();
-}
-
-function pinCategoryFirst(kind, catId) {
-  const items = getSortedCategoriesForKind(kind);
-  const idx = items.findIndex(c => c.id === catId);
-  if (idx <= 0) return;
-  const [picked] = items.splice(idx, 1);
-  items.unshift(picked);
-
-  saveCategoryOrderForKind(kind, items.map(c => c.id));
-  renderSortableCategoryList();
-  renderHomeView();
-  showToast(`已将「${picked.name}」排在第一位`);
-}
-
-function bindTouchAndMouseDragSort(container) {
-  container.querySelectorAll('.sort-group-list').forEach(listEl => {
-    const kind = listEl.getAttribute('data-kind');
-    let draggingRow = null;
-
-    const getClientY = (e) => {
-      if (e.touches && e.touches.length > 0) return e.touches[0].clientY;
-      if (e.changedTouches && e.changedTouches.length > 0) return e.changedTouches[0].clientY;
-      return e.clientY;
+    const getPoint = (e) => {
+      if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      if (e.changedTouches && e.changedTouches.length > 0) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+      return { x: e.clientX, y: e.clientY };
     };
 
-    const onStart = (e) => {
+    const clearTimer = () => {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    };
+
+    const startDragMode = (card) => {
+      draggingCard = card;
+      draggingCard.classList.add('card-dragging');
+      suppressCardClickUntil = Date.now() + 600;
+      if (navigator.vibrate) {
+        try { navigator.vibrate(25); } catch (err) {}
+      }
+    };
+
+    const onTouchStart = (e) => {
       if (e.target.closest('button')) return;
-      const row = e.target.closest('.sort-item-row');
-      if (!row) return;
-      if (e.cancelable) e.preventDefault();
-      draggingRow = row;
-      draggingRow.classList.add('dragging');
+      const card = e.target.closest('.category-grid-card[data-cat-id]');
+      if (!card) return;
+      const pt = getPoint(e);
+      startX = pt.x;
+      startY = pt.y;
+      clearTimer();
+      pressTimer = setTimeout(() => {
+        startDragMode(card);
+      }, 280);
     };
 
-    const onMove = (e) => {
-      if (!draggingRow) return;
+    const onTouchMove = (e) => {
+      const pt = getPoint(e);
+      if (!draggingCard) {
+        if (Math.abs(pt.x - startX) > 8 || Math.abs(pt.y - startY) > 8) {
+          clearTimer();
+        }
+        return;
+      }
+
       if (e.cancelable) e.preventDefault();
-      const clientY = getClientY(e);
-      const siblings = Array.from(listEl.querySelectorAll('.sort-item-row:not(.dragging)'));
-      let insertBeforeEl = null;
-      for (const sib of siblings) {
-        const rect = sib.getBoundingClientRect();
-        if (clientY < rect.top + rect.height / 2) {
-          insertBeforeEl = sib;
+      suppressCardClickUntil = Date.now() + 600;
+
+      const cards = Array.from(gridEl.querySelectorAll('.category-grid-card[data-cat-id]'));
+      let targetCard = null;
+      let minDist = Infinity;
+
+      for (const c of cards) {
+        if (c === draggingCard) continue;
+        const r = c.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const dist = Math.hypot(pt.x - cx, pt.y - cy);
+        if (pt.x >= r.left - 6 && pt.x <= r.right + 6 && pt.y >= r.top - 6 && pt.y <= r.bottom + 6) {
+          targetCard = c;
           break;
         }
+        if (dist < minDist) {
+          minDist = dist;
+          targetCard = c;
+        }
       }
-      if (insertBeforeEl) {
-        listEl.insertBefore(draggingRow, insertBeforeEl);
-      } else {
-        listEl.appendChild(draggingRow);
+
+      if (targetCard && targetCard !== draggingCard) {
+        const allCards = Array.from(gridEl.querySelectorAll('.category-grid-card[data-cat-id]'));
+        const dragIdx = allCards.indexOf(draggingCard);
+        const targetIdx = allCards.indexOf(targetCard);
+        if (dragIdx < targetIdx) {
+          gridEl.insertBefore(draggingCard, targetCard.nextSibling);
+        } else {
+          gridEl.insertBefore(draggingCard, targetCard);
+        }
       }
     };
 
-    const onEnd = () => {
-      if (!draggingRow) return;
-      draggingRow.classList.remove('dragging');
-      draggingRow = null;
+    const onTouchEnd = () => {
+      clearTimer();
+      if (!draggingCard) return;
+      draggingCard.classList.remove('card-dragging');
+      draggingCard = null;
+      suppressCardClickUntil = Date.now() + 500;
 
-      const newIds = Array.from(listEl.querySelectorAll('.sort-item-row')).map(r => r.getAttribute('data-cat-id'));
+      const newIds = Array.from(gridEl.querySelectorAll('.category-grid-card[data-cat-id]'))
+        .map(el => el.getAttribute('data-cat-id'));
       saveCategoryOrderForKind(kind, newIds);
-      renderSortableCategoryList();
-      renderHomeView();
+      showToast('已更新项目排列顺序');
     };
 
-    listEl.addEventListener('touchstart', onStart, { passive: false });
-    listEl.addEventListener('touchmove', onMove, { passive: false });
-    listEl.addEventListener('touchend', onEnd);
-    listEl.addEventListener('touchcancel', onEnd);
+    gridEl.addEventListener('touchstart', onTouchStart, { passive: true });
+    gridEl.addEventListener('touchmove', onTouchMove, { passive: false });
+    gridEl.addEventListener('touchend', onTouchEnd);
+    gridEl.addEventListener('touchcancel', onTouchEnd);
 
-    listEl.addEventListener('mousedown', onStart);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onEnd);
+    gridEl.addEventListener('mousedown', (e) => {
+      if (e.button !== 0 || e.target.closest('button')) return;
+      const card = e.target.closest('.category-grid-card[data-cat-id]');
+      if (!card) return;
+      startX = e.clientX;
+      startY = e.clientY;
+      clearTimer();
+      pressTimer = setTimeout(() => startDragMode(card), 280);
+    });
+    window.addEventListener('mousemove', onTouchMove);
+    window.addEventListener('mouseup', onTouchEnd);
   });
 }
 
@@ -465,7 +460,7 @@ function buildCategoryCardHtml(cat, mKey) {
   const accHint = defaultAcc ? defaultAcc.name : '未指定账户';
 
   return `
-    <div class="category-grid-card" onclick="openQuickRecordModal('${cat.id}')">
+    <div class="category-grid-card" data-cat-id="${cat.id}" onclick="if(Date.now() < suppressCardClickUntil) return; openQuickRecordModal('${cat.id}')">
       <div class="cat-grid-top">
         <div class="category-icon-box ${badgeClass}">${iconChar}</div>
         <div class="category-action-btns" onclick="event.stopPropagation()">
@@ -676,13 +671,15 @@ function renderHomeView() {
         <div class="cat-section-head">
           <span class="cat-section-bar" style="background: ${sec.color};"></span>
           <span class="cat-section-title">${sec.title}</span>
-          <span class="cat-section-count">${items.length}个项目</span>
+          <span class="cat-section-count">${items.length}个项目</span>${items.length > 1 ? '<span class="drag-hint-pill">长按可拖动</span>' : ''}
           <span class="cat-section-total tabular-nums" style="color: ${sec.color};">本月 ${totalText}</span>
         </div>
-        <div class="categories-grid">${cardsHtml}</div>
+        <div class="categories-grid" data-kind="${sec.kind}">${cardsHtml}</div>
       </section>
     `;
   }).join('');
+
+  bindHomeCardLongPressDrag();
 }
 
 function renderDetailView() {

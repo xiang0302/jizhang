@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>智简账本 · 个人资产与现金流管理</title>
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=6" />
 </head>
 <body>
 
@@ -104,7 +104,7 @@
           <button class="month-arrow-btn" onclick="changeMonth(1)" aria-label="下个月">&gt;</button>
         </div>
         <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-          <button type="button" class="btn btn-sm btn-secondary" onclick="openLayoutSettingsModal()" title="选择排法并拖动调整项目顺序">
+          <button type="button" class="btn btn-sm btn-secondary" onclick="cycleHomeLayoutMode()" title="点击切换卡片排法，长按项目卡片可直接拖动排序">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
             <span id="layoutModeLabel">排法·混合</span>
           </button>
@@ -849,55 +849,9 @@
     </div>
   </div>
 
-  <!-- ========================================================================
-       模态弹窗 9：排法与拖动排序设置弹窗
-       ======================================================================== -->
-  <div id="layoutSettingsModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'layoutSettingsModal')">
-    <div class="modal-panel">
-      <div class="modal-header">
-        <h3 class="modal-title">自定义排法与项目顺序</h3>
-        <button class="modal-close" onclick="closeModal('layoutSettingsModal')">&times;</button>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">1. 选择分类卡片排法（立即生效）</label>
-        <div class="radio-pills cols-2" id="layoutModePicker">
-          <div class="radio-pill" data-mode="hybrid" onclick="selectHomeLayoutMode('hybrid')">
-            <div style="font-weight: 700;">默认混合</div>
-            <div style="font-size: 11px; opacity: 0.8; margin-top: 2px;">支出网格 + 其余横条</div>
-          </div>
-          <div class="radio-pill" data-mode="grid" onclick="selectHomeLayoutMode('grid')">
-            <div style="font-weight: 700;">双列网格</div>
-            <div style="font-size: 11px; opacity: 0.8; margin-top: 2px;">全部 2 列方块卡片</div>
-          </div>
-          <div class="radio-pill" data-mode="grid3" onclick="selectHomeLayoutMode('grid3')">
-            <div style="font-weight: 700;">三列紧凑网格</div>
-            <div style="font-size: 11px; opacity: 0.8; margin-top: 2px;">一排 3 个小方块</div>
-          </div>
-          <div class="radio-pill" data-mode="list" onclick="selectHomeLayoutMode('list')">
-            <div style="font-weight: 700;">全横向列表</div>
-            <div style="font-size: 11px; opacity: 0.8; margin-top: 2px;">单列紧凑横条</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-group" style="margin-bottom: 0;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-          <label class="form-label" style="margin-bottom: 0;">2. 拖动调整项目先后顺序（越靠前越优先）</label>
-          <span style="font-size: 11px; color: #60A5FA;">按住项目上下拖动 或 点 ↑↓ 调整</span>
-        </div>
-        <div id="sortableCategoryContainer" class="sortable-sections-wrap"></div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="closeModal('layoutSettingsModal')">完成</button>
-      </div>
-    </div>
-  </div>
-
   <!-- 按职责拆分的 3 个独立脚本模块 -->
   <script src="finance.js"></script>
-  <script src="ui.js"></script>
+  <script src="ui.js?v=6"></script>
   <script type="module" src="cloud.js"></script>
 </body>
 </html>
