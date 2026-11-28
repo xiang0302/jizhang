@@ -11,10 +11,11 @@ const CATEGORY_SECTIONS = [
 ];
 
 const HOME_LAYOUT_MODES = [
+  { key: 'bento', label: '排法·焦点舱' },
+  { key: 'milestone', label: '排法·阶梯流' },
   { key: 'hybrid', label: '排法·混合' },
   { key: 'grid', label: '排法·双列网格' },
-  { key: 'grid3', label: '排法·三列网格' },
-  { key: 'list', label: '排法·横向列表' }
+  { key: 'grid3', label: '排法·三列网格' }
 ];
 const HOME_LAYOUT_STORAGE_KEY = 'zhijian_home_layout_mode';
 const CATEGORY_ORDER_STORAGE_KEY = 'zhijian_category_sort_order_v1';
@@ -62,7 +63,7 @@ function applyHomeLayoutMode(mode) {
   currentHomeLayoutMode = valid;
   const listEl = document.getElementById('homeCategoriesList');
   if (listEl) {
-    listEl.classList.remove('layout-hybrid', 'layout-grid', 'layout-grid3', 'layout-list');
+    listEl.classList.remove('layout-bento', 'layout-milestone', 'layout-hybrid', 'layout-grid', 'layout-grid3', 'layout-list');
     listEl.classList.add('layout-' + valid);
   }
   const labelEl = document.getElementById('layoutModeLabel');
@@ -307,9 +308,9 @@ async function initApp() {
   try {
     const savedLayout = localStorage.getItem(HOME_LAYOUT_STORAGE_KEY);
     if (savedLayout) applyHomeLayoutMode(savedLayout);
-    else applyHomeLayoutMode('hybrid');
+    else applyHomeLayoutMode('bento');
   } catch (e) {
-    applyHomeLayoutMode('hybrid');
+    applyHomeLayoutMode('bento');
   }
 
   let loaded = null;
@@ -497,9 +498,10 @@ function changeMonth(delta) {
   renderAll();
 }
 
-function buildCategoryCardHtml(cat, mKey) {
+function buildCategoryCardHtml(cat, mKey, sectionTotal = 0, rankIndex = 0) {
   const catMonthTxs = appState.transactions.filter(t => t.categoryId === cat.id && t.date && t.date.startsWith(mKey));
   const monthSum = catMonthTxs.reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+  const ratioPct = sectionTotal > 0 ? Math.min(100, Math.max(6, (monthSum / sectionTotal) * 100)) : 0;
 
   let badgeClass = 'badge-essential';
   let badgeText = '维持性支出';
@@ -541,9 +543,10 @@ function buildCategoryCardHtml(cat, mKey) {
 
   const defaultAcc = appState.accounts.find(a => a.id === cat.defaultAccountId);
   const accHint = defaultAcc ? defaultAcc.name : '未指定账户';
+  const pctText = sectionTotal > 0 && monthSum > 0 ? ` · ${((monthSum / sectionTotal) * 100).toFixed(0)}%` : '';
 
   return `
-    <div class="category-grid-card" data-cat-id="${cat.id}" onclick="if(Date.now() < suppressCardClickUntil) return; openQuickRecordModal('${cat.id}')">
+    <div class="category-grid-card" data-cat-id="${cat.id}" style="--progress-pct: ${ratioPct.toFixed(1)}%;" onclick="if(Date.now() < suppressCardClickUntil) return; openQuickRecordModal('${cat.id}')">
       <div class="cat-grid-top">
         <div class="category-icon-box ${badgeClass}">${iconChar}</div>
         <div class="category-action-btns" onclick="event.stopPropagation()">
@@ -557,7 +560,7 @@ function buildCategoryCardHtml(cat, mKey) {
       </div>
 
       <div class="cat-grid-mid">
-        <div class="category-name" title="${escapeHtml(cat.name)}">${escapeHtml(cat.name)}</div>
+        <div class="category-name" title="${escapeHtml(cat.name)}">${escapeHtml(cat.name)}<span class="milestone-rank-chip tabular-nums">#${rankIndex + 1}</span></div>
         <span class="tag-pill ${badgeClass}">${badgeText}</span>
       </div>
 
@@ -565,7 +568,7 @@ function buildCategoryCardHtml(cat, mKey) {
         <div class="category-month-sum tabular-nums" style="color: ${amountColor};">
           ${amountPrefix}${formatMoney(monthSum)}
         </div>
-        <div class="category-sub">${escapeHtml(accHint)} · ${catMonthTxs.length}笔</div>
+        <div class="category-sub">${escapeHtml(accHint)} · ${catMonthTxs.length}笔${pctText}</div>
       </div>
     </div>
   `;
@@ -746,7 +749,7 @@ function renderHomeView() {
     const totalText = total > 0 ? sec.sign + formatMoney(total) : '0.00';
 
     const cardsHtml = items.length > 0
-      ? items.map(cat => buildCategoryCardHtml(cat, mKey)).join('')
+      ? items.map((cat, idx) => buildCategoryCardHtml(cat, mKey, total, idx)).join('')
       : `<div class="cat-section-empty">${sec.empty}，点右上「+ 新增项目」添加</div>`;
 
     return `

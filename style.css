@@ -1821,6 +1821,109 @@ button:active {
 }
 
 /* ==========================================================================
+   新增高质感排法：仪表舱 Bento 焦点舱（layout-bento）与 阶梯成就流（layout-milestone）
+   ========================================================================== */
+#homeCategoriesList.layout-bento .categories-grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 11px;
+}
+
+@media (min-width: 640px) {
+  #homeCategoriesList.layout-bento .categories-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 13px;
+  }
+}
+
+/* 焦点舱模式下，排在首位的项目跨双列成为高亮主卡，更有成就感与层级感 */
+#homeCategoriesList.layout-bento .category-grid-card:first-child {
+  grid-column: span 2;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 16px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.96) 0%, rgba(15, 23, 42, 0.98) 60%, rgba(37, 99, 235, 0.18) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.38);
+  box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.55);
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .cat-grid-top {
+  display: contents;
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .category-icon-box {
+  order: 1;
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+  border-radius: 12px;
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .cat-grid-mid {
+  order: 2;
+  flex: 1;
+  min-width: 0;
+  margin-left: 10px;
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .category-name {
+  font-size: 16px;
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .cat-grid-bottom {
+  order: 3;
+  text-align: right;
+  margin-right: 6px;
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .category-month-sum {
+  font-size: 20px;
+}
+
+#homeCategoriesList.layout-bento .category-grid-card:first-child .category-action-btns {
+  order: 4;
+}
+
+/* 排法·阶梯成就流（layout-milestone）：左侧带顺位勋章与底部占本类进度条 */
+#homeCategoriesList.layout-milestone .categories-grid {
+  grid-template-columns: 1fr;
+  gap: 9px;
+}
+
+#homeCategoriesList.layout-milestone .category-grid-card {
+  position: relative;
+  padding: 12px 14px 14px 16px;
+  border-left: 3.5px solid #3B82F6;
+  background: linear-gradient(90deg, rgba(30, 41, 59, 0.72) 0%, rgba(17, 24, 39, 0.95) 45%);
+  overflow: hidden;
+}
+
+#homeCategoriesList.layout-milestone .category-grid-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  width: var(--progress-pct, 0%);
+  background: linear-gradient(90deg, #3B82F6 0%, #10B981 100%);
+  opacity: 0.8;
+  transition: width 0.35s ease;
+}
+
+.milestone-rank-chip {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #93C5FD;
+  background: rgba(59, 130, 246, 0.16);
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  padding: 1px 6px;
+  border-radius: 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* ==========================================================================
    主界面长按直接拖动排序样式（浮空克隆跟随 + 原位虚线占位 + 顶部状态横幅）
    ========================================================================== */
 .category-grid-card {
@@ -1830,7 +1933,6 @@ button:active {
   transition: transform 0.16s ease, opacity 0.16s ease, border-color 0.16s ease, background 0.16s ease;
 }
 
-/* 原位留下的半透明虚线坑位，彻底杜绝文字重叠 */
 .category-grid-card.card-placeholder {
   opacity: 0.25 !important;
   border: 2px dashed #60A5FA !important;
@@ -1838,12 +1940,10 @@ button:active {
   transform: scale(0.95) !important;
 }
 
-/* 拖拽进行时，其余未拖动卡片微微缩小退让，视觉更清晰 */
 .categories-grid.is-sorting .category-grid-card:not(.card-placeholder) {
   transform: scale(0.97);
 }
 
-/* 跟随手指移动的独立不透明浮空卡片 */
 .drag-floating-clone {
   position: fixed !important;
   margin: 0 !important;
@@ -1857,7 +1957,6 @@ button:active {
   transition: none !important;
 }
 
-/* 拖拽期间顶部固定操作提示条 */
 .drag-status-banner {
   position: fixed;
   top: 14px;
