@@ -354,7 +354,7 @@
     }
 
     /* ==========================================================================
-       3. 主页顶部：总资产卡片 & 小账户网格区
+       3. 主页顶部：总资产卡片 & 小账户网格区 & 投资面板
        ========================================================================== */
     .hero-asset-card {
       background: linear-gradient(135deg, #0F172A 0%, #172554 55%, #064E3B 100%);
@@ -443,7 +443,7 @@
       margin-right: 6px;
     }
 
-    /* 小账户管理区块 */
+    /* 小账户与投资管理区块 */
     .accounts-section {
       margin-top: 16px;
       background: var(--bg-card);
@@ -523,6 +523,13 @@
       word-break: break-word;
     }
 
+    .account-mini-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
     .account-transfer-shortcut {
       color: var(--text-secondary);
       background: rgba(255, 255, 255, 0.04);
@@ -559,8 +566,65 @@
       margin-top: 3px;
     }
 
+    /* 投资面板样式 */
+    .invest-summary {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .invest-stat {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+    }
+
+    .invest-stat-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 2px;
+    }
+
+    .invest-stat-val {
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .invest-row {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-top: 8px;
+    }
+
+    .invest-row-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .invest-row-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .invest-row-grid b {
+      display: block;
+      font-size: 14px;
+      color: var(--text-primary);
+      margin-top: 1px;
+    }
+
     /* ==========================================================================
-       4. 月份切换器 & 网格化核心记账项目区
+       4. 月份切换器 & 分类板块化记账项目区
        ========================================================================== */
     .month-switcher-bar {
       display: flex;
@@ -606,9 +670,58 @@
       text-align: center;
     }
 
+    .category-sections {
+      margin-top: 6px;
+    }
+
+    .cat-section {
+      margin-top: 18px;
+    }
+
+    .cat-section-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 4px;
+    }
+
+    .cat-section-bar {
+      width: 4px;
+      height: 16px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .cat-section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .cat-section-count {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .cat-section-total {
+      margin-left: auto;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .cat-section-empty {
+      grid-column: 1 / -1;
+      padding: 14px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-md);
+    }
+
     /* 项目栏：响应式网格布局（手机2列，宽屏3列） */
     .categories-grid {
-      margin-top: 12px;
+      margin-top: 10px;
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 10px;
@@ -1461,7 +1574,10 @@
         <div id="homeAccountsGrid" class="accounts-grid"></div>
       </section>
 
-      <!-- 主页核心区：月份切换器与网格化记账项目列表 -->
+      <!-- 我的投资面板（直接融合进主视图） -->
+      <section id="investPanel" class="accounts-section"></section>
+
+      <!-- 主页核心区：月份切换器与分类化记账项目列表 -->
       <div class="month-switcher-bar">
         <div class="month-nav-group">
           <button class="month-arrow-btn" onclick="changeMonth(-1)" aria-label="上个月">&lt;</button>
@@ -1473,8 +1589,8 @@
         </button>
       </div>
 
-      <!-- 记账项目网格卡片区 -->
-      <div id="homeCategoriesList" class="categories-grid"></div>
+      <!-- 记账项目分类板块区 -->
+      <div id="homeCategoriesList" class="category-sections"></div>
     </div>
 
     <!-- ======================================================================
@@ -1528,7 +1644,7 @@
           </div>
 
           <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); margin: 14px 0 6px;">
-            持有的各个小账户明细列表（支持修改名称或校准起始金额）
+            持有的各个小账户明细列表（支持修改名称、校准起始金额或删除）
           </div>
           <div id="detailAccountsList"></div>
         </div>
@@ -1746,6 +1862,100 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="closeModal('accountModal')">取消</button>
+          <button type="submit" class="btn btn-primary">确认保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       模态弹窗 1B：删除小账户二次确认弹窗（融合原补丁功能）
+       ======================================================================== -->
+  <div id="deleteAccountModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'deleteAccountModal')">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3 class="modal-title">删除小账户</h3>
+        <button class="modal-close" onclick="closeModal('deleteAccountModal')">&times;</button>
+      </div>
+      <p id="delAccIntro" style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6;"></p>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="btn btn-danger-solid" style="justify-content: flex-start; text-align: left; padding: 12px 14px; height: auto;" onclick="confirmDeleteAccount(true)">
+          <div>
+            <div>是，一并删除相关流水和互转</div>
+            <div style="font-size: 11px; font-weight: 400; opacity: 0.9;">涉及该账户的收支、存入、还债、互转记录全部清除，其他账户余额会自动重算</div>
+          </div>
+        </button>
+        <button class="btn btn-secondary" style="justify-content: flex-start; text-align: left; padding: 12px 14px; height: auto;" onclick="confirmDeleteAccount(false)">
+          <div>
+            <div style="color: var(--text-primary);">不，只删除账户本身，历史记录保留</div>
+            <div style="font-size: 11px; font-weight: 400; color: var(--text-muted);">流水继续计入报表，但该账户显示为“未知账户”，总资产会减去它的余额</div>
+          </div>
+        </button>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('deleteAccountModal')">取消操作</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       模态弹窗 1C：新增投资账户弹窗 & 更新投资现值弹窗（融合原补丁功能）
+       ======================================================================== -->
+  <div id="investNewModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'investNewModal')">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3 class="modal-title">新增投资账户</h3>
+        <button class="modal-close" onclick="closeModal('investNewModal')">&times;</button>
+      </div>
+      <form onsubmit="saveNewInvest(event)">
+        <div class="form-group">
+          <label class="form-label">投资账户名称</label>
+          <input type="text" id="invNewName" class="form-control" placeholder="例如：长期持仓、美股账户" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">已投入本金（没有就填 0）</label>
+          <input type="number" step="0.01" min="0" id="invNewCost" class="form-control tabular-nums" placeholder="0.00" value="0" required />
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">以后每月入金，用「存入」项目或「互转」记录，本金会自动累加。</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">当前现值（选填，不填则暂按本金计算）</label>
+          <input type="number" step="0.01" min="0" id="invNewValue" class="form-control tabular-nums" placeholder="0.00" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">现值日期</label>
+          <input type="date" id="invNewDate" class="form-control tabular-nums" required />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('investNewModal')">取消</button>
+          <button type="submit" class="btn btn-primary">确认创建</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="investModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'investModal')">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3 class="modal-title" id="investModalTitle">更新投资现值</h3>
+        <button class="modal-close" onclick="closeModal('investModal')">&times;</button>
+      </div>
+      <form onsubmit="saveInvestForm(event)">
+        <div class="form-group">
+          <label class="form-label">选择小账户</label>
+          <select id="invAccSelect" class="form-control" onchange="fillInvestFields()"></select>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;" id="invCostHint"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">当前现值（持仓市值）</label>
+          <input type="number" step="0.01" min="0" id="invValueInput" class="form-control amount-input-hero tabular-nums" placeholder="0.00" required />
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">入金之后，记得回来更新一次现值，盈亏才准确。</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">现值日期</label>
+          <input type="date" id="invDateInput" class="form-control tabular-nums" required />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('investModal')">取消</button>
           <button type="submit" class="btn btn-primary">确认保存</button>
         </div>
       </form>
@@ -2121,6 +2331,16 @@
     const STORAGE_KEY = 'zhijian_ledger_v1_clean';
     const DEFAULT_TODAY = '2026-11-27';
 
+    const LIQUID_EXCLUDE_KEYWORDS = ['epf', '公积金', '定投', '定期'];
+    const TRASH_ICON_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+
+    const CATEGORY_SECTIONS = [
+      { kind: 'expense', title: '支出类', color: 'var(--debt-red)', sign: '-', empty: '暂无支出项目' },
+      { kind: 'deposit', title: '存款', color: 'var(--deposit-indigo)', sign: '+', empty: '暂无存款项目' },
+      { kind: 'income', title: '收入', color: '#34D399', sign: '+', empty: '暂无收入项目' },
+      { kind: 'repay', title: '还债', color: 'var(--deposit-indigo)', sign: '-', empty: '', hideIfEmpty: true }
+    ];
+
     let currentYear = 2026;
     let currentMonth = 11; // 1 - 12
     let currentView = 'home'; // 'home' | 'detail'
@@ -2129,6 +2349,7 @@
     let ledgerFilterMode = 'inflow'; // 'inflow' | 'income' | 'ext_deposit' | 'all'
     let activeHistoryCategoryId = null;
     let pendingDeleteCategoryId = null;
+    let pendingDeleteAccountId = null;
 
     let appState = {
       accounts: [],
@@ -2255,6 +2476,11 @@
     /* ==========================================================================
        3. 实时余额与历史快照核心引擎 (Single Source of Truth)
        ========================================================================== */
+    function isNonLiquidAccountName(name) {
+      const lower = (name || '').toLowerCase();
+      return LIQUID_EXCLUDE_KEYWORDS.some(k => lower.includes(k));
+    }
+
     function getMonthKey(year, month) {
       return `${year}-${String(month).padStart(2, '0')}`;
     }
@@ -2409,19 +2635,34 @@
       let liquidCash = 0;
 
       const accountDetails = appState.accounts.map(acc => {
-        const bal = calculateAccountBalance(acc.id, upToDateStr);
+        const rawBal = calculateAccountBalance(acc.id, upToDateStr);
+        let effectiveBal = rawBal;
+        let costBalance = rawBal;
+
         if (acc.type === 'liability') {
-          totalDebt += bal;
+          totalDebt += rawBal;
+        } else if (acc.isInvestment) {
+          const mv = Number(acc.marketValue);
+          if (
+            acc.marketValue != null &&
+            acc.marketValue !== '' &&
+            isFinite(mv) &&
+            (!upToDateStr || upToDateStr >= (acc.valueDate || ''))
+          ) {
+            effectiveBal = Number(mv.toFixed(2));
+          }
+          totalAssets += effectiveBal;
         } else {
-          totalAssets += bal;
-          const lowerName = acc.name.toLowerCase();
-          if (!lowerName.includes('epf') && !lowerName.includes('公积金') && !lowerName.includes('定投') && !lowerName.includes('定期')) {
-            liquidCash += bal;
+          totalAssets += rawBal;
+          if (!isNonLiquidAccountName(acc.name)) {
+            liquidCash += rawBal;
           }
         }
+
         return {
           ...acc,
-          currentBalance: bal
+          costBalance: Number(costBalance.toFixed(2)),
+          currentBalance: Number(effectiveBal.toFixed(2))
         };
       });
 
@@ -2433,6 +2674,22 @@
         liquidCash: Number(liquidCash.toFixed(2)),
         accountDetails
       };
+    }
+
+    function getAccountMonthInflow(accId) {
+      const mKey = getMonthKey(currentYear, currentMonth);
+      let sum = 0;
+      appState.transactions.forEach(t => {
+        if (t.kind === 'deposit' && t.accountId === accId && t.date && t.date.startsWith(mKey)) {
+          sum += Number(t.amount) || 0;
+        }
+      });
+      appState.transfers.forEach(t => {
+        if (t.toAccountId === accId && t.date && t.date.startsWith(mKey)) {
+          sum += Number(t.amount) || 0;
+        }
+      });
+      return Number(sum.toFixed(2));
     }
 
     function computePeriodMetrics(startStr, endStr) {
@@ -2686,6 +2943,189 @@
       renderAll();
     }
 
+    function buildCategoryCardHtml(cat, mKey) {
+      const catMonthTxs = appState.transactions.filter(t => t.categoryId === cat.id && t.date && t.date.startsWith(mKey));
+      const monthSum = catMonthTxs.reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+
+      let badgeClass = 'badge-essential';
+      let badgeText = '维持性支出';
+      let iconChar = '支';
+      let amountColor = 'var(--text-primary)';
+      let amountPrefix = '';
+
+      if (cat.kind === 'expense') {
+        if (cat.subType === 'discretionary') {
+          badgeClass = 'badge-discretionary';
+          badgeText = '非必要支出';
+          iconChar = '玩';
+          amountColor = 'var(--discretionary-amber)';
+        } else {
+          badgeClass = 'badge-essential';
+          badgeText = '维持性支出';
+          iconChar = '刚';
+        }
+        amountPrefix = monthSum > 0 ? '-' : '';
+      } else if (cat.kind === 'income') {
+        badgeClass = 'badge-income';
+        badgeText = '收入';
+        iconChar = '收';
+        amountColor = '#34D399';
+        amountPrefix = monthSum > 0 ? '+' : '';
+      } else if (cat.kind === 'deposit') {
+        badgeClass = 'badge-deposit';
+        badgeText = cat.sourceMode === 'internal' ? '存入·互转' : '存入·外部';
+        iconChar = '存';
+        amountColor = 'var(--deposit-indigo)';
+        amountPrefix = monthSum > 0 ? '+' : '';
+      } else if (cat.kind === 'repay') {
+        badgeClass = 'badge-deposit';
+        badgeText = '还债减债';
+        iconChar = '还';
+        amountColor = 'var(--deposit-indigo)';
+        amountPrefix = monthSum > 0 ? '-' : '';
+      }
+
+      const defaultAcc = appState.accounts.find(a => a.id === cat.defaultAccountId);
+      const accHint = defaultAcc ? defaultAcc.name : '未指定账户';
+
+      return `
+        <div class="category-grid-card" onclick="openQuickRecordModal('${cat.id}')">
+          <div class="cat-grid-top">
+            <div class="category-icon-box ${badgeClass}">${iconChar}</div>
+            <div class="category-action-btns" onclick="event.stopPropagation()">
+              <button class="icon-btn" title="查看本月明细" onclick="openTxHistoryModal('${cat.id}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              </button>
+              <button class="icon-btn" title="编辑项目" onclick="openCategoryModal('${cat.id}')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button class="icon-btn" title="删除项目" style="color: var(--debt-red);" onclick="openDeleteCategoryModal('${cat.id}')">
+                ${TRASH_ICON_SVG}
+              </button>
+            </div>
+          </div>
+
+          <div class="cat-grid-mid">
+            <div class="category-name" title="${escapeHtml(cat.name)}">${escapeHtml(cat.name)}</div>
+            <span class="tag-pill ${badgeClass}">${badgeText}</span>
+          </div>
+
+          <div class="cat-grid-bottom">
+            <div class="category-month-sum tabular-nums" style="color: ${amountColor};">
+              ${amountPrefix}${formatMoney(monthSum)}
+            </div>
+            <div class="category-sub">${escapeHtml(accHint)} · ${catMonthTxs.length}笔</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderInvestPanel(snap) {
+      const panelEl = document.getElementById('investPanel');
+      if (!panelEl) return;
+
+      const list = snap.accountDetails.filter(a => a.isInvestment && a.type !== 'liability');
+      let bodyHtml = '';
+
+      if (list.length === 0) {
+        bodyHtml = `
+          <div class="empty-state">
+            点右上「+ 新增投资账户」创建一个，就能看到本金、现值、盈亏和占总资产比例。<br>
+            每月入金用「存入」项目（目标选这个投资账户，从现金账户转入）或「互转」记录即可。
+          </div>
+        `;
+      } else {
+        let costSum = 0;
+        let valueSum = 0;
+        let gainSum = 0;
+
+        const rowsHtml = list.map(a => {
+          const cost = a.costBalance;
+          const valued = a.marketValue != null && a.marketValue !== '' && isFinite(Number(a.marketValue));
+          const value = valued ? a.currentBalance : cost;
+          const gain = valued ? value - cost : 0;
+          costSum += cost;
+          valueSum += value;
+          gainSum += gain;
+
+          const rate = valued && cost > 0 ? (gain / cost * 100) : null;
+          const share = snap.totalAssets > 0 ? (value / snap.totalAssets * 100) : 0;
+          const gainColor = gain >= 0 ? '#34D399' : '#F87171';
+          const gainSign = gain >= 0 ? '+' : '-';
+          const gainText = valued
+            ? `${gainSign}${formatMoney(Math.abs(gain))}${rate !== null ? ` (${rate >= 0 ? '+' : ''}${rate.toFixed(2)}%)` : ''}`
+            : '--';
+
+          return `
+            <div class="invest-row">
+              <div class="invest-row-top">
+                <strong style="font-size: 14px;">${escapeHtml(a.name)}</strong>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <button class="btn btn-sm btn-secondary" onclick="openInvestModal('${a.id}')">更新现值</button>
+                  <button class="icon-btn" title="取消投资账户标记" onclick="removeInvestFlag('${a.id}')">&times;</button>
+                </div>
+              </div>
+              <div class="invest-row-grid tabular-nums">
+                <div>投入本金<b>${formatMoney(cost)}</b></div>
+                <div>${valued ? '现值' : '现值（未录入）'}<b>${valued ? formatMoney(value) : '--'}</b></div>
+                <div>盈亏<b style="color: ${valued ? gainColor : 'var(--text-muted)'};">${gainText}</b></div>
+                <div>${currentMonth}月投入<b>${formatMoney(getAccountMonthInflow(a.id))}</b></div>
+              </div>
+              <div style="margin-top: 12px;">
+                <div class="progress-header" style="font-size: 12px;">
+                  <span style="color: var(--text-secondary);">占总资产</span>
+                  <span class="tabular-nums">${share.toFixed(1)}%</span>
+                </div>
+                <div class="progress-track">
+                  <div class="progress-fill" style="width: ${Math.min(share, 100)}%; background: #60A5FA;"></div>
+                </div>
+              </div>
+              ${valued ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">现值更新于 ${escapeHtml(a.valueDate || '')}</div>` : ''}
+            </div>
+          `;
+        }).join('');
+
+        const totalShare = snap.totalAssets > 0 ? (valueSum / snap.totalAssets * 100) : 0;
+        const totalGainColor = gainSum >= 0 ? '#34D399' : '#F87171';
+        const totalGainSign = gainSum >= 0 ? '+' : '-';
+
+        bodyHtml = `
+          <div class="invest-summary tabular-nums">
+            <div class="invest-stat">
+              <div class="invest-stat-label">投入本金合计</div>
+              <div class="invest-stat-val">${formatMoney(costSum)}</div>
+            </div>
+            <div class="invest-stat">
+              <div class="invest-stat-label">现值合计</div>
+              <div class="invest-stat-val">${formatMoney(valueSum)}</div>
+            </div>
+            <div class="invest-stat">
+              <div class="invest-stat-label">总盈亏</div>
+              <div class="invest-stat-val" style="color: ${totalGainColor};">${totalGainSign}${formatMoney(Math.abs(gainSum))}</div>
+            </div>
+            <div class="invest-stat">
+              <div class="invest-stat-label">占总资产</div>
+              <div class="invest-stat-val" style="color: #60A5FA;">${totalShare.toFixed(1)}%</div>
+            </div>
+          </div>
+          ${rowsHtml}
+        `;
+      }
+
+      panelEl.innerHTML = `
+        <div class="section-header-bar">
+          <div class="section-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            我的投资
+          </div>
+          <div class="account-actions">
+            <button class="btn btn-sm btn-primary" onclick="openInvestModal()">+ 新增投资账户</button>
+          </div>
+        </div>
+        ${bodyHtml}
+      `;
+    }
+
     function renderHomeView() {
       const snap = computeAssetsSnapshot(null);
 
@@ -2693,26 +3133,34 @@
       document.getElementById('homeNetWorth').textContent = formatMoney(snap.netWorth);
       document.getElementById('homeTotalDebt').textContent = snap.totalDebt > 0 ? '-' + formatMoney(snap.totalDebt) : '0.00';
 
+      // 1. 渲染我的小账户卡片（含快捷互转与删除按钮）
       const gridEl = document.getElementById('homeAccountsGrid');
       if (snap.accountDetails.length === 0) {
         gridEl.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">暂无小账户，点击右上角“+ 添加小账户”开始配置</div>`;
       } else {
         gridEl.innerHTML = snap.accountDetails.map(acc => {
           const isDebt = acc.type === 'liability';
-          const displayBal = isDebt ? (acc.currentBalance > 0 ? '-' + formatMoney(acc.currentBalance) : '0.00') : formatMoney(acc.currentBalance);
+          const displayBal = isDebt
+            ? (acc.currentBalance > 0 ? '-' + formatMoney(acc.currentBalance) : '0.00')
+            : formatMoney(acc.currentBalance);
           const initBalStr = formatMoney(acc.initialBalance || 0);
           return `
             <div class="account-mini-card" onclick="openEditAccountModal('${acc.id}')" title="点击设置或修改起始金额">
               <div class="account-mini-top">
                 <span class="account-name">${escapeHtml(acc.name)}</span>
-                <button class="account-transfer-shortcut" title="从此账户转出" onclick="event.stopPropagation(); openTransferModal('${acc.id}')">
-                  互转
-                </button>
+                <div class="account-mini-actions" onclick="event.stopPropagation()">
+                  <button class="account-transfer-shortcut" title="从此账户转出" onclick="openTransferModal('${acc.id}')">
+                    互转
+                  </button>
+                  <button type="button" class="icon-btn" title="删除账户" style="color: var(--debt-red);" onclick="openDeleteAccountModal('${acc.id}')">
+                    ${TRASH_ICON_SVG}
+                  </button>
+                </div>
               </div>
               <div>
                 <div class="account-balance tabular-nums ${isDebt ? 'text-debt' : 'text-asset'}">${displayBal}</div>
                 <div class="account-type-tag" style="display: flex; justify-content: space-between; align-items: center;">
-                  <span>${isDebt ? '负债账户' : '资产账户'}</span>
+                  <span>${isDebt ? '负债账户' : (acc.isInvestment ? '投资账户' : '资产账户')}</span>
                   <span class="tabular-nums">起始: ${initBalStr}</span>
                 </div>
               </div>
@@ -2721,89 +3169,46 @@
         }).join('');
       }
 
-      // 网格化渲染当月记账项目栏
+      // 2. 渲染我的投资面板
+      renderInvestPanel(snap);
+
+      // 3. 按大类板块分组渲染当月记账项目栏
       const mKey = getMonthKey(currentYear, currentMonth);
       const listEl = document.getElementById('homeCategoriesList');
 
       if (appState.categories.length === 0) {
-        listEl.innerHTML = `<div class="detail-card empty-state" style="grid-column: 1 / -1;">暂无记账项目，点击上方“+ 新增项目”创建您的第一个账目分类</div>`;
+        listEl.innerHTML = `<div class="detail-card empty-state">暂无记账项目，点击上方“+ 新增项目”创建您的第一个账目分类</div>`;
         return;
       }
 
-      listEl.innerHTML = appState.categories.map(cat => {
-        const catMonthTxs = appState.transactions.filter(t => t.categoryId === cat.id && t.date && t.date.startsWith(mKey));
-        const monthSum = catMonthTxs.reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
-
-        let badgeClass = 'badge-essential';
-        let badgeText = '维持性支出';
-        let iconChar = '支';
-        let amountColor = 'var(--text-primary)';
-        let amountPrefix = '';
-
-        if (cat.kind === 'expense') {
-          if (cat.subType === 'discretionary') {
-            badgeClass = 'badge-discretionary';
-            badgeText = '非必要支出';
-            iconChar = '玩';
-            amountColor = 'var(--discretionary-amber)';
-          } else {
-            badgeClass = 'badge-essential';
-            badgeText = '维持性支出';
-            iconChar = '刚';
-          }
-          amountPrefix = monthSum > 0 ? '-' : '';
-        } else if (cat.kind === 'income') {
-          badgeClass = 'badge-income';
-          badgeText = '收入';
-          iconChar = '收';
-          amountColor = '#34D399';
-          amountPrefix = monthSum > 0 ? '+' : '';
-        } else if (cat.kind === 'deposit') {
-          badgeClass = 'badge-deposit';
-          badgeText = cat.sourceMode === 'internal' ? '存入·互转' : '存入·外部';
-          iconChar = '存';
-          amountColor = 'var(--deposit-indigo)';
-          amountPrefix = monthSum > 0 ? '+' : '';
-        } else if (cat.kind === 'repay') {
-          badgeClass = 'badge-deposit';
-          badgeText = '还债减债';
-          iconChar = '还';
-          amountColor = 'var(--deposit-indigo)';
-          amountPrefix = monthSum > 0 ? '-' : '';
+      const sumByCatId = {};
+      appState.transactions.forEach(t => {
+        if (t.date && t.date.startsWith(mKey)) {
+          sumByCatId[t.categoryId] = (sumByCatId[t.categoryId] || 0) + (Number(t.amount) || 0);
         }
+      });
 
-        const defaultAcc = appState.accounts.find(a => a.id === cat.defaultAccountId);
-        const accHint = defaultAcc ? defaultAcc.name : '未指定账户';
+      listEl.innerHTML = CATEGORY_SECTIONS.map(sec => {
+        const items = appState.categories.filter(c => c.kind === sec.kind);
+        if (items.length === 0 && sec.hideIfEmpty) return '';
+
+        const total = items.reduce((acc, c) => acc + (sumByCatId[c.id] || 0), 0);
+        const totalText = total > 0 ? sec.sign + formatMoney(total) : '0.00';
+
+        const cardsHtml = items.length > 0
+          ? items.map(cat => buildCategoryCardHtml(cat, mKey)).join('')
+          : `<div class="cat-section-empty">${sec.empty}，点右上「+ 新增项目」添加</div>`;
 
         return `
-          <div class="category-grid-card" onclick="openQuickRecordModal('${cat.id}')">
-            <div class="cat-grid-top">
-              <div class="category-icon-box ${badgeClass}">${iconChar}</div>
-              <div class="category-action-btns" onclick="event.stopPropagation()">
-                <button class="icon-btn" title="查看本月明细" onclick="openTxHistoryModal('${cat.id}')">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                </button>
-                <button class="icon-btn" title="编辑项目" onclick="openCategoryModal('${cat.id}')">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </button>
-                <button class="icon-btn" title="删除项目" style="color: var(--debt-red);" onclick="openDeleteCategoryModal('${cat.id}')">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                </button>
-              </div>
+          <section class="cat-section">
+            <div class="cat-section-head">
+              <span class="cat-section-bar" style="background: ${sec.color};"></span>
+              <span class="cat-section-title">${sec.title}</span>
+              <span class="cat-section-count">${items.length}个项目</span>
+              <span class="cat-section-total tabular-nums" style="color: ${sec.color};">本月 ${totalText}</span>
             </div>
-
-            <div class="cat-grid-mid">
-              <div class="category-name" title="${escapeHtml(cat.name)}">${escapeHtml(cat.name)}</div>
-              <span class="tag-pill ${badgeClass}">${badgeText}</span>
-            </div>
-
-            <div class="cat-grid-bottom">
-              <div class="category-month-sum tabular-nums" style="color: ${amountColor};">
-                ${amountPrefix}${formatMoney(monthSum)}
-              </div>
-              <div class="category-sub">${escapeHtml(accHint)} · ${catMonthTxs.length}笔</div>
-            </div>
-          </div>
+            <div class="categories-grid">${cardsHtml}</div>
+          </section>
         `;
       }).join('');
     }
@@ -2827,16 +3232,20 @@
       } else {
         detailAccEl.innerHTML = snap.accountDetails.map(acc => {
           const isDebt = acc.type === 'liability';
-          const displayBal = isDebt ? (acc.currentBalance > 0 ? '-' + formatMoney(acc.currentBalance) : '0.00') : formatMoney(acc.currentBalance);
+          const displayBal = isDebt
+            ? (acc.currentBalance > 0 ? '-' + formatMoney(acc.currentBalance) : '0.00')
+            : formatMoney(acc.currentBalance);
+          const typeDesc = isDebt ? '负债账户' : (acc.isInvestment ? '投资账户' : '资产账户');
           return `
             <div class="detail-account-row">
               <div>
                 <div style="font-weight: 700; font-size: 14px;">${escapeHtml(acc.name)}</div>
-                <div style="font-size: 11px; color: var(--text-muted);">${isDebt ? '负债账户' : '资产账户'} · 初始设定: ${formatMoney(acc.initialBalance)}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">${typeDesc} · 初始设定: ${formatMoney(acc.initialBalance)}</div>
               </div>
-              <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
                 <span class="tabular-nums ${isDebt ? 'text-debt' : 'text-asset'}" style="font-weight: 700; font-size: 15px;">${displayBal}</span>
                 <button class="btn btn-sm btn-secondary no-print" onclick="openEditAccountModal('${acc.id}')">修改/校准</button>
+                <button type="button" class="btn btn-sm btn-danger no-print" onclick="openDeleteAccountModal('${acc.id}')">删除</button>
               </div>
             </div>
           `;
@@ -3026,10 +3435,11 @@
       // 表一：资产负债明细行
       const assetRows = snap.accountDetails.map(acc => {
         const isDebt = acc.type === 'liability';
+        const kindDesc = isDebt ? '负债类账户' : (acc.isInvestment ? '投资类账户' : '资产类账户');
         return `
           <tr>
             <td>${escapeHtml(acc.name)}</td>
-            <td>${isDebt ? '负债类账户' : '资产类账户'}</td>
+            <td>${kindDesc}</td>
             <td class="num">${formatMoney(acc.initialBalance)}</td>
             <td class="num">${isDebt && acc.currentBalance > 0 ? '-' : ''}${formatMoney(acc.currentBalance)}</td>
           </tr>
@@ -3213,7 +3623,7 @@
                 <td class="num">+${formatMoney(metrics.externalDeposit)}</td>
               </tr>
               <tr class="stmt-total-row">
-                <td colspan="2">六、期末流动资金现金留存总额（扣除公积金/定期等锁定资产后可用余额）</td>
+                <td colspan="2">六、期末流动资金现金留存总额（扣除投资/公积金/定期等资产后可用余额）</td>
                 <td class="num">${formatMoney(snap.liquidCash)}</td>
               </tr>
             </tbody>
@@ -3321,7 +3731,7 @@
     }
 
     /* ==========================================================================
-       5. 交互逻辑：小账户添加、起始金额设置、互转与历史撤销
+       5. 交互逻辑：小账户添加、起始金额设置、删除确认、互转与投资账户管理
        ========================================================================== */
     function selectAccountType(type) {
       document.getElementById('accTypeInput').value = type;
@@ -3421,6 +3831,153 @@
       saveState();
       closeModal('accountModal');
       renderAll();
+    }
+
+    function openDeleteAccountModal(accId) {
+      const acc = appState.accounts.find(a => a.id === accId);
+      if (!acc) return;
+      pendingDeleteAccountId = accId;
+
+      const bal = calculateAccountBalance(accId, null);
+      const txCount = appState.transactions.filter(t => t.accountId === accId || t.fromAccountId === accId).length;
+      const trCount = appState.transfers.filter(t => t.fromAccountId === accId || t.toAccountId === accId).length;
+      const balLabel = acc.type === 'liability' ? '当前欠款' : '当前余额';
+
+      document.getElementById('delAccIntro').innerHTML =
+        `您正在删除账户 <strong style="color: var(--text-primary);">「${escapeHtml(acc.name)}」</strong>` +
+        `（${balLabel} ${formatMoney(bal)}，相关流水 ${txCount} 笔、互转 ${trCount} 笔）。请选择如何处理这些历史记录：`;
+      openModal('deleteAccountModal');
+    }
+
+    function confirmDeleteAccount(deleteHistory) {
+      const id = pendingDeleteAccountId;
+      if (!id) return;
+
+      if (deleteHistory) {
+        appState.transactions = appState.transactions.filter(t => t.accountId !== id && t.fromAccountId !== id);
+        appState.transfers = appState.transfers.filter(t => t.fromAccountId !== id && t.toAccountId !== id);
+      }
+
+      appState.categories.forEach(c => {
+        if (c.defaultAccountId === id) c.defaultAccountId = '';
+        if (c.fromAccountId === id) c.fromAccountId = null;
+      });
+
+      appState.accounts = appState.accounts.filter(a => a.id !== id);
+      pendingDeleteAccountId = null;
+
+      saveState();
+      closeModal('deleteAccountModal');
+      renderAll();
+      showToast(deleteHistory ? '已删除账户及相关记录，余额已重算' : '已仅删除账户本身，历史记录已保留');
+    }
+
+    /* 投资账户新增、更新现值与取消标记 */
+    function fillInvestFields() {
+      const id = document.getElementById('invAccSelect').value;
+      const acc = appState.accounts.find(a => a.id === id);
+      if (!acc) return;
+      const cost = calculateAccountBalance(id, null);
+      document.getElementById('invCostHint').textContent = `投入本金（累计净投入）：${formatMoney(cost)}`;
+      const hasValue = acc.marketValue != null && acc.marketValue !== '';
+      document.getElementById('invValueInput').value = hasValue ? Number(acc.marketValue).toFixed(2) : cost.toFixed(2);
+    }
+
+    function openInvestModal(accId = null) {
+      if (!accId) {
+        document.getElementById('invNewName').value = '';
+        document.getElementById('invNewCost').value = '0';
+        document.getElementById('invNewValue').value = '';
+        document.getElementById('invNewDate').value = formatDateISO(new Date());
+        openModal('investNewModal');
+        setTimeout(() => document.getElementById('invNewName').focus(), 120);
+        return;
+      }
+
+      const assets = appState.accounts.filter(a => a.type !== 'liability');
+      if (assets.length === 0) {
+        showToast('请先添加一个资产类小账户');
+        return;
+      }
+      const sel = document.getElementById('invAccSelect');
+      sel.innerHTML = assets.map(a => `<option value="${a.id}">${escapeHtml(a.name)}${a.isInvestment ? '（投资账户）' : ''}</option>`).join('');
+      sel.value = accId;
+      const picked = assets.find(a => a.id === accId);
+      document.getElementById('investModalTitle').textContent = picked && picked.isInvestment ? '更新现值' : '设为投资账户';
+      document.getElementById('invDateInput').value = formatDateISO(new Date());
+      fillInvestFields();
+      openModal('investModal');
+    }
+
+    function saveNewInvest(e) {
+      e.preventDefault();
+      const name = document.getElementById('invNewName').value.trim();
+      const cost = parseFloat(document.getElementById('invNewCost').value) || 0;
+      const valueStr = document.getElementById('invNewValue').value;
+      const date = document.getElementById('invNewDate').value;
+      if (!name) return;
+      if (cost < 0) {
+        showToast('本金不能为负数');
+        return;
+      }
+
+      const acc = {
+        id: generateId('acc'),
+        name,
+        type: 'asset',
+        initialBalance: Number(cost.toFixed(2)),
+        isInvestment: true
+      };
+      if (valueStr !== '') {
+        const value = parseFloat(valueStr);
+        if (isNaN(value) || value < 0) {
+          showToast('请输入有效的现值');
+          return;
+        }
+        acc.marketValue = Number(value.toFixed(2));
+        acc.valueDate = date;
+      }
+
+      appState.accounts.push(acc);
+      saveState();
+      closeModal('investNewModal');
+      renderAll();
+      showToast(`已创建投资账户「${name}」`);
+    }
+
+    function saveInvestForm(e) {
+      e.preventDefault();
+      const acc = appState.accounts.find(a => a.id === document.getElementById('invAccSelect').value);
+      const value = parseFloat(document.getElementById('invValueInput').value);
+      const date = document.getElementById('invDateInput').value;
+      if (!acc || isNaN(value) || value < 0) {
+        showToast('请输入有效的现值');
+        return;
+      }
+      acc.isInvestment = true;
+      acc.marketValue = Number(value.toFixed(2));
+      acc.valueDate = date;
+      saveState();
+      closeModal('investModal');
+      renderAll();
+      showToast(`已更新「${acc.name}」现值`);
+    }
+
+    function removeInvestFlag(accId) {
+      const acc = appState.accounts.find(a => a.id === accId);
+      if (!acc) return;
+      showConfirmModal(
+        '取消投资账户标记',
+        `只取消「${acc.name}」的投资标记并清除现值记录，账户和余额都不会被删除。`,
+        function () {
+          acc.isInvestment = false;
+          delete acc.marketValue;
+          delete acc.valueDate;
+          saveState();
+          renderAll();
+          showToast('已取消投资账户标记');
+        }
+      );
     }
 
     function openTransferModal(presetFromId = null) {
@@ -4291,557 +4848,5 @@
 
     window.initFirebaseCloudSync();
   </script>
-  <style>
-  .category-sections { margin-top: 6px; }
-  .cat-section { margin-top: 18px; }
-  .cat-section-head { display: flex; align-items: center; gap: 8px; padding: 0 4px; }
-  .cat-section-bar { width: 4px; height: 16px; border-radius: 2px; flex-shrink: 0; }
-  .cat-section-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
-  .cat-section-count { font-size: 12px; color: var(--text-muted); }
-  .cat-section-total { margin-left: auto; font-size: 14px; font-weight: 700; }
-  .cat-section .categories-grid { margin-top: 10px; }
-  .cat-section-empty {
-    grid-column: 1 / -1; padding: 14px; text-align: center;
-    font-size: 12px; color: var(--text-muted);
-    border: 1px dashed var(--border-strong); border-radius: var(--radius-md);
-  }
-</style>
-<script>
-(function () {
-  // 板块顺序：想换顺序，调换下面几行的位置即可
-  const SECTIONS = [
-    { kind: 'expense', title: '支出类', color: 'var(--debt-red)', sign: '-', empty: '暂无支出项目' },
-    { kind: 'deposit', title: '存款', color: 'var(--deposit-indigo)', sign: '+', empty: '暂无存款项目' },
-    { kind: 'income', title: '收入', color: '#34D399', sign: '+', empty: '暂无收入项目' },
-    { kind: 'repay', title: '还债', color: 'var(--deposit-indigo)', sign: '-', empty: '', hideIfEmpty: true }
-  ];
-
-  const baseRender = window.renderHomeView;
-
-  window.renderHomeView = function () {
-    baseRender();
-
-    const listEl = document.getElementById('homeCategoriesList');
-    const cards = Array.from(listEl.querySelectorAll(':scope > .category-grid-card'));
-    if (cards.length === 0) return;
-
-    const kindOf = {};
-    appState.categories.forEach(c => { kindOf[c.id] = c.kind; });
-
-    const mKey = getMonthKey(currentYear, currentMonth);
-    const sumOf = {};
-    appState.transactions.forEach(t => {
-      if (t.date && t.date.startsWith(mKey)) {
-        sumOf[t.categoryId] = (sumOf[t.categoryId] || 0) + (Number(t.amount) || 0);
-      }
-    });
-
-    const groups = {};
-    SECTIONS.forEach(s => { groups[s.kind] = []; });
-    cards.forEach(card => {
-      const m = /openQuickRecordModal\('([^']+)'\)/.exec(card.getAttribute('onclick') || '');
-      const kind = m ? kindOf[m[1]] : null;
-      if (kind && groups[kind]) groups[kind].push({ card, id: m[1] });
-    });
-
-    listEl.className = 'category-sections';
-    listEl.innerHTML = '';
-
-    SECTIONS.forEach(s => {
-      const items = groups[s.kind];
-      if (items.length === 0 && s.hideIfEmpty) return;
-
-      const total = items.reduce((a, it) => a + (sumOf[it.id] || 0), 0);
-      const totalText = total > 0 ? s.sign + formatMoney(total) : '0.00';
-
-      const sec = document.createElement('section');
-      sec.className = 'cat-section';
-      sec.innerHTML = `
-        <div class="cat-section-head">
-          <span class="cat-section-bar" style="background:${s.color};"></span>
-          <span class="cat-section-title">${s.title}</span>
-          <span class="cat-section-count">${items.length}个项目</span>
-          <span class="cat-section-total tabular-nums" style="color:${s.color};">本月 ${totalText}</span>
-        </div>
-      `;
-
-      const grid = document.createElement('div');
-      grid.className = 'categories-grid';
-      if (items.length) {
-        items.forEach(it => grid.appendChild(it.card));
-      } else {
-        grid.innerHTML = `<div class="cat-section-empty">${s.empty}，点右上「+ 新增项目」添加</div>`;
-      }
-      sec.appendChild(grid);
-      listEl.appendChild(sec);
-    });
-  };
-})();
-</script>
-  <script>
-(function () {
-  let pendingDelAccId = null;
-
-  const TRASH_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
-
-  // 删除确认弹窗（样式和删除项目的弹窗一致）
-  document.body.insertAdjacentHTML('beforeend', `
-    <div id="deleteAccountModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'deleteAccountModal')">
-      <div class="modal-panel">
-        <div class="modal-header">
-          <h3 class="modal-title">删除小账户</h3>
-          <button class="modal-close" onclick="closeModal('deleteAccountModal')">&times;</button>
-        </div>
-        <p id="delAccIntro" style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6;"></p>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <button class="btn btn-danger-solid" style="justify-content: flex-start; text-align: left; padding: 12px 14px; height: auto;" onclick="confirmDeleteAccount(true)">
-            <div>
-              <div>是，一并删除相关流水和互转</div>
-              <div style="font-size: 11px; font-weight: 400; opacity: 0.9;">涉及该账户的收支、存入、还债、互转记录全部清除，其他账户余额会自动重算</div>
-            </div>
-          </button>
-          <button class="btn btn-secondary" style="justify-content: flex-start; text-align: left; padding: 12px 14px; height: auto;" onclick="confirmDeleteAccount(false)">
-            <div>
-              <div style="color: var(--text-primary);">不，只删除账户本身，历史记录保留</div>
-              <div style="font-size: 11px; font-weight: 400; color: var(--text-muted);">流水继续计入报表，但该账户显示为“未知账户”，总资产会减去它的余额</div>
-            </div>
-          </button>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" onclick="closeModal('deleteAccountModal')">取消操作</button>
-        </div>
-      </div>
-    </div>
-  `);
-
-  window.openDeleteAccountModal = function (accId) {
-    const acc = appState.accounts.find(a => a.id === accId);
-    if (!acc) return;
-    pendingDelAccId = accId;
-
-    const bal = calculateAccountBalance(accId, null);
-    const txCount = appState.transactions.filter(t => t.accountId === accId || t.fromAccountId === accId).length;
-    const trCount = appState.transfers.filter(t => t.fromAccountId === accId || t.toAccountId === accId).length;
-    const balLabel = acc.type === 'liability' ? '当前欠款' : '当前余额';
-
-    document.getElementById('delAccIntro').innerHTML =
-      `您正在删除账户 <strong style="color: var(--text-primary);">「${escapeHtml(acc.name)}」</strong>` +
-      `（${balLabel} ${formatMoney(bal)}，相关流水 ${txCount} 笔、互转 ${trCount} 笔）。请选择如何处理这些历史记录：`;
-    openModal('deleteAccountModal');
-  };
-
-  window.confirmDeleteAccount = function (deleteHistory) {
-    const id = pendingDelAccId;
-    if (!id) return;
-
-    if (deleteHistory) {
-      appState.transactions = appState.transactions.filter(t => t.accountId !== id && t.fromAccountId !== id);
-      appState.transfers = appState.transfers.filter(t => t.fromAccountId !== id && t.toAccountId !== id);
-    }
-
-    // 项目里绑定的默认账户如果是它，清掉绑定
-    appState.categories.forEach(c => {
-      if (c.defaultAccountId === id) c.defaultAccountId = '';
-      if (c.fromAccountId === id) c.fromAccountId = null;
-    });
-
-    appState.accounts = appState.accounts.filter(a => a.id !== id);
-    pendingDelAccId = null;
-
-    saveState();
-    closeModal('deleteAccountModal');
-    renderAll();
-    showToast(deleteHistory ? '已删除账户及相关记录，余额已重算' : '已仅删除账户本身，历史记录已保留');
-  };
-
-  function idFromOnclick(el) {
-    const m = /openEditAccountModal\('([^']+)'\)/.exec(el.getAttribute('onclick') || '');
-    return m ? m[1] : null;
-  }
-
-  // 主页小账户卡片：加垃圾桶按钮
-  function addHomeDeleteButtons() {
-    document.querySelectorAll('#homeAccountsGrid .account-mini-card').forEach(card => {
-      const id = idFromOnclick(card);
-      const top = card.querySelector('.account-mini-top');
-      if (!id || !top || card.querySelector('.acc-del-btn')) return;
-
-      const box = document.createElement('div');
-      box.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
-      const shortcut = top.querySelector('.account-transfer-shortcut');
-      top.appendChild(box);
-      if (shortcut) box.appendChild(shortcut);
-
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'icon-btn acc-del-btn';
-      btn.title = '删除账户';
-      btn.style.color = 'var(--debt-red)';
-      btn.innerHTML = TRASH_SVG;
-      btn.onclick = function (e) { e.stopPropagation(); openDeleteAccountModal(id); };
-      box.appendChild(btn);
-    });
-  }
-
-  // 详情页账户列表：加“删除”按钮
-  function addDetailDeleteButtons() {
-    document.querySelectorAll('#detailAccountsList .detail-account-row').forEach(row => {
-      const editBtn = row.querySelector('button[onclick*="openEditAccountModal"]');
-      if (!editBtn || row.querySelector('.acc-del-btn')) return;
-      const id = idFromOnclick(editBtn);
-      if (!id) return;
-
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'btn btn-sm btn-danger no-print acc-del-btn';
-      btn.textContent = '删除';
-      btn.onclick = function () { openDeleteAccountModal(id); };
-      editBtn.parentNode.appendChild(btn);
-    });
-  }
-
-  const baseHome = window.renderHomeView;
-  window.renderHomeView = function () {
-    baseHome();
-    addHomeDeleteButtons();
-  };
-
-  const baseDetail = window.renderDetailView;
-  window.renderDetailView = function () {
-    baseDetail();
-    addDetailDeleteButtons();
-  };
-})();
-</script>
-<style>
-  .invest-summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 4px; }
-  .invest-stat { background: var(--bg-subtle); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 10px 12px; }
-  .invest-stat-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 2px; }
-  .invest-stat-val { font-size: 17px; font-weight: 800; }
-  .invest-row { background: var(--bg-subtle); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 12px; margin-top: 8px; }
-  .invest-row-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .invest-row-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 12px; font-size: 12px; color: var(--text-secondary); }
-  .invest-row-grid b { display: block; font-size: 14px; color: var(--text-primary); margin-top: 1px; }
-</style>
-<script>
-(function () {
-  const EXCLUDE = ['epf', '公积金', '定投', '定期'];
-  const isExcluded = name => EXCLUDE.some(k => (name || '').toLowerCase().includes(k));
-  const fm = n => formatMoney(n);
-  const sgn = n => (n >= 0 ? '+' : '-') + formatMoney(Math.abs(n));
-  const gainColor = n => (n >= 0 ? '#34D399' : '#F87171');
-
-  /* 1. 让总资产/净资产按「投资现值」计算（盈亏并入），现金留存不含投资账户 */
-  const baseSnap = window.computeAssetsSnapshot;
-  window.computeAssetsSnapshot = function (upToDateStr = null) {
-    const snap = baseSnap(upToDateStr);
-    let gain = 0, liquidFix = 0;
-    snap.accountDetails.forEach(a => {
-      if (!a.isInvestment || a.type === 'liability') return;
-      a.costBalance = a.currentBalance;
-      if (!isExcluded(a.name)) liquidFix += a.currentBalance;
-      const mv = Number(a.marketValue);
-      if (a.marketValue != null && a.marketValue !== '' && isFinite(mv) && (!upToDateStr || upToDateStr >= (a.valueDate || ''))) {
-        gain += mv - a.currentBalance;
-        a.currentBalance = Number(mv.toFixed(2));
-      }
-    });
-    snap.totalAssets = Number((snap.totalAssets + gain).toFixed(2));
-    snap.netWorth = Number((snap.netWorth + gain).toFixed(2));
-    snap.liquidCash = Number((snap.liquidCash - liquidFix).toFixed(2));
-    return snap;
-  };
-
-  /* 2. 主页「我的投资」面板 */
-  function ensurePanel() {
-    let el = document.getElementById('investPanel');
-    if (!el) {
-      el = document.createElement('section');
-      el.id = 'investPanel';
-      el.className = 'accounts-section';
-      const anchor = document.querySelector('#homeView .month-switcher-bar');
-      anchor.parentNode.insertBefore(el, anchor);
-    }
-    return el;
-  }
-
-  function monthInflow(accId) {
-    const mKey = getMonthKey(currentYear, currentMonth);
-    let s = 0;
-    appState.transactions.forEach(t => {
-      if (t.kind === 'deposit' && t.accountId === accId && t.date && t.date.startsWith(mKey)) s += Number(t.amount) || 0;
-    });
-    appState.transfers.forEach(t => {
-      if (t.toAccountId === accId && t.date && t.date.startsWith(mKey)) s += Number(t.amount) || 0;
-    });
-    return s;
-  }
-
-  function renderInvestPanel() {
-    const el = ensurePanel();
-    const snap = computeAssetsSnapshot(null);
-    const list = snap.accountDetails.filter(a => a.isInvestment && a.type !== 'liability');
-
-    let body = '';
-    if (list.length === 0) {
-      body = `<div class="empty-state">把一个小账户（例如「投资账户」）设为投资账户，就能看到本金、现值、盈亏和占总资产比例。<br>每月入金用「存入」项目（从现金账户转入）或「互转」记录即可。</div>`;
-    } else {
-      let costSum = 0, valueSum = 0, gainSum = 0;
-      const rows = list.map(a => {
-        const cost = a.costBalance;
-        const valued = a.marketValue != null && a.marketValue !== '' && isFinite(Number(a.marketValue));
-        const value = valued ? a.currentBalance : cost;
-        const gain = valued ? value - cost : 0;
-        costSum += cost; valueSum += value; gainSum += gain;
-        const rate = valued && cost > 0 ? (gain / cost * 100) : null;
-        const share = snap.totalAssets > 0 ? (value / snap.totalAssets * 100) : 0;
-        return `
-          <div class="invest-row">
-            <div class="invest-row-top">
-              <strong style="font-size: 14px;">${escapeHtml(a.name)}</strong>
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <button class="btn btn-sm btn-secondary" onclick="openInvestModal('${a.id}')">更新现值</button>
-                <button class="icon-btn" title="取消投资账户标记" onclick="removeInvestFlag('${a.id}')">&times;</button>
-              </div>
-            </div>
-            <div class="invest-row-grid tabular-nums">
-              <div>投入本金<b>${fm(cost)}</b></div>
-              <div>${valued ? '现值' : '现值（未录入）'}<b>${valued ? fm(value) : '--'}</b></div>
-              <div>盈亏<b style="color: ${valued ? gainColor(gain) : 'var(--text-muted)'};">${valued ? sgn(gain) + (rate !== null ? ' (' + (rate >= 0 ? '+' : '') + rate.toFixed(2) + '%)' : '') : '--'}</b></div>
-              <div>${currentMonth}月投入<b>${fm(monthInflow(a.id))}</b></div>
-            </div>
-            <div style="margin-top: 12px;">
-              <div class="progress-header" style="font-size: 12px;">
-                <span style="color: var(--text-secondary);">占总资产</span>
-                <span class="tabular-nums">${share.toFixed(1)}%</span>
-              </div>
-              <div class="progress-track"><div class="progress-fill" style="width: ${Math.min(share, 100)}%; background: #60A5FA;"></div></div>
-            </div>
-            ${valued ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">现值更新于 ${escapeHtml(a.valueDate || '')}</div>` : ''}
-          </div>`;
-      }).join('');
-
-      const totalShare = snap.totalAssets > 0 ? (valueSum / snap.totalAssets * 100) : 0;
-      body = `
-        <div class="invest-summary tabular-nums">
-          <div class="invest-stat"><div class="invest-stat-label">投入本金合计</div><div class="invest-stat-val">${fm(costSum)}</div></div>
-          <div class="invest-stat"><div class="invest-stat-label">现值合计</div><div class="invest-stat-val">${fm(valueSum)}</div></div>
-          <div class="invest-stat"><div class="invest-stat-label">总盈亏</div><div class="invest-stat-val" style="color: ${gainColor(gainSum)};">${sgn(gainSum)}</div></div>
-          <div class="invest-stat"><div class="invest-stat-label">占总资产</div><div class="invest-stat-val" style="color: #60A5FA;">${totalShare.toFixed(1)}%</div></div>
-        </div>
-        ${rows}`;
-    }
-
-    el.innerHTML = `
-      <div class="section-header-bar">
-        <div class="section-title">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          我的投资
-        </div>
-        <div class="account-actions">
-          <button class="btn btn-sm btn-primary" onclick="openInvestModal()">+ 设为投资账户</button>
-        </div>
-      </div>
-      ${body}`;
-  }
-
-  /* 3. 设置投资账户 / 更新现值 弹窗 */
-  document.body.insertAdjacentHTML('beforeend', `
-    <div id="investModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'investModal')">
-      <div class="modal-panel">
-        <div class="modal-header">
-          <h3 class="modal-title" id="investModalTitle">设为投资账户</h3>
-          <button class="modal-close" onclick="closeModal('investModal')">&times;</button>
-        </div>
-        <form onsubmit="saveInvestForm(event)">
-          <div class="form-group">
-            <label class="form-label">选择小账户</label>
-            <select id="invAccSelect" class="form-control" onchange="fillInvestFields()"></select>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;" id="invCostHint"></div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">当前现值（持仓市值）</label>
-            <input type="number" step="0.01" min="0" id="invValueInput" class="form-control amount-input-hero tabular-nums" placeholder="0.00" required />
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">入金之后，记得回来更新一次现值，盈亏才准确。</div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">现值日期</label>
-            <input type="date" id="invDateInput" class="form-control tabular-nums" required />
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closeModal('investModal')">取消</button>
-            <button type="submit" class="btn btn-primary">确认保存</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  `);
-
-  window.fillInvestFields = function () {
-    const id = document.getElementById('invAccSelect').value;
-    const acc = appState.accounts.find(a => a.id === id);
-    if (!acc) return;
-    const cost = calculateAccountBalance(id, null);
-    document.getElementById('invCostHint').textContent = `投入本金（累计净投入）：${fm(cost)}`;
-    const hasValue = acc.marketValue != null && acc.marketValue !== '';
-    document.getElementById('invValueInput').value = hasValue ? Number(acc.marketValue).toFixed(2) : cost.toFixed(2);
-  };
-
-  window.openInvestModal = function (accId = null) {
-    const assets = appState.accounts.filter(a => a.type !== 'liability');
-    if (assets.length === 0) {
-      showToast('请先添加一个资产类小账户');
-      return;
-    }
-    const sel = document.getElementById('invAccSelect');
-    sel.innerHTML = assets.map(a => `<option value="${a.id}">${escapeHtml(a.name)}${a.isInvestment ? '（投资账户）' : ''}</option>`).join('');
-    const pick = accId || (assets.find(a => !a.isInvestment) || assets[0]).id;
-    sel.value = pick;
-    const picked = assets.find(a => a.id === pick);
-    document.getElementById('investModalTitle').textContent = picked && picked.isInvestment ? '更新现值' : '设为投资账户';
-    document.getElementById('invDateInput').value = formatDateISO(new Date());
-    fillInvestFields();
-    openModal('investModal');
-  };
-
-  window.saveInvestForm = function (e) {
-    e.preventDefault();
-    const acc = appState.accounts.find(a => a.id === document.getElementById('invAccSelect').value);
-    const value = parseFloat(document.getElementById('invValueInput').value);
-    const date = document.getElementById('invDateInput').value;
-    if (!acc || isNaN(value) || value < 0) {
-      showToast('请输入有效的现值');
-      return;
-    }
-    acc.isInvestment = true;
-    acc.marketValue = Number(value.toFixed(2));
-    acc.valueDate = date;
-    saveState();
-    closeModal('investModal');
-    renderAll();
-    showToast(`已更新「${acc.name}」现值`);
-  };
-
-  window.removeInvestFlag = function (accId) {
-    const acc = appState.accounts.find(a => a.id === accId);
-    if (!acc) return;
-    showConfirmModal(
-      '取消投资账户标记',
-      `只取消「${acc.name}」的投资标记并清除现值记录，账户和余额都不会被删除。`,
-      function () {
-        acc.isInvestment = false;
-        delete acc.marketValue;
-        delete acc.valueDate;
-        saveState();
-        renderAll();
-        showToast('已取消投资账户标记');
-      }
-    );
-  };
-
-  const baseHome = window.renderHomeView;
-  window.renderHomeView = function () {
-    baseHome();
-    renderInvestPanel();
-  };
-})();
-</script>
-<script>
-(function () {
-  document.body.insertAdjacentHTML('beforeend', `
-    <div id="investNewModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'investNewModal')">
-      <div class="modal-panel">
-        <div class="modal-header">
-          <h3 class="modal-title">新增投资账户</h3>
-          <button class="modal-close" onclick="closeModal('investNewModal')">&times;</button>
-        </div>
-        <form onsubmit="saveNewInvest(event)">
-          <div class="form-group">
-            <label class="form-label">投资账户名称</label>
-            <input type="text" id="invNewName" class="form-control" placeholder="例如：长期持仓、美股账户" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label">已投入本金（没有就填 0）</label>
-            <input type="number" step="0.01" min="0" id="invNewCost" class="form-control tabular-nums" placeholder="0.00" value="0" required />
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">以后每月入金，用「存入」项目或「互转」记录，本金会自动累加。</div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">当前现值（选填，不填则暂按本金计算）</label>
-            <input type="number" step="0.01" min="0" id="invNewValue" class="form-control tabular-nums" placeholder="0.00" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">现值日期</label>
-            <input type="date" id="invNewDate" class="form-control tabular-nums" required />
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closeModal('investNewModal')">取消</button>
-            <button type="submit" class="btn btn-primary">确认创建</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  `);
-
-  // 不带参数 = 新增投资账户；带账户 id = 沿用原来的「更新现值」
-  const baseOpen = window.openInvestModal;
-  window.openInvestModal = function (accId = null) {
-    if (accId) return baseOpen(accId);
-    document.getElementById('invNewName').value = '';
-    document.getElementById('invNewCost').value = '0';
-    document.getElementById('invNewValue').value = '';
-    document.getElementById('invNewDate').value = formatDateISO(new Date());
-    openModal('investNewModal');
-    setTimeout(() => document.getElementById('invNewName').focus(), 120);
-  };
-
-  window.saveNewInvest = function (e) {
-    e.preventDefault();
-    const name = document.getElementById('invNewName').value.trim();
-    const cost = parseFloat(document.getElementById('invNewCost').value) || 0;
-    const valueStr = document.getElementById('invNewValue').value;
-    const date = document.getElementById('invNewDate').value;
-    if (!name) return;
-    if (cost < 0) {
-      showToast('本金不能为负数');
-      return;
-    }
-
-    const acc = {
-      id: generateId('acc'),
-      name,
-      type: 'asset',
-      initialBalance: Number(cost.toFixed(2)),
-      isInvestment: true
-    };
-    if (valueStr !== '') {
-      const value = parseFloat(valueStr);
-      if (isNaN(value) || value < 0) {
-        showToast('请输入有效的现值');
-        return;
-      }
-      acc.marketValue = Number(value.toFixed(2));
-      acc.valueDate = date;
-    }
-
-    appState.accounts.push(acc);
-    saveState();
-    closeModal('investNewModal');
-    renderAll();
-    showToast(`已创建投资账户「${name}」`);
-  };
-
-  // 把面板上的按钮和空状态提示改成新说法
-  const baseHome = window.renderHomeView;
-  window.renderHomeView = function () {
-    baseHome();
-    const btn = document.querySelector('#investPanel .account-actions button');
-    if (btn) btn.textContent = '+ 新增投资账户';
-    const empty = document.querySelector('#investPanel .empty-state');
-    if (empty) {
-      empty.innerHTML = '点右上「+ 新增投资账户」创建一个，就能看到本金、现值、盈亏和占总资产比例。<br>每月入金用「存入」项目（目标选这个投资账户，从现金账户转入）或「互转」记录即可。';
-    }
-  };
-})();
-</script>
 </body>
 </html>
